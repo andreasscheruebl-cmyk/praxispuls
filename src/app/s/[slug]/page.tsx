@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import Image from "next/image";
 import { db } from "@/lib/db";
 import { surveys } from "@/lib/db/schema";
-import { eq } from "drizzle-orm";
+import { eq, and, isNull } from "drizzle-orm";
 import { SurveyForm } from "@/components/survey/survey-form";
 import { ThemeProvider } from "@/components/theme-provider";
 import { type ThemeId, getThemeConfig } from "@/lib/themes";
@@ -15,11 +15,11 @@ export default async function SurveyPage({ params }: Props) {
   const { slug } = await params;
 
   const survey = await db.query.surveys.findFirst({
-    where: eq(surveys.slug, slug),
+    where: and(eq(surveys.slug, slug), isNull(surveys.deletedAt)),
     with: { practice: true },
   });
 
-  if (!survey || !survey.isActive) {
+  if (!survey || !survey.isActive || survey.practice.deletedAt) {
     notFound();
   }
 

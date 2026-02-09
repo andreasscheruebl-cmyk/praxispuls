@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { practices } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import type Stripe from "stripe";
+import { logAudit } from "@/lib/audit";
 
 /**
  * Stripe Webhook Handler
@@ -123,9 +124,13 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
     })
     .where(eq(practices.id, practiceId));
 
-  console.log(
-    `Practice ${practiceId} upgraded to ${plan} (subscription: ${subscriptionId})`
-  );
+  logAudit({
+    practiceId,
+    action: "plan.upgraded",
+    entity: "subscription",
+    entityId: subscriptionId,
+    after: { plan, stripeCustomerId: customerId, stripeSubscriptionId: subscriptionId },
+  });
 }
 
 /**
@@ -155,7 +160,14 @@ async function handleSubscriptionUpdated(subscription: Stripe.Subscription) {
     })
     .where(eq(practices.id, practice.id));
 
-  console.log(`Practice ${practice.id} plan updated to ${plan}`);
+  logAudit({
+    practiceId: practice.id,
+    action: "plan.changed",
+    entity: "subscription",
+    entityId: subscription.id,
+    before: { plan: practice.plan },
+    after: { plan },
+  });
 }
 
 /**
@@ -184,7 +196,14 @@ async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
     })
     .where(eq(practices.id, practice.id));
 
-  console.log(`Practice ${practice.id} downgraded to free`);
+  logAudit({
+    practiceId: practice.id,
+    action: "plan.downgraded",
+    entity: "subscription",
+    entityId: subscription.id,
+    before: { plan: practice.plan },
+    after: { plan: "free" },
+  });
 }
 
 /**

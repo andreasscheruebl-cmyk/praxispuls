@@ -2,11 +2,12 @@ import { NextResponse } from "next/server";
 import { getUserOptional } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { practices, surveys } from "@/lib/db/schema";
-import { eq, and, ne } from "drizzle-orm";
+import { eq, and, ne, isNull } from "drizzle-orm";
 import { practiceUpdateSchema } from "@/lib/validations";
 import { getGoogleReviewLink, getPlaceDetails } from "@/lib/google";
 import { slugify } from "@/lib/utils";
 import { SURVEY_TEMPLATES } from "@/lib/survey-templates";
+import { logAudit, getRequestMeta } from "@/lib/audit";
 
 export async function GET() {
   try {
@@ -15,7 +16,7 @@ export async function GET() {
       return NextResponse.json({ error: "Nicht angemeldet" }, { status: 401 });
     }
     const practice = await db.query.practices.findFirst({
-      where: eq(practices.email, user.email),
+      where: and(eq(practices.email, user.email), isNull(practices.deletedAt)),
     });
     if (!practice) return NextResponse.json({ error: "Praxis nicht gefunden" }, { status: 404 });
     return NextResponse.json(practice);
@@ -101,9 +102,10 @@ export async function PUT(request: Request) {
     }
     const body = await request.json();
     const parsed = practiceUpdateSchema.parse(body);
+    const meta = getRequestMeta(request);
 
     const practice = await db.query.practices.findFirst({
-      where: eq(practices.email, user.email),
+      where: and(eq(practices.email, user.email), isNull(practices.deletedAt)),
     });
     if (!practice) return NextResponse.json({ error: "Praxis nicht gefunden" }, { status: 404 });
 
@@ -141,6 +143,22 @@ export async function PUT(request: Request) {
     await db.update(practices)
       .set({ ...parsed, googleReviewUrl, updatedAt: new Date() })
       .where(eq(practices.id, practice.id));
+
+    // Audit log for settings change
+    logAudit({
+      practiceId: practice.id,
+      action: "practice.updated",
+      entity: "practice",
+      entityId: practice.id,
+      before: {
+        name: practice.name,
+        googlePlaceId: practice.googlePlaceId,
+        npsThreshold: practice.npsThreshold,
+        logoUrl: practice.logoUrl,
+      },
+      after: parsed,
+      ...meta,
+    });
 
     return NextResponse.json({ success: true });
   } catch {

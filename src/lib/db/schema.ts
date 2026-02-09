@@ -32,6 +32,7 @@ export const practices = pgTable("practices", {
   npsThreshold: smallint("nps_threshold").default(9),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow(),
+  deletedAt: timestamp("deleted_at", { withTimezone: true }), // Soft delete
 });
 
 // ============================================================
@@ -51,6 +52,7 @@ export const surveys = pgTable(
     config: jsonb("config").default({}),
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow(),
+    deletedAt: timestamp("deleted_at", { withTimezone: true }), // Soft delete
   },
   (table) => ({
     slugIdx: index("idx_surveys_slug").on(table.slug),
@@ -143,6 +145,34 @@ export const loginEvents = pgTable(
 );
 
 // ============================================================
+// AUDIT EVENTS (Change tracking)
+// ============================================================
+export const auditEvents = pgTable(
+  "audit_events",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    practiceId: uuid("practice_id").references(() => practices.id, {
+      onDelete: "set null",
+    }),
+    action: text("action").notNull(), // e.g. practice.updated, practice.deleted, survey.toggled, plan.changed
+    entity: text("entity"), // e.g. practice, survey, subscription
+    entityId: text("entity_id"), // UUID of affected entity
+    before: jsonb("before"), // State before change (partial)
+    after: jsonb("after"), // State after change (partial)
+    ipAddress: text("ip_address"),
+    userAgent: text("user_agent"),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
+  },
+  (table) => ({
+    practiceIdx: index("idx_audit_events_practice").on(
+      table.practiceId,
+      table.createdAt
+    ),
+    actionIdx: index("idx_audit_events_action").on(table.action),
+  })
+);
+
+// ============================================================
 // RELATIONS
 // ============================================================
 export const practicesRelations = relations(practices, ({ many }) => ({
@@ -150,6 +180,7 @@ export const practicesRelations = relations(practices, ({ many }) => ({
   responses: many(responses),
   alerts: many(alerts),
   loginEvents: many(loginEvents),
+  auditEvents: many(auditEvents),
 }));
 
 export const surveysRelations = relations(surveys, ({ one, many }) => ({
@@ -189,6 +220,13 @@ export const loginEventsRelations = relations(loginEvents, ({ one }) => ({
   }),
 }));
 
+export const auditEventsRelations = relations(auditEvents, ({ one }) => ({
+  practice: one(practices, {
+    fields: [auditEvents.practiceId],
+    references: [practices.id],
+  }),
+}));
+
 // ============================================================
 // TYPES (inferred from schema)
 // ============================================================
@@ -202,3 +240,5 @@ export type Alert = typeof alerts.$inferSelect;
 export type NewAlert = typeof alerts.$inferInsert;
 export type LoginEvent = typeof loginEvents.$inferSelect;
 export type NewLoginEvent = typeof loginEvents.$inferInsert;
+export type AuditEvent = typeof auditEvents.$inferSelect;
+export type NewAuditEvent = typeof auditEvents.$inferInsert;

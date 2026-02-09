@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import Image from "next/image";
 import { db } from "@/lib/db";
 import { surveys } from "@/lib/db/schema";
-import { eq } from "drizzle-orm";
+import { eq, and, isNull } from "drizzle-orm";
 
 type Props = {
   params: Promise<{ slug: string }>;
@@ -14,11 +14,11 @@ export default async function DankePage({ params, searchParams }: Props) {
   const { nps, rid } = await searchParams;
 
   const survey = await db.query.surveys.findFirst({
-    where: eq(surveys.slug, slug),
+    where: and(eq(surveys.slug, slug), isNull(surveys.deletedAt)),
     with: { practice: true },
   });
 
-  if (!survey) notFound();
+  if (!survey || survey.practice.deletedAt) notFound();
 
   const npsScore = nps ? parseInt(nps, 10) : null;
   const practice = survey.practice;
