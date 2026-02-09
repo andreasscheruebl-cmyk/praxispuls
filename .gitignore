@@ -39,3 +39,5 @@ drizzle/meta/
 # IDE
 .idea/
 .vscode/
+
+.vercel
