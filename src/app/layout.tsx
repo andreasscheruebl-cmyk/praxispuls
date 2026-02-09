@@ -44,7 +44,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="de" className={`${inter.variable} ${playfair.variable}`}>
+    <html lang="de" data-theme="vertrauen" className={`${inter.variable} ${playfair.variable}`}>
       <body className={inter.className}>
         {children}
         {process.env.NEXT_PUBLIC_PLAUSIBLE_DOMAIN && (
