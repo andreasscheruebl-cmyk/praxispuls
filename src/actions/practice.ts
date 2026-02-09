@@ -59,7 +59,7 @@ export async function createPractice(data: {
   const template = SURVEY_TEMPLATES.find((t) => t.id === templateId) || SURVEY_TEMPLATES[0]!;
 
   await db.insert(surveys).values({
-    practiceId: practice.id,
+    practiceId: practice!.id,
     title: "Patientenbefragung",
     slug: `${slug}-umfrage`,
     questions: template.questions,

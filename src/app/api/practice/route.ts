@@ -48,7 +48,7 @@ export async function POST(request: Request) {
     }).returning();
 
     await db.insert(surveys).values({
-      practiceId: practice.id,
+      practiceId: practice!.id,
       title: "Patientenbefragung",
       slug: `${slug}-umfrage`,
       questions: template.questions,
