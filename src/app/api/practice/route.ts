@@ -25,7 +25,7 @@ export async function POST(request: Request) {
   try {
     const user = await getUser();
     const body = await request.json();
-    const { name, postalCode, googlePlaceId, surveyTemplate } = body;
+    const { name, postalCode, googlePlaceId, surveyTemplate, logoUrl } = body;
 
     if (!name?.trim()) {
       return NextResponse.json({ error: "Name fehlt" }, { status: 400 });
@@ -43,6 +43,7 @@ export async function POST(request: Request) {
       postalCode,
       googlePlaceId,
       googleReviewUrl,
+      logoUrl: logoUrl || null,
       alertEmail: user.email!,
       surveyTemplate: templateId,
     }).returning();

@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { GooglePlacesSearch } from "@/components/dashboard/google-places-search";
+import { LogoUpload } from "@/components/dashboard/logo-upload";
 
 export default function SettingsPage() {
   const [practice, setPractice] = useState<Record<string, string | number> | null>(null);
@@ -32,6 +33,15 @@ export default function SettingsPage() {
     <div className="space-y-8">
       <div><h1 className="text-2xl font-bold">Einstellungen</h1><p className="text-muted-foreground">Praxisdaten und Umfrage-Konfiguration</p></div>
       <form onSubmit={handleSave} className="space-y-6">
+        <Card>
+          <CardHeader><CardTitle className="text-lg">Logo</CardTitle></CardHeader>
+          <CardContent>
+            <LogoUpload
+              currentLogoUrl={practice.logoUrl ? String(practice.logoUrl) : null}
+              onUpload={(url) => setPractice({ ...practice, logoUrl: url })}
+            />
+          </CardContent>
+        </Card>
         <Card><CardHeader><CardTitle className="text-lg">Praxisdaten</CardTitle></CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2"><Label htmlFor="name">Praxisname</Label><Input id="name" value={String(practice.name || "")} onChange={e => setPractice({...practice, name: e.target.value})} /></div>

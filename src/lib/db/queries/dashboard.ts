@@ -136,6 +136,60 @@ export async function getMonthlyResponseCount(practiceId: string) {
 }
 
 /**
+ * Get review funnel metrics for a practice (last 30 days)
+ * Tracks: total responses → NPS categories → Google shown → Google clicked
+ */
+export async function getReviewFunnel(practiceId: string) {
+  const now = new Date();
+  const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+
+  const [result] = await db
+    .select({
+      totalResponses: count(),
+      promoters: count(
+        sql`CASE WHEN ${responses.npsCategory} = 'promoter' THEN 1 END`
+      ),
+      passives: count(
+        sql`CASE WHEN ${responses.npsCategory} = 'passive' THEN 1 END`
+      ),
+      detractors: count(
+        sql`CASE WHEN ${responses.npsCategory} = 'detractor' THEN 1 END`
+      ),
+      googleShown: count(
+        sql`CASE WHEN ${responses.googleReviewShown} = true THEN 1 END`
+      ),
+      googleClicked: count(
+        sql`CASE WHEN ${responses.googleReviewClicked} = true THEN 1 END`
+      ),
+    })
+    .from(responses)
+    .where(
+      and(
+        eq(responses.practiceId, practiceId),
+        gte(responses.createdAt, thirtyDaysAgo)
+      )
+    );
+
+  const totalResponses = result?.totalResponses ?? 0;
+  const promoters = Number(result?.promoters ?? 0);
+  const passives = Number(result?.passives ?? 0);
+  const detractors = Number(result?.detractors ?? 0);
+  const googleShown = Number(result?.googleShown ?? 0);
+  const googleClicked = Number(result?.googleClicked ?? 0);
+
+  return {
+    totalResponses,
+    promoters,
+    passives,
+    detractors,
+    googleShown,
+    googleClicked,
+    conversionRate:
+      promoters > 0 ? Math.round((googleClicked / promoters) * 100) : null,
+  };
+}
+
+/**
  * Get NPS trend data grouped by week for chart display
  */
 export async function getNpsTrend(

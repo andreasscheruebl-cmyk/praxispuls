@@ -46,6 +46,7 @@ export const practiceUpdateSchema = z.object({
     .optional(),
   googlePlaceId: z.string().optional(),
   alertEmail: z.string().email().optional(),
+  logoUrl: z.string().url().optional().nullable(),
   primaryColor: z
     .string()
     .regex(/^#[0-9A-Fa-f]{6}$/)

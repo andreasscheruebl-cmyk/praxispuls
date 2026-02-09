@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { LogoUpload } from "@/components/dashboard/logo-upload";
 
 const TEMPLATES = [
   { id: "zahnarzt_standard", name: "Standard", desc: "NPS + 4 Kategorien + Freitext (empfohlen)" },
@@ -20,6 +21,7 @@ export default function OnboardingPage() {
   const [data, setData] = useState({
     name: "",
     postalCode: "",
+    logoUrl: "",
     googlePlaceId: "",
     surveyTemplate: "zahnarzt_standard",
   });
@@ -67,6 +69,13 @@ export default function OnboardingPage() {
                 <Label htmlFor="plz">PLZ</Label>
                 <Input id="plz" placeholder="80331" value={data.postalCode} maxLength={5}
                   onChange={e => setData({...data, postalCode: e.target.value})} />
+              </div>
+              <div className="space-y-2">
+                <Label>Logo <span className="text-muted-foreground font-normal">(optional)</span></Label>
+                <LogoUpload
+                  currentLogoUrl={data.logoUrl || null}
+                  onUpload={(url) => setData({ ...data, logoUrl: url })}
+                />
               </div>
               <Button onClick={() => setStep(2)} className="w-full" disabled={!data.name.trim()}>
                 Weiter

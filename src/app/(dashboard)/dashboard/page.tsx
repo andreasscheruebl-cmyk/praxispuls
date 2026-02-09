@@ -1,8 +1,9 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { TrendingUp, MessageSquare, Star, AlertTriangle } from "lucide-react";
 import { getPractice } from "@/actions/practice";
-import { getDashboardOverview, getNpsTrend } from "@/lib/db/queries/dashboard";
+import { getDashboardOverview, getNpsTrend, getReviewFunnel } from "@/lib/db/queries/dashboard";
 import { NpsChart } from "@/components/dashboard/nps-chart";
+import { ReviewFunnel } from "@/components/dashboard/review-funnel";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
@@ -12,9 +13,10 @@ export default async function DashboardPage() {
   const practice = await getPractice();
   if (!practice) redirect("/onboarding");
 
-  const [overview, npsTrend] = await Promise.all([
+  const [overview, npsTrend, reviewFunnel] = await Promise.all([
     getDashboardOverview(practice.id),
     getNpsTrend(practice.id),
+    getReviewFunnel(practice.id),
   ]);
   const hasData = overview.totalResponses > 0;
 
@@ -86,6 +88,18 @@ export default async function DashboardPage() {
           </CardHeader>
           <CardContent>
             <NpsChart data={npsTrend} />
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Google Review Funnel */}
+      {hasData && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Google-Review-Funnel (30 Tage)</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ReviewFunnel data={reviewFunnel} />
           </CardContent>
         </Card>
       )}
