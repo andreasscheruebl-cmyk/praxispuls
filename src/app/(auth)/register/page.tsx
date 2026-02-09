@@ -38,7 +38,11 @@ export default function RegisterPage() {
     });
 
     if (error) {
-      setError(error.message);
+      if (error.message.includes("already registered") || error.message.includes("already been registered")) {
+        setError("Diese E-Mail-Adresse ist bereits registriert. Bitte melden Sie sich an.");
+      } else {
+        setError(error.message);
+      }
       setLoading(false);
       return;
     }

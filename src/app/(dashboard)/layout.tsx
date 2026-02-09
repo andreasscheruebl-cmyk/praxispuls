@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { getUser } from "@/lib/auth";
+import { LogoutButton } from "@/components/dashboard/logout-button";
 import {
   LayoutDashboard,
   MessageSquare,
@@ -7,6 +8,7 @@ import {
   Settings,
   CreditCard,
   Bell,
+  User,
 } from "lucide-react";
 
 const navItems = [
@@ -16,6 +18,7 @@ const navItems = [
   { href: "/dashboard/qr-codes", label: "QR-Codes", icon: QrCode },
   { href: "/dashboard/settings", label: "Einstellungen", icon: Settings },
   { href: "/dashboard/billing", label: "Abrechnung", icon: CreditCard },
+  { href: "/dashboard/profile", label: "Profil", icon: User },
 ];
 
 export default async function DashboardLayout({
@@ -52,8 +55,8 @@ export default async function DashboardLayout({
             ))}
           </nav>
 
-          {/* User info */}
-          <div className="border-t p-4">
+          {/* User info + logout */}
+          <div className="border-t p-4 space-y-3">
             <div className="flex items-center gap-3">
               <div className="flex h-8 w-8 items-center justify-center rounded-full bg-brand-100 text-xs font-medium text-brand-600">
                 {user.email?.charAt(0).toUpperCase()}
@@ -62,6 +65,7 @@ export default async function DashboardLayout({
                 <p className="truncate text-sm font-medium">{user.email}</p>
               </div>
             </div>
+            <LogoutButton />
           </div>
         </div>
       </aside>

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { CreditCard, Check, Zap, Crown } from "lucide-react";
+import { CreditCard, Check, Zap, Crown, FileText, Download } from "lucide-react";
 
 type PlanId = "free" | "starter" | "professional";
 
@@ -68,13 +68,32 @@ export default function BillingPage() {
   const [hasStripeCustomer, setHasStripeCustomer] = useState(false);
   const [loading, setLoading] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [invoices, setInvoices] = useState<Array<{
+    id: string;
+    number: string | null;
+    date: number;
+    amount: number;
+    currency: string;
+    status: string | null;
+    pdfUrl: string | null;
+    hostedUrl: string | null;
+  }>>([]);
 
   useEffect(() => {
     fetch("/api/practice")
       .then((res) => res.json())
       .then((data) => {
         if (data.plan) setCurrentPlan(data.plan as PlanId);
-        if (data.stripeCustomerId) setHasStripeCustomer(true);
+        if (data.stripeCustomerId) {
+          setHasStripeCustomer(true);
+          // Load invoices
+          fetch("/api/billing/invoices")
+            .then((r) => r.json())
+            .then((d) => {
+              if (d.invoices) setInvoices(d.invoices);
+            })
+            .catch(() => {});
+        }
       })
       .catch(() => {});
   }, []);
@@ -231,14 +250,74 @@ export default function BillingPage() {
         })}
       </div>
 
+      {/* Invoices list */}
+      {hasStripeCustomer && invoices.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-lg">
+              <FileText className="h-5 w-5" />
+              Rechnungen
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="divide-y">
+              {invoices.map((inv) => (
+                <div
+                  key={inv.id}
+                  className="flex items-center justify-between py-3"
+                >
+                  <div>
+                    <p className="text-sm font-medium">
+                      {inv.number || inv.id}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {new Date(inv.date * 1000).toLocaleDateString("de-DE", {
+                        year: "numeric",
+                        month: "long",
+                        day: "numeric",
+                      })}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <span className="text-sm font-medium">
+                      {(inv.amount / 100).toFixed(2)} {inv.currency.toUpperCase()}
+                    </span>
+                    <span
+                      className={`rounded-full px-2 py-0.5 text-xs font-medium ${
+                        inv.status === "paid"
+                          ? "bg-green-100 text-green-700"
+                          : "bg-yellow-100 text-yellow-700"
+                      }`}
+                    >
+                      {inv.status === "paid" ? "Bezahlt" : inv.status}
+                    </span>
+                    {inv.pdfUrl && (
+                      <a
+                        href={inv.pdfUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-1 rounded-md border px-2 py-1 text-xs font-medium text-gray-700 hover:bg-gray-50"
+                      >
+                        <Download className="h-3 w-3" />
+                        PDF
+                      </a>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Stripe Portal link for existing customers */}
       {hasStripeCustomer && (
         <Card>
           <CardContent className="flex items-center justify-between py-6">
             <div>
-              <h3 className="font-semibold">Rechnungen & Zahlungsmethode</h3>
+              <h3 className="font-semibold">Zahlungsmethode & Abo verwalten</h3>
               <p className="text-sm text-muted-foreground">
-                Verwalten Sie Ihre Zahlungsdaten und laden Sie Rechnungen herunter.
+                Zahlungsdaten ändern, Abo kündigen oder Plan wechseln.
               </p>
             </div>
             <button

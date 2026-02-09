@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { getUser } from "@/lib/auth";
+import { getUserOptional } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { practices } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
@@ -45,11 +45,14 @@ function extractStoragePath(publicUrl: string): string | null {
 export async function POST(request: Request) {
   try {
     // 1. Auth check
-    const user = await getUser();
+    const user = await getUserOptional();
+    if (!user?.email) {
+      return NextResponse.json({ error: "Nicht angemeldet", code: "UNAUTHORIZED" }, { status: 401 });
+    }
 
     // 2. Find the practice for this user
     const practice = await db.query.practices.findFirst({
-      where: eq(practices.email, user.email!),
+      where: eq(practices.email, user.email),
     });
 
     if (!practice) {

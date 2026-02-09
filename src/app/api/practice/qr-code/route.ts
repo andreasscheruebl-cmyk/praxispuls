@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getUser } from "@/lib/auth";
+import { getUserOptional } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { practices, surveys } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
@@ -7,10 +7,13 @@ import { generateQrCodeDataUrl, getSurveyUrl } from "@/lib/qr";
 
 export async function GET() {
   try {
-    const user = await getUser();
+    const user = await getUserOptional();
+    if (!user?.email) {
+      return NextResponse.json({ error: "Nicht angemeldet" }, { status: 401 });
+    }
 
     const practice = await db.query.practices.findFirst({
-      where: eq(practices.email, user.email!),
+      where: eq(practices.email, user.email),
     });
 
     if (!practice) {

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getUser } from "@/lib/auth";
+import { getUserOptional } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { practices, surveys } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
@@ -10,20 +10,26 @@ import { SURVEY_TEMPLATES } from "@/lib/survey-templates";
 
 export async function GET() {
   try {
-    const user = await getUser();
+    const user = await getUserOptional();
+    if (!user?.email) {
+      return NextResponse.json({ error: "Nicht angemeldet" }, { status: 401 });
+    }
     const practice = await db.query.practices.findFirst({
-      where: eq(practices.email, user.email!),
+      where: eq(practices.email, user.email),
     });
     if (!practice) return NextResponse.json({ error: "Praxis nicht gefunden" }, { status: 404 });
     return NextResponse.json(practice);
   } catch {
-    return NextResponse.json({ error: "Nicht authentifiziert" }, { status: 401 });
+    return NextResponse.json({ error: "Interner Fehler" }, { status: 500 });
   }
 }
 
 export async function POST(request: Request) {
   try {
-    const user = await getUser();
+    const user = await getUserOptional();
+    if (!user?.email) {
+      return NextResponse.json({ error: "Nicht angemeldet" }, { status: 401 });
+    }
     const body = await request.json();
     const { name, postalCode, googlePlaceId, surveyTemplate, logoUrl } = body;
 
@@ -39,12 +45,12 @@ export async function POST(request: Request) {
     const [practice] = await db.insert(practices).values({
       name: name.trim(),
       slug,
-      email: user.email!,
+      email: user.email,
       postalCode,
       googlePlaceId,
       googleReviewUrl,
       logoUrl: logoUrl || null,
-      alertEmail: user.email!,
+      alertEmail: user.email,
       surveyTemplate: templateId,
     }).returning();
 
@@ -65,12 +71,15 @@ export async function POST(request: Request) {
 
 export async function PUT(request: Request) {
   try {
-    const user = await getUser();
+    const user = await getUserOptional();
+    if (!user?.email) {
+      return NextResponse.json({ error: "Nicht angemeldet" }, { status: 401 });
+    }
     const body = await request.json();
     const parsed = practiceUpdateSchema.parse(body);
 
     const practice = await db.query.practices.findFirst({
-      where: eq(practices.email, user.email!),
+      where: eq(practices.email, user.email),
     });
     if (!practice) return NextResponse.json({ error: "Praxis nicht gefunden" }, { status: 404 });
 

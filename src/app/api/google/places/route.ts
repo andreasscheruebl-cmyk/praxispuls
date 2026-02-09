@@ -1,10 +1,13 @@
 import { NextResponse } from "next/server";
-import { getUser } from "@/lib/auth";
+import { getUserOptional } from "@/lib/auth";
 import { searchPlaces } from "@/lib/google";
 
 export async function GET(request: Request) {
   try {
-    await getUser(); // Auth check
+    const user = await getUserOptional();
+    if (!user) {
+      return NextResponse.json({ error: "Nicht angemeldet" }, { status: 401 });
+    }
 
     const { searchParams } = new URL(request.url);
     const query = searchParams.get("q");
@@ -16,6 +19,6 @@ export async function GET(request: Request) {
     const results = await searchPlaces(query);
     return NextResponse.json(results);
   } catch {
-    return NextResponse.json({ error: "Nicht authentifiziert" }, { status: 401 });
+    return NextResponse.json({ error: "Interner Fehler" }, { status: 500 });
   }
 }
