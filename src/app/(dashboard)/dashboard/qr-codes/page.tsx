@@ -125,7 +125,6 @@ export default function QrCodesPage() {
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
   const [surveyUrl, setSurveyUrl] = useState("");
   const [practiceName, setPracticeName] = useState("");
-  const [practiceColor, setPracticeColor] = useState("#0D9488");
   const [loading, setLoading] = useState(true);
   const [pdfLoading, setPdfLoading] = useState<string | null>(null);
   const [hoveredItem, setHoveredItem] = useState<string | null>(null);
@@ -145,7 +144,6 @@ export default function QrCodesPage() {
       if (practiceData) {
         setPracticeName(practiceData.name || "Praxis");
         if (practiceData.primaryColor) {
-          setPracticeColor(practiceData.primaryColor);
           setCustomColor(practiceData.primaryColor);
         }
         // Load logo as data URL if available
@@ -343,9 +341,9 @@ export default function QrCodesPage() {
                     {hoveredItem === design.type && (
                       <div className="pointer-events-none absolute left-1/2 top-full z-10 mt-2 -translate-x-1/2">
                         {designMode === "light" ? (
-                          <LightMiniPreview color={practiceColor} headline={customHeadline || undefined} />
+                          <LightMiniPreview color={customColor} headline={customHeadline || undefined} />
                         ) : designMode === "dark" ? (
-                          <DarkMiniPreview color={practiceColor} headline={customHeadline || undefined} />
+                          <DarkMiniPreview color={customColor} headline={customHeadline || undefined} />
                         ) : (
                           <InfographicMiniPreview color={customColor} headline={customHeadline || undefined} />
                         )}
@@ -381,16 +379,16 @@ export default function QrCodesPage() {
                     <p className="mb-3 text-center text-xs font-semibold">Wie wahrscheinlich ist es, dass Sie {practiceName} weiterempfehlen?</p>
                     <div className="mx-auto max-w-[180px] space-y-2">
                       <div className="relative h-2 rounded-full bg-gray-200">
-                        <div className="absolute left-0 top-0 h-2 w-3/4 rounded-full" style={{ backgroundColor: practiceColor }} />
-                        <div className="absolute top-1/2 h-4 w-4 -translate-y-1/2 rounded-full border-2 border-white shadow-md" style={{ backgroundColor: practiceColor, left: "72%" }} />
+                        <div className="absolute left-0 top-0 h-2 w-3/4 rounded-full" style={{ backgroundColor: customColor }} />
+                        <div className="absolute top-1/2 h-4 w-4 -translate-y-1/2 rounded-full border-2 border-white shadow-md" style={{ backgroundColor: customColor, left: "72%" }} />
                       </div>
                       <div className="flex justify-between text-[9px] text-muted-foreground">
                         <span>0</span>
-                        <span className="font-bold" style={{ color: practiceColor }}>8</span>
+                        <span className="font-bold" style={{ color: customColor }}>8</span>
                         <span>10</span>
                       </div>
                     </div>
-                    <div className="mt-3 rounded-lg py-1.5 text-center text-[10px] font-semibold text-white" style={{ backgroundColor: practiceColor }}>Weiter</div>
+                    <div className="mt-3 rounded-lg py-1.5 text-center text-[10px] font-semibold text-white" style={{ backgroundColor: customColor }}>Weiter</div>
                   </div>
 
                   {/* Step 2: Categories */}
@@ -408,13 +406,13 @@ export default function QrCodesPage() {
                           <p className="mb-0.5 text-[9px] font-medium">{cat.label}</p>
                           <div className="flex gap-0.5">
                             {[1, 2, 3, 4, 5].map((s) => (
-                              <Star key={s} className="h-3 w-3" style={s <= cat.stars ? { fill: practiceColor, color: practiceColor } : { color: "#d1d5db" }} />
+                              <Star key={s} className="h-3 w-3" style={s <= cat.stars ? { fill: customColor, color: customColor } : { color: "#d1d5db" }} />
                             ))}
                           </div>
                         </div>
                       ))}
                     </div>
-                    <div className="mt-2 rounded-lg py-1.5 text-center text-[10px] font-semibold text-white" style={{ backgroundColor: practiceColor }}>Weiter</div>
+                    <div className="mt-2 rounded-lg py-1.5 text-center text-[10px] font-semibold text-white" style={{ backgroundColor: customColor }}>Weiter</div>
                   </div>
 
                   {/* Step 3: Freetext */}
@@ -427,7 +425,7 @@ export default function QrCodesPage() {
                     </div>
                     <p className="mt-1.5 text-[8px] text-muted-foreground">Bitte keine persönlichen Daten eingeben.</p>
                     <div className="mt-3 flex gap-2">
-                      <div className="flex-1 rounded-lg py-1.5 text-center text-[10px] font-semibold text-white" style={{ backgroundColor: practiceColor }}>Absenden</div>
+                      <div className="flex-1 rounded-lg py-1.5 text-center text-[10px] font-semibold text-white" style={{ backgroundColor: customColor }}>Absenden</div>
                       <div className="rounded-lg border px-2 py-1.5 text-center text-[10px] text-muted-foreground">Überspringen</div>
                     </div>
                   </div>
@@ -438,7 +436,7 @@ export default function QrCodesPage() {
                     <div className="my-3 text-2xl">🎉</div>
                     <p className="mb-2 text-xs font-semibold">Vielen Dank für Ihr tolles Feedback!</p>
                     <p className="mb-3 text-[10px] text-muted-foreground">Würden Sie Ihre positive Erfahrung auch auf Google teilen?</p>
-                    <div className="rounded-lg py-1.5 text-center text-[10px] font-semibold text-white" style={{ backgroundColor: practiceColor }}>⭐ Ja, gerne bewerten!</div>
+                    <div className="rounded-lg py-1.5 text-center text-[10px] font-semibold text-white" style={{ backgroundColor: customColor }}>⭐ Ja, gerne bewerten!</div>
                     <p className="mt-2 text-[9px] text-muted-foreground underline">Nein, danke</p>
                   </div>
 
