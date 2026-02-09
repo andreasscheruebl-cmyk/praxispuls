@@ -2,9 +2,86 @@
 
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { QrCode, Download } from "lucide-react";
-import { generateA4Poster, generateA6Card } from "@/lib/qr-pdf";
+import { QrCode, Download, Sun, Moon } from "lucide-react";
+import {
+  generateA4Poster,
+  generateA6Card,
+  generateA5TableTentLight,
+  generateBusinessCardLight,
+  generateA4InfographicDark,
+  generateA6BoldDark,
+  generateA5TableTentDark,
+  generateBusinessCardDark,
+  type PdfConfig,
+} from "@/lib/qr-pdf";
 import { type ThemeId, getThemeConfig } from "@/lib/themes";
+
+type PdfDesignType =
+  | "a4-light"
+  | "a6-light"
+  | "a5-light"
+  | "card-light"
+  | "a4-dark"
+  | "a6-dark"
+  | "a5-dark"
+  | "card-dark";
+
+type DesignInfo = {
+  type: PdfDesignType;
+  label: string;
+  format: string;
+  description: string;
+  filename: string;
+};
+
+const LIGHT_DESIGNS: DesignInfo[] = [
+  { type: "a4-light", label: "A4 Poster", format: "A4", description: "Wartezimmer, Behandlungsräume", filename: "praxispuls-poster-a4-light.pdf" },
+  { type: "a6-light", label: "A6 Aufsteller", format: "A6", description: "Rezeption, Tresen", filename: "praxispuls-aufsteller-a6-light.pdf" },
+  { type: "a5-light", label: "A5 Tischaufsteller", format: "A5", description: "Empfang, Wartebereich", filename: "praxispuls-tischaufsteller-a5-light.pdf" },
+  { type: "card-light", label: "Visitenkarte", format: "85×55mm", description: "Zum Mitnehmen, mit Schnittlinien", filename: "praxispuls-visitenkarte-light.pdf" },
+];
+
+const DARK_DESIGNS: DesignInfo[] = [
+  { type: "a4-dark", label: "A4 Infographic", format: "A4", description: "Premium-Look mit Glow-Effekt", filename: "praxispuls-infographic-a4-dark.pdf" },
+  { type: "a6-dark", label: "A6 Bold", format: "A6", description: "Dunkler Aufsteller, modern", filename: "praxispuls-aufsteller-a6-dark.pdf" },
+  { type: "a5-dark", label: "A5 Tisch-Infographic", format: "A5", description: "Split-Design, Schritte + QR", filename: "praxispuls-tischaufsteller-a5-dark.pdf" },
+  { type: "card-dark", label: "Visitenkarte Dark", format: "85×55mm", description: "Premium-Karte mit Accent-Stripe", filename: "praxispuls-visitenkarte-dark.pdf" },
+];
+
+function LightMiniPreview({ color }: { color: string }) {
+  return (
+    <div className="flex h-44 w-32 flex-col items-center justify-between rounded border bg-white p-2 shadow-sm">
+      <div className="h-3 w-full rounded-sm" style={{ backgroundColor: color }} />
+      <p className="text-[7px] font-bold" style={{ color }}>Ihre Meinung zählt!</p>
+      <div className="flex h-14 w-14 items-center justify-center rounded bg-gray-100">
+        <QrCode className="h-10 w-10 text-gray-300" />
+      </div>
+      <div className="rounded-full px-2 py-0.5 text-[6px] font-bold text-white" style={{ backgroundColor: "#22c55e" }}>Nur 60 Sekunden!</div>
+      <div className="h-2 w-full rounded-sm" style={{ backgroundColor: color }} />
+    </div>
+  );
+}
+
+function DarkMiniPreview({ color }: { color: string }) {
+  return (
+    <div className="flex h-44 w-32 flex-col items-center justify-between rounded border bg-slate-900 p-2 shadow-sm">
+      <p className="text-[7px] font-bold text-white">Praxis</p>
+      <p className="text-[8px] font-bold" style={{ color }}>Ihre Meinung zählt!</p>
+      <div className="relative flex h-14 w-14 items-center justify-center">
+        <div className="absolute inset-0 rounded opacity-20" style={{ backgroundColor: color }} />
+        <div className="flex h-12 w-12 items-center justify-center rounded bg-white">
+          <QrCode className="h-8 w-8 text-gray-400" />
+        </div>
+      </div>
+      <div className="flex gap-1">
+        {["60s", "Anonym", "DSGVO"].map((s) => (
+          <span key={s} className="rounded-full border border-slate-600 px-1.5 py-0.5 text-[5px] text-slate-300">{s}</span>
+        ))}
+      </div>
+      <div className="h-1.5 w-full rounded-sm bg-slate-800" />
+    </div>
+  );
+}
 
 export default function QrCodesPage() {
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
@@ -38,17 +115,33 @@ export default function QrCodesPage() {
     link.click();
   }
 
-  async function downloadPdf(type: "a4" | "a6") {
+  async function downloadPdf(design: DesignInfo) {
     if (!qrDataUrl) return;
-    setPdfLoading(type);
+    setPdfLoading(design.type);
     const brandColor = getThemeConfig(themeId).pdf.brandColor;
+
+    const config: PdfConfig = {
+      qrDataUrl,
+      practiceName,
+      surveyUrl,
+      brandColor,
+    };
+
     try {
-      const blob = type === "a4"
-        ? await generateA4Poster(qrDataUrl, practiceName, surveyUrl, brandColor)
-        : await generateA6Card(qrDataUrl, practiceName, surveyUrl, brandColor);
+      let blob: Blob;
+      switch (design.type) {
+        case "a4-light": blob = await generateA4Poster(config); break;
+        case "a6-light": blob = await generateA6Card(config); break;
+        case "a5-light": blob = await generateA5TableTentLight(config); break;
+        case "card-light": blob = await generateBusinessCardLight(config); break;
+        case "a4-dark": blob = await generateA4InfographicDark(config); break;
+        case "a6-dark": blob = await generateA6BoldDark(config); break;
+        case "a5-dark": blob = await generateA5TableTentDark(config); break;
+        case "card-dark": blob = await generateBusinessCardDark(config); break;
+      }
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
-      link.download = type === "a4" ? "praxispuls-poster-a4.pdf" : "praxispuls-aufsteller-a6.pdf";
+      link.download = design.filename;
       link.href = url;
       link.click();
       URL.revokeObjectURL(url);
@@ -68,67 +161,109 @@ export default function QrCodesPage() {
         <p className="text-muted-foreground">Laden Sie den QR-Code herunter und platzieren Sie ihn in Ihrer Praxis.</p>
       </div>
       {qrDataUrl ? (
-        <div className="grid gap-8 md:grid-cols-2">
-          <Card>
-            <CardHeader><CardTitle className="text-lg">Ihr QR-Code</CardTitle></CardHeader>
-            <CardContent className="flex flex-col items-center">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <div className="rounded-lg border bg-white p-4"><img src={qrDataUrl} alt="QR-Code" className="h-64 w-64" /></div>
-              <p className="mt-4 text-center text-sm text-muted-foreground">URL: <code className="text-xs">{surveyUrl}</code></p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader><CardTitle className="text-lg">Herunterladen</CardTitle></CardHeader>
-            <CardContent className="space-y-3">
-              <div className="relative">
-                <button onClick={downloadQr} onMouseEnter={() => setHoveredItem("png")} onMouseLeave={() => setHoveredItem(null)} className="flex w-full items-center gap-4 rounded-lg border p-4 text-left hover:bg-gray-50">
+        <div className="space-y-8">
+          {/* QR Preview + PNG Download */}
+          <div className="grid gap-8 md:grid-cols-2">
+            <Card>
+              <CardHeader><CardTitle className="text-lg">Ihr QR-Code</CardTitle></CardHeader>
+              <CardContent className="flex flex-col items-center">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <div className="rounded-lg border bg-white p-4"><img src={qrDataUrl} alt="QR-Code" className="h-64 w-64" /></div>
+                <p className="mt-4 text-center text-sm text-muted-foreground">URL: <code className="text-xs">{surveyUrl}</code></p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader><CardTitle className="text-lg">PNG herunterladen</CardTitle></CardHeader>
+              <CardContent>
+                <button onClick={downloadQr} onMouseEnter={() => setHoveredItem("png")} onMouseLeave={() => setHoveredItem(null)} className="relative flex w-full items-center gap-4 rounded-lg border p-4 text-left hover:bg-gray-50 dark:hover:bg-gray-800">
                   <Download className="h-5 w-5 text-primary" />
                   <div><p className="font-medium">PNG (512×512)</p><p className="text-sm text-muted-foreground">Website, Social Media, E-Mails</p></div>
                 </button>
                 {hoveredItem === "png" && qrDataUrl && (
-                  <div className="absolute right-0 top-0 z-10 -translate-y-1/2 translate-x-[calc(100%+8px)] rounded-lg border bg-white p-2 shadow-lg">
+                  <div className="mt-3 flex justify-center">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={qrDataUrl} alt="QR Preview" className="h-32 w-32" />
+                    <img src={qrDataUrl} alt="QR Preview" className="h-28 w-28 rounded border" />
                   </div>
                 )}
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Light Designs */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <Sun className="h-5 w-5 text-amber-500" />
+                Light-Designs
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid gap-3 sm:grid-cols-2">
+                {LIGHT_DESIGNS.map((design) => (
+                  <div key={design.type} className="relative">
+                    <button
+                      onClick={() => downloadPdf(design)}
+                      disabled={pdfLoading === design.type}
+                      onMouseEnter={() => setHoveredItem(design.type)}
+                      onMouseLeave={() => setHoveredItem(null)}
+                      className="flex w-full items-center gap-4 rounded-lg border p-4 text-left transition-colors hover:bg-gray-50 disabled:opacity-50 dark:hover:bg-gray-800"
+                    >
+                      <Download className="h-5 w-5 shrink-0 text-primary" />
+                      <div className="min-w-0">
+                        <p className="font-medium">{design.label} <span className="text-xs text-muted-foreground">({design.format})</span></p>
+                        <p className="text-sm text-muted-foreground">{pdfLoading === design.type ? "Wird erstellt..." : design.description}</p>
+                      </div>
+                    </button>
+                    {hoveredItem === design.type && (
+                      <div className="pointer-events-none absolute right-0 top-0 z-10 hidden -translate-y-1/4 translate-x-[calc(100%+8px)] xl:block">
+                        <LightMiniPreview color={practiceColor} />
+                      </div>
+                    )}
+                  </div>
+                ))}
               </div>
-              <div className="relative">
-                <button onClick={() => downloadPdf("a4")} disabled={pdfLoading === "a4"} onMouseEnter={() => setHoveredItem("a4")} onMouseLeave={() => setHoveredItem(null)} className="flex w-full items-center gap-4 rounded-lg border p-4 text-left hover:bg-gray-50 disabled:opacity-50">
-                  <Download className="h-5 w-5 text-primary" />
-                  <div><p className="font-medium">A4 Poster (PDF)</p><p className="text-sm text-muted-foreground">{pdfLoading === "a4" ? "Wird erstellt..." : "Wartezimmer, Behandlungsräume"}</p></div>
-                </button>
-                {hoveredItem === "a4" && (
-                  <div className="absolute right-0 top-0 z-10 -translate-y-1/4 translate-x-[calc(100%+8px)] rounded-lg border bg-white p-3 shadow-lg">
-                    <div className="flex h-48 w-36 flex-col items-center justify-between rounded border p-3" style={{ borderColor: practiceColor }}>
-                      <p className="text-[8px] font-bold" style={{ color: practiceColor }}>{practiceName}</p>
-                      <div className="h-16 w-16 rounded bg-gray-200" />
-                      <p className="text-[6px] text-center text-gray-500">Wie zufrieden waren Sie?<br />Scannen Sie den QR-Code</p>
-                      <div className="h-1 w-full rounded" style={{ backgroundColor: practiceColor }} />
-                    </div>
+            </CardContent>
+          </Card>
+
+          {/* Dark Premium Designs */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <Moon className="h-5 w-5 text-indigo-400" />
+                Premium Dark-Designs
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid gap-3 sm:grid-cols-2">
+                {DARK_DESIGNS.map((design) => (
+                  <div key={design.type} className="relative">
+                    <button
+                      onClick={() => downloadPdf(design)}
+                      disabled={pdfLoading === design.type}
+                      onMouseEnter={() => setHoveredItem(design.type)}
+                      onMouseLeave={() => setHoveredItem(null)}
+                      className="flex w-full items-center gap-4 rounded-lg border p-4 text-left transition-colors hover:bg-gray-50 disabled:opacity-50 dark:hover:bg-gray-800"
+                    >
+                      <Download className="h-5 w-5 shrink-0 text-primary" />
+                      <div className="min-w-0">
+                        <p className="font-medium">{design.label} <span className="text-xs text-muted-foreground">({design.format})</span></p>
+                        <p className="text-sm text-muted-foreground">{pdfLoading === design.type ? "Wird erstellt..." : design.description}</p>
+                      </div>
+                    </button>
+                    {hoveredItem === design.type && (
+                      <div className="pointer-events-none absolute right-0 top-0 z-10 hidden -translate-y-1/4 translate-x-[calc(100%+8px)] xl:block">
+                        <DarkMiniPreview color={practiceColor} />
+                      </div>
+                    )}
                   </div>
-                )}
-              </div>
-              <div className="relative">
-                <button onClick={() => downloadPdf("a6")} disabled={pdfLoading === "a6"} onMouseEnter={() => setHoveredItem("a6")} onMouseLeave={() => setHoveredItem(null)} className="flex w-full items-center gap-4 rounded-lg border p-4 text-left hover:bg-gray-50 disabled:opacity-50">
-                  <Download className="h-5 w-5 text-primary" />
-                  <div><p className="font-medium">A6 Aufsteller (PDF)</p><p className="text-sm text-muted-foreground">{pdfLoading === "a6" ? "Wird erstellt..." : "Rezeption, Tresen"}</p></div>
-                </button>
-                {hoveredItem === "a6" && (
-                  <div className="absolute right-0 top-0 z-10 -translate-y-1/4 translate-x-[calc(100%+8px)] rounded-lg border bg-white p-3 shadow-lg">
-                    <div className="flex h-28 w-36 flex-col items-center justify-between rounded border p-2" style={{ borderColor: practiceColor }}>
-                      <p className="text-[7px] font-bold" style={{ color: practiceColor }}>{practiceName}</p>
-                      <div className="h-12 w-12 rounded bg-gray-200" />
-                      <div className="h-0.5 w-full rounded" style={{ backgroundColor: practiceColor }} />
-                    </div>
-                  </div>
-                )}
+                ))}
               </div>
             </CardContent>
           </Card>
 
           {/* Survey Preview */}
           {surveyUrl && (
-            <Card className="md:col-span-2">
+            <Card>
               <CardHeader><CardTitle className="text-lg">Umfrage-Vorschau</CardTitle></CardHeader>
               <CardContent>
                 <div className="rounded-xl border bg-gray-50 p-6">

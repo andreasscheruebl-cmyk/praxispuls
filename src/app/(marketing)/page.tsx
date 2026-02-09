@@ -180,16 +180,16 @@ export default function HomePage() {
           <h2 className="text-center text-3xl font-bold">
             Einfache, faire Preise
           </h2>
-          <p className="mx-auto mt-4 max-w-2xl text-center text-muted-foreground">
-            Weniger als eine PZR-Behandlung pro Monat.
-          </p>
+          <div className="mx-auto mt-4 w-fit rounded-full border border-primary/20 bg-primary/5 px-5 py-2 text-center text-sm font-semibold text-primary">
+            Weniger als eine PZR-Behandlung pro Monat
+          </div>
           <div className="mx-auto mt-12 grid max-w-4xl gap-8 md:grid-cols-3">
             {/* Free */}
-            <div className="rounded-lg border p-6">
+            <div className="flex flex-col rounded-lg border p-6">
               <h3 className="text-lg font-semibold">Free</h3>
               <p className="mt-2 text-3xl font-bold">0 €</p>
               <p className="text-sm text-muted-foreground">Zum Testen</p>
-              <ul className="mt-6 space-y-2 text-sm">
+              <ul className="mt-6 flex-1 space-y-2 text-sm">
                 <li>✓ 30 Antworten/Monat</li>
                 <li>✓ Google Review-Routing</li>
                 <li>✓ QR-Code Download</li>
@@ -200,11 +200,12 @@ export default function HomePage() {
               </Button>
             </div>
             {/* Starter */}
-            <div className="rounded-lg border-2 border-primary p-6 shadow-lg">
+            <div className="flex flex-col rounded-lg border-2 border-primary p-6 shadow-lg">
+              <div className="mb-2 w-fit rounded-full bg-primary px-3 py-0.5 text-xs font-semibold text-white">Beliebt</div>
               <h3 className="text-lg font-semibold">Starter</h3>
               <p className="mt-2 text-3xl font-bold">49 €<span className="text-base font-normal text-muted-foreground">/Monat</span></p>
               <p className="text-sm text-muted-foreground">Für Einzelpraxen</p>
-              <ul className="mt-6 space-y-2 text-sm">
+              <ul className="mt-6 flex-1 space-y-2 text-sm">
                 <li>✓ 200 Antworten/Monat</li>
                 <li>✓ Alle 3 Templates</li>
                 <li>✓ Detractor E-Mail-Alerts</li>
@@ -216,11 +217,11 @@ export default function HomePage() {
               </Button>
             </div>
             {/* Professional */}
-            <div className="rounded-lg border p-6">
+            <div className="flex flex-col rounded-lg border p-6">
               <h3 className="text-lg font-semibold">Professional</h3>
               <p className="mt-2 text-3xl font-bold">99 €<span className="text-base font-normal text-muted-foreground">/Monat</span></p>
               <p className="text-sm text-muted-foreground">Für Gemeinschaftspraxen</p>
-              <ul className="mt-6 space-y-2 text-sm">
+              <ul className="mt-6 flex-1 space-y-2 text-sm">
                 <li>✓ Unbegrenzte Antworten</li>
                 <li>✓ Alle Starter-Features</li>
                 <li>✓ Prioritäts-Support</li>
@@ -401,59 +402,27 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Theme Showcase */}
-      <section className="border-t py-20">
-        <div className="container mx-auto px-4">
-          <h2 className="text-center text-3xl font-bold">
-            Zwei Designs – Ihr Auftritt
-          </h2>
-          <p className="mx-auto mt-4 max-w-2xl text-center text-muted-foreground">
-            Wählen Sie das Design, das zu Ihrer Praxis passt. Jederzeit umschaltbar.
-          </p>
-          <div className="mx-auto mt-12 grid max-w-3xl gap-8 md:grid-cols-2">
-            {/* Standard */}
-            <div className="overflow-hidden rounded-xl border p-6 text-center">
-              <div className="mx-auto mb-4 h-10 w-10 rounded-full bg-blue-500" />
-              <h3 className="text-lg font-semibold">Standard</h3>
-              <p className="mt-2 text-sm text-muted-foreground">
-                Klar & professionell – Blau, modern, bewährt.
-              </p>
-              <div className="mt-4 flex justify-center gap-2">
-                <span className="h-6 w-6 rounded-full bg-blue-500" />
-                <span className="h-6 w-6 rounded-full bg-blue-200" />
-                <span className="h-6 w-6 rounded-full bg-gray-100 border" />
-              </div>
-            </div>
-            {/* Vertrauen */}
-            <div className="overflow-hidden rounded-xl border-2 border-teal-500 bg-creme-100 p-6 text-center">
-              <div className="mx-auto mb-4 h-10 w-10 rounded-full bg-teal-500" />
-              <h3 className="font-heading text-lg font-semibold text-charcoal">Vertrauen</h3>
-              <p className="mt-2 text-sm text-charcoal-400">
-                Warm & premium – Teal, Sage, Creme, Serif-Akzente.
-              </p>
-              <div className="mt-4 flex justify-center gap-2">
-                <span className="h-6 w-6 rounded-full bg-teal-500" />
-                <span className="h-6 w-6 rounded-full bg-sage-400" />
-                <span className="h-6 w-6 rounded-full bg-creme-200" />
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
       {/* CTA */}
-      <section className="border-t bg-primary py-16 text-white">
-        <div className="container mx-auto px-4 text-center">
-          <h2 className="text-3xl font-bold">
+      <section className="relative overflow-hidden border-t bg-gradient-to-br from-primary to-primary/80 py-20 text-white">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_50%,rgba(255,255,255,0.08),transparent_60%)]" />
+        <div className="container relative mx-auto px-4 text-center">
+          <h2 className="text-3xl font-bold md:text-4xl">
             Bereit für bessere Google-Bewertungen?
           </h2>
-          <p className="mx-auto mt-4 max-w-xl text-primary-foreground/80">
+          <p className="mx-auto mt-4 max-w-xl text-lg text-primary-foreground/80">
             In 5 Minuten eingerichtet. Kostenlos testen. Keine Kreditkarte nötig.
           </p>
+          <div className="mt-6 flex items-center justify-center gap-3 text-sm text-primary-foreground/60">
+            <span>DSGVO-konform</span>
+            <span aria-hidden>·</span>
+            <span>Server in Deutschland</span>
+            <span aria-hidden>·</span>
+            <span>Keine Bindung</span>
+          </div>
           <Button
             asChild
             size="lg"
-            className="mt-8 bg-white text-primary hover:bg-gray-100"
+            className="mt-8 bg-white text-primary shadow-lg hover:bg-gray-100"
           >
             <Link href="/register">Kostenlos starten</Link>
           </Button>
