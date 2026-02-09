@@ -6,11 +6,13 @@ if (!process.env.DATABASE_URL) {
   throw new Error("DATABASE_URL environment variable is not set");
 }
 
-// Connection for queries (pooled)
+// Connection for queries (via Supabase Transaction Pooler)
 const client = postgres(process.env.DATABASE_URL, {
   max: 10,
   idle_timeout: 20,
   connect_timeout: 10,
+  ssl: "require",
+  prepare: false, // Transaction pooler doesn't support prepared statements
 });
 
 export const db = drizzle(client, { schema });

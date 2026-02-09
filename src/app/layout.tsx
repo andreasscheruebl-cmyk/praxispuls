@@ -12,6 +12,24 @@ export const metadata: Metadata = {
   description:
     "Patientenfeedback sammeln, Google-Bewertungen steigern, QM-Pflicht erfüllen – in 5 Minuten eingerichtet.",
   metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"),
+  openGraph: {
+    type: "website",
+    locale: "de_DE",
+    siteName: "PraxisPuls",
+    title: "PraxisPuls – Patientenfeedback & Google-Bewertungen für Zahnarztpraxen",
+    description:
+      "QM-konforme Patientenumfrage mit automatischem Google-Review-Routing – ab 49 €/Monat.",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "PraxisPuls – Patientenfeedback für Zahnarztpraxen",
+    description:
+      "Patientenfeedback sammeln, Google-Bewertungen steigern, QM-Pflicht erfüllen.",
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
 };
 
 export default function RootLayout({

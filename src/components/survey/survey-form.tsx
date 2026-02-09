@@ -31,6 +31,14 @@ export function SurveyForm({ surveyId, practiceName, practiceColor }: Props) {
   async function submitSurvey() {
     setStep("submitting");
 
+    // Generate session hash for deduplication (surveyId + date, no PII)
+    const dateKey = new Date().toISOString().slice(0, 10);
+    const raw = `${surveyId}-${dateKey}-${navigator.userAgent}`;
+    const encoder = new TextEncoder();
+    const hashBuffer = await crypto.subtle.digest("SHA-256", encoder.encode(raw));
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    const sessionHash = hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
+
     try {
       const res = await fetch("/api/public/responses", {
         method: "POST",
@@ -44,6 +52,7 @@ export function SurveyForm({ surveyId, practiceName, practiceColor }: Props) {
           ratingFacility: ratings.facility || undefined,
           freeText: freeText || undefined,
           deviceType: /Mobi/.test(navigator.userAgent) ? "mobile" : "desktop",
+          sessionHash,
         }),
       });
 

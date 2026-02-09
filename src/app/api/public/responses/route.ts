@@ -4,7 +4,7 @@ import { responses, alerts, surveys } from "@/lib/db/schema";
 import { surveyResponseSchema } from "@/lib/validations";
 import { getNpsCategory } from "@/lib/utils";
 import { routeByNps } from "@/lib/review-router";
-import { eq } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 import { getMonthlyResponseCount } from "@/lib/db/queries/dashboard";
 import { PLAN_LIMITS } from "@/types";
 import type { PlanId } from "@/types";
@@ -38,6 +38,25 @@ export async function POST(request: Request) {
     }
 
     const practice = survey.practice;
+
+    // Session deduplication (same device + survey within 24h)
+    if (data.sessionHash) {
+      const existing = await db.query.responses.findFirst({
+        where: and(
+          eq(responses.sessionHash, data.sessionHash),
+          eq(responses.surveyId, data.surveyId)
+        ),
+      });
+      if (existing) {
+        return NextResponse.json(
+          {
+            error: "Sie haben diese Umfrage bereits ausgefüllt. Vielen Dank!",
+            code: "DUPLICATE_RESPONSE",
+          },
+          { status: 409 }
+        );
+      }
+    }
 
     // Check plan limits
     const planId = (practice.plan || "free") as PlanId;

@@ -3,7 +3,7 @@
 **Stand:** 2026-02-09
 **Build:** `npm run build` kompiliert fehlerfrei
 **Dev Server:** `npm run dev` lauffähig
-**Git:** Initialisiert, Branch `main`, 3 Commits
+**Git:** Initialisiert, Branch `main`, 4 Commits
 **Node:** Next.js 15.5.12, TypeScript strict
 
 ---
@@ -16,6 +16,7 @@
 | Auth (Login, Register, Logout, Middleware) | `(auth)/login`, `(auth)/register`, `api/auth/*`, `middleware.ts` |
 | Onboarding (3-Step Wizard) | `(dashboard)/onboarding/page.tsx` |
 | Survey-Flow (Public, Mobile-first) | `s/[slug]/page.tsx`, `components/survey/survey-form.tsx` |
+| Session-Deduplizierung (SHA-256) | `survey-form.tsx` (Client), `api/public/responses` (Server) |
 | Danke-Seite (Promoter/Passive/Detractor) | `s/[slug]/danke/page.tsx` |
 | Review-Router (NPS → Google/Internal) | `lib/review-router.ts` |
 | Dashboard Übersicht (KPIs + Kategorien) | `(dashboard)/dashboard/page.tsx` |
@@ -33,55 +34,28 @@
 | Upgrade-Reminder (bei 80%/100% Limit) | `api/public/responses/route.ts` |
 | Google Places API | `lib/google.ts`, `api/google/places/route.ts` |
 | Landing Page | `(marketing)/page.tsx` |
+| Legal Pages (Impressum, Datenschutz, AGB) | `(marketing)/impressum`, `datenschutz`, `agb` |
+| SEO (Meta, OG, Sitemap, Robots) | `layout.tsx`, `sitemap.ts`, `robots.ts` |
 | DB Schema (Drizzle ORM, 4 Tabellen) | `lib/db/schema.ts` |
+| Drizzle Migration generiert | `drizzle/0000_damp_morlocks.sql` |
 | Zod Validierungen | `lib/validations.ts` |
 
 ### Offen
 | Feature | Priorität | Notizen |
 |---------|-----------|---------|
-| Drizzle Migration ausführen | P0 | `npm run db:push` gegen Supabase nötig |
-| Legal Pages (Impressum, Datenschutz, AGB) | P1 | Platzhalter-Content, Anwalt nötig |
-| QR-Code PDF-Druckvorlagen | P2 | A4 Poster, A6 Aufsteller – "kommt bald" |
+| ~~Supabase DB verbinden + Migration pushen~~ | ✅ | Erledigt – 4 Tabellen live |
+| Legal Pages: eigene Daten einsetzen | P1 | Platzhalter [Name], [Adresse] ersetzen |
+| QR-Code PDF-Druckvorlagen | P2 | A4 Poster, A6 Aufsteller |
 | Google Places Autocomplete in Settings-UI | P2 | Backend fertig, Frontend-Integration fehlt |
 | Logo-Upload (Onboarding + Settings) | P2 | Supabase Storage nötig |
-| SEO (Meta, OG, Sitemap) | P2 | Vor Go-Live |
 | Monitoring (Sentry, Plausible) | P2 | Vor Go-Live |
 | E2E Tests (Playwright) | P2 | Vor Go-Live |
-| Session-Deduplizierung (24h Cookie) | P3 | Survey-Spam verhindern |
-
----
-
-## API Routes
-
-| Route | Methode | Auth | Status |
-|-------|---------|------|--------|
-| `/api/auth/callback` | GET | — | Fertig |
-| `/api/auth/confirm` | GET | — | Fertig |
-| `/api/practice` | GET/POST/PUT | Auth | Fertig |
-| `/api/practice/qr-code` | GET | Auth | Fertig |
-| `/api/google/places` | GET | Auth | Fertig |
-| `/api/billing/checkout` | POST | Auth | Fertig |
-| `/api/billing/portal` | POST | Auth | Fertig |
-| `/api/webhooks/stripe` | POST | Signature | Fertig |
-| `/api/public/responses` | POST | — | Fertig (+ Limits) |
-| `/api/public/track-click` | POST | — | Fertig |
-
-## Dashboard Pages
-
-| Route | Status |
-|-------|--------|
-| `/dashboard` | Fertig (KPIs + NPS-Chart + Kategorien) |
-| `/dashboard/responses` | Fertig |
-| `/dashboard/alerts` | Fertig |
-| `/dashboard/qr-codes` | Fertig |
-| `/dashboard/settings` | Fertig |
-| `/dashboard/billing` | Fertig (3 Pläne + Checkout + Portal) |
 
 ---
 
 ## Nächste Schritte
-1. **Supabase DB**: `npm run db:push` ausführen, RLS Policies einrichten
-2. **Manuelles Testing**: Gesamten Flow durchspielen (Register → Onboarding → Survey → Dashboard)
-3. **Legal Pages**: Impressum/Datenschutz mit echten Daten füllen, AGB vom Anwalt
-4. **SEO + Monitoring**: Meta Tags, Sitemap, Sentry, Plausible
+1. ~~**Supabase DB**: Projekt aktivieren, `npm run db:push` ausführen~~ ✅
+2. **Manuelles Testing**: Register → Onboarding → Survey → Dashboard Flow
+3. **Legal Pages**: Eigene Daten einsetzen
+4. **Monitoring**: Sentry + Plausible einrichten
 5. **Beta-Test**: 3-5 Praxen onboarden
