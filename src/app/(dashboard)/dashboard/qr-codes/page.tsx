@@ -40,6 +40,7 @@ export default function QrCodesPage() {
           <Card>
             <CardHeader><CardTitle className="text-lg">Ihr QR-Code</CardTitle></CardHeader>
             <CardContent className="flex flex-col items-center">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
               <div className="rounded-lg border bg-white p-4"><img src={qrDataUrl} alt="QR-Code" className="h-64 w-64" /></div>
               <p className="mt-4 text-center text-sm text-muted-foreground">URL: <code className="text-xs">{surveyUrl}</code></p>
             </CardContent>

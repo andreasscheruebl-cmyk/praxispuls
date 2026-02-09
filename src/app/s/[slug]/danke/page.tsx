@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import Image from "next/image";
 import { db } from "@/lib/db";
 import { surveys } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
@@ -38,7 +39,7 @@ export default async function DankePage({ params, searchParams }: Props) {
       <header className="bg-white py-4 shadow-sm">
         <div className="mx-auto max-w-lg px-4 text-center">
           {practice.logoUrl ? (
-            <img src={practice.logoUrl} alt={practice.name} className="mx-auto h-10 object-contain" />
+            <Image src={practice.logoUrl} alt={practice.name} width={200} height={40} className="mx-auto h-10 w-auto object-contain" unoptimized />
           ) : (
             <h1 className="text-lg font-semibold" style={{ color: practiceColor }}>
               {practice.name}

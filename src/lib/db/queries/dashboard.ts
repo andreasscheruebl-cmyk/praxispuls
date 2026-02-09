@@ -1,5 +1,5 @@
 import { db } from "@/lib/db";
-import { responses, alerts, practices } from "@/lib/db/schema";
+import { responses, alerts } from "@/lib/db/schema";
 import { eq, and, gte, count, avg, sql, desc } from "drizzle-orm";
 
 /**

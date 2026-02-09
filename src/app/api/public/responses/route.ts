@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { responses, alerts, surveys, practices } from "@/lib/db/schema";
+import { responses, alerts, surveys } from "@/lib/db/schema";
 import { surveyResponseSchema } from "@/lib/validations";
 import { getNpsCategory } from "@/lib/utils";
 import { routeByNps } from "@/lib/review-router";

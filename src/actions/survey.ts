@@ -2,7 +2,6 @@
 
 import { db } from "@/lib/db";
 import { surveys } from "@/lib/db/schema";
-import { getUser } from "@/lib/auth";
 import { getPractice } from "./practice";
 import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";

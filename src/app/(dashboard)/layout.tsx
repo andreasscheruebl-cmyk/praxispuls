@@ -7,7 +7,6 @@ import {
   Settings,
   CreditCard,
   Bell,
-  LogOut,
 } from "lucide-react";
 
 const navItems = [
