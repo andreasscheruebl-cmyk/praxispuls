@@ -1,5 +1,6 @@
 "use client";
 
+import { memo } from "react";
 import {
   ResponsiveContainer,
   LineChart,
@@ -20,7 +21,7 @@ type NpsTrendPoint = {
   detractors: number;
 };
 
-export function NpsChart({ data }: { data: NpsTrendPoint[] }) {
+export const NpsChart = memo(function NpsChart({ data, color = "#2563eb" }: { data: NpsTrendPoint[]; color?: string }) {
   if (data.length < 2) {
     return (
       <div className="flex h-[250px] items-center justify-center text-sm text-muted-foreground">
@@ -53,7 +54,7 @@ export function NpsChart({ data }: { data: NpsTrendPoint[] }) {
             return (
               <div className="rounded-md border bg-white px-3 py-2 text-sm shadow-md">
                 <p className="font-medium">KW {point.week}</p>
-                <p className="text-brand-600">NPS: {point.nps}</p>
+                <p style={{ color }}>NPS: {point.nps}</p>
                 <p className="text-muted-foreground">
                   {point.responses} Antworten ({point.promoters} Promoter, {point.detractors} Kritiker)
                 </p>
@@ -65,12 +66,12 @@ export function NpsChart({ data }: { data: NpsTrendPoint[] }) {
         <Line
           type="monotone"
           dataKey="nps"
-          stroke="#2563eb"
+          stroke={color}
           strokeWidth={2}
-          dot={{ r: 4, fill: "#2563eb" }}
-          activeDot={{ r: 6, fill: "#2563eb" }}
+          dot={{ r: 4, fill: color }}
+          activeDot={{ r: 6, fill: color }}
         />
       </LineChart>
     </ResponsiveContainer>
   );
-}
+});

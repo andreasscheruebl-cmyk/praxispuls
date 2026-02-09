@@ -36,7 +36,7 @@ export function MobileNav({ email, navItems }: MobileNavProps) {
           {/* Slide-in menu */}
           <div className="fixed inset-y-0 right-0 z-50 w-64 bg-white shadow-xl">
             <div className="flex h-16 items-center justify-between border-b px-4">
-              <span className="text-lg font-bold text-brand-500">Menü</span>
+              <span className="text-lg font-bold text-primary">Menü</span>
               <button
                 onClick={() => setOpen(false)}
                 className="rounded-md p-2 text-muted-foreground hover:bg-accent"
@@ -54,7 +54,7 @@ export function MobileNav({ email, navItems }: MobileNavProps) {
                   onClick={() => setOpen(false)}
                   className={`flex items-center rounded-md px-3 py-2.5 text-sm font-medium transition-colors ${
                     pathname === item.href
-                      ? "bg-brand-50 text-brand-600"
+                      ? "bg-primary/5 text-primary"
                       : "text-muted-foreground hover:bg-accent hover:text-foreground"
                   }`}
                 >
@@ -69,7 +69,7 @@ export function MobileNav({ email, navItems }: MobileNavProps) {
                 onClick={() => setOpen(false)}
                 className="flex items-center gap-3 rounded-md px-1 py-1 hover:bg-accent transition-colors"
               >
-                <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-brand-100 text-xs font-medium text-brand-600">
+                <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-medium text-primary">
                   {email.charAt(0).toUpperCase()}
                 </div>
                 <span className="flex-1 truncate text-sm font-medium">{email}</span>

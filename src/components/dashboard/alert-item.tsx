@@ -115,7 +115,7 @@ export function AlertItem({ alert }: { alert: AlertData }) {
                     value={note}
                     onChange={(e) => setNote(e.target.value)}
                     placeholder="Interne Notiz hinzufügen (z.B. 'Wartezeit lang wegen Notfall')"
-                    className="w-full rounded-md border px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+                    className="w-full rounded-md border px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
                     rows={2}
                   />
                   <div className="flex gap-2">
@@ -131,7 +131,7 @@ export function AlertItem({ alert }: { alert: AlertData }) {
                     <button
                       onClick={handleSaveNote}
                       disabled={saving || !note.trim()}
-                      className="rounded-md bg-brand-500 px-3 py-1.5 text-sm font-medium text-white hover:bg-brand-600 disabled:opacity-50"
+                      className="rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-white hover:bg-primary/90 disabled:opacity-50"
                     >
                       {saving ? "Speichert…" : "Notiz speichern"}
                     </button>

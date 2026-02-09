@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { GooglePlacesSearch } from "@/components/dashboard/google-places-search";
 import { LogoUpload } from "@/components/dashboard/logo-upload";
+import { THEMES } from "@/lib/themes";
 
 type PlaceInfo = { name: string; address: string; rating?: number; totalRatings?: number } | null;
 
@@ -40,7 +41,7 @@ export default function SettingsPage() {
     setSaving(false);
   }
 
-  if (loading) return <div className="flex justify-center py-16"><div className="h-8 w-8 animate-spin rounded-full border-4 border-gray-200 border-t-brand-500" /></div>;
+  if (loading) return <div className="flex justify-center py-16"><div className="h-8 w-8 animate-spin rounded-full border-4 border-gray-200 border-t-primary" /></div>;
   if (!practice) return <p className="text-muted-foreground">Praxis nicht gefunden.</p>;
 
   return (
@@ -54,6 +55,42 @@ export default function SettingsPage() {
               currentLogoUrl={practice.logoUrl ? String(practice.logoUrl) : null}
               onUpload={(url) => setPractice({ ...practice, logoUrl: url })}
             />
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader><CardTitle className="text-lg">Design-Theme</CardTitle></CardHeader>
+          <CardContent>
+            <p className="mb-4 text-sm text-muted-foreground">Wählen Sie das Erscheinungsbild Ihrer Umfrage und Ihres Dashboards.</p>
+            <div className="grid gap-4 sm:grid-cols-2">
+              {Object.values(THEMES).map((theme) => {
+                const isSelected = (practice.theme || "standard") === theme.id;
+                return (
+                  <button
+                    key={theme.id}
+                    type="button"
+                    onClick={() => setPractice({ ...practice, theme: theme.id })}
+                    className={`rounded-lg border-2 p-4 text-left transition-all ${
+                      isSelected
+                        ? "border-primary bg-primary/5 ring-2 ring-primary/20"
+                        : "border-border hover:border-primary/40"
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className={`h-8 w-8 rounded-full ${
+                        theme.id === "standard" ? "bg-blue-500" : "bg-teal-500"
+                      }`} />
+                      <div>
+                        <p className="font-semibold">{theme.name}</p>
+                        <p className="text-xs text-muted-foreground">{theme.description}</p>
+                      </div>
+                    </div>
+                    {isSelected && (
+                      <p className="mt-2 text-xs font-medium text-primary">Aktiv</p>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
           </CardContent>
         </Card>
         <Card><CardHeader><CardTitle className="text-lg">Praxisdaten</CardTitle></CardHeader>

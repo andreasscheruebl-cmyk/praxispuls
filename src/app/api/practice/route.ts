@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { getUserOptional } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { practices, surveys } from "@/lib/db/schema";
-import { eq } from "drizzle-orm";
+import { eq, and, ne } from "drizzle-orm";
 import { practiceUpdateSchema } from "@/lib/validations";
 import { getGoogleReviewLink, getPlaceDetails } from "@/lib/google";
 import { slugify } from "@/lib/utils";
@@ -50,6 +50,18 @@ export async function POST(request: Request) {
         );
       }
       googleReviewUrl = getGoogleReviewLink(googlePlaceId);
+
+      // Check if Place ID is already used by another practice
+      const existing = await db.query.practices.findFirst({
+        where: eq(practices.googlePlaceId, googlePlaceId),
+        columns: { id: true },
+      });
+      if (existing) {
+        return NextResponse.json(
+          { error: "Diese Google-Praxis ist bereits mit einem anderen Konto verknüpft.", code: "PLACE_ID_TAKEN", warning: true },
+          { status: 409 }
+        );
+      }
     }
     const templateId = surveyTemplate || "zahnarzt_standard";
     const template = SURVEY_TEMPLATES.find(t => t.id === templateId) || SURVEY_TEMPLATES[0]!;
@@ -105,6 +117,22 @@ export async function PUT(request: Request) {
           { status: 400 }
         );
       }
+
+      // Check if Place ID is already used by another practice
+      const existing = await db.query.practices.findFirst({
+        where: and(
+          eq(practices.googlePlaceId, parsed.googlePlaceId),
+          ne(practices.id, practice.id)
+        ),
+        columns: { id: true },
+      });
+      if (existing) {
+        return NextResponse.json(
+          { error: "Diese Google-Praxis ist bereits mit einem anderen Konto verknüpft.", code: "PLACE_ID_TAKEN", warning: true },
+          { status: 409 }
+        );
+      }
+
       googleReviewUrl = getGoogleReviewLink(parsed.googlePlaceId);
     } else if (parsed.googlePlaceId) {
       googleReviewUrl = getGoogleReviewLink(parsed.googlePlaceId);

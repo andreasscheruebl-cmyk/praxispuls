@@ -172,17 +172,17 @@ export default function BillingPage() {
               key={plan.id}
               className={`relative ${
                 plan.popular
-                  ? "border-brand-500 shadow-md"
+                  ? "border-primary shadow-md"
                   : ""
-              } ${isActive ? "ring-2 ring-brand-500" : ""}`}
+              } ${isActive ? "ring-2 ring-primary" : ""}`}
             >
               {plan.popular && (
-                <div className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-brand-500 px-3 py-1 text-xs font-medium text-white">
+                <div className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-primary px-3 py-1 text-xs font-medium text-white">
                   Beliebt
                 </div>
               )}
               <CardHeader className="text-center">
-                <Icon className="mx-auto h-8 w-8 text-brand-500" />
+                <Icon className="mx-auto h-8 w-8 text-primary" />
                 <CardTitle className="text-lg">{plan.name}</CardTitle>
                 <div className="mt-2">
                   <span className="text-3xl font-bold">{plan.price}</span>
@@ -215,7 +215,7 @@ export default function BillingPage() {
                 <div className="pt-2">
                   {isActive ? (
                     <div className="text-center">
-                      <span className="inline-flex items-center rounded-md bg-brand-50 px-3 py-1.5 text-sm font-medium text-brand-700">
+                      <span className="inline-flex items-center rounded-md bg-primary/5 px-3 py-1.5 text-sm font-medium text-primary">
                         Aktueller Plan
                       </span>
                     </div>
@@ -234,7 +234,7 @@ export default function BillingPage() {
                     <button
                       onClick={() => handleCheckout(plan.id as "starter" | "professional")}
                       disabled={loading !== null}
-                      className="w-full rounded-md bg-brand-500 px-4 py-2 text-sm font-medium text-white hover:bg-brand-600 disabled:opacity-50"
+                      className="w-full rounded-md bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary/90 disabled:opacity-50"
                     >
                       {loading === plan.id
                         ? "Wird geladen…"

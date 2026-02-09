@@ -1,7 +1,7 @@
 import { jsPDF } from "jspdf";
 
-// Brand color for PraxisPuls accents
-const BRAND_COLOR: [number, number, number] = [59, 130, 246]; // blue-500
+// Default brand color for PraxisPuls accents
+const DEFAULT_BRAND_COLOR: [number, number, number] = [59, 130, 246]; // blue-500
 const TEXT_DARK: [number, number, number] = [31, 41, 55]; // gray-800
 const TEXT_MUTED: [number, number, number] = [107, 114, 128]; // gray-500
 
@@ -51,7 +51,8 @@ function renderCenteredWrappedText(
 export async function generateA4Poster(
   qrDataUrl: string,
   practiceName: string,
-  surveyUrl: string
+  surveyUrl: string,
+  brandColor: [number, number, number] = DEFAULT_BRAND_COLOR
 ): Promise<Blob> {
   const pageWidth = 210;
   const pageHeight = 297;
@@ -63,7 +64,7 @@ export async function generateA4Poster(
   });
 
   // -- Decorative top bar --
-  doc.setFillColor(...BRAND_COLOR);
+  doc.setFillColor(...brandColor);
   doc.rect(0, 0, pageWidth, 4, "F");
 
   // -- Main heading --
@@ -109,7 +110,7 @@ export async function generateA4Poster(
   doc.text(thanks, thanksX, urlY + 18);
 
   // -- Decorative bottom bar --
-  doc.setFillColor(...BRAND_COLOR);
+  doc.setFillColor(...brandColor);
   doc.rect(0, pageHeight - 12, pageWidth, 12, "F");
 
   // -- PraxisPuls branding (bottom) --
@@ -136,7 +137,8 @@ export async function generateA4Poster(
 export async function generateA6Card(
   qrDataUrl: string,
   practiceName: string,
-  surveyUrl: string
+  surveyUrl: string,
+  brandColor: [number, number, number] = DEFAULT_BRAND_COLOR
 ): Promise<Blob> {
   const pageWidth = 105;
   const pageHeight = 148;
@@ -148,7 +150,7 @@ export async function generateA6Card(
   });
 
   // -- Decorative top bar --
-  doc.setFillColor(...BRAND_COLOR);
+  doc.setFillColor(...brandColor);
   doc.rect(0, 0, pageWidth, 2.5, "F");
 
   // -- Heading --
@@ -185,7 +187,7 @@ export async function generateA6Card(
   doc.text(surveyUrl, urlX, urlY);
 
   // -- Decorative bottom bar --
-  doc.setFillColor(...BRAND_COLOR);
+  doc.setFillColor(...brandColor);
   doc.rect(0, pageHeight - 8, pageWidth, 8, "F");
 
   // -- Branding at the bottom --

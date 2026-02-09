@@ -92,7 +92,7 @@ export function LogoUpload({ currentLogoUrl, onUpload }: LogoUploadProps) {
         type="button"
         onClick={() => fileInputRef.current?.click()}
         disabled={uploading}
-        className="group relative flex h-16 w-16 items-center justify-center overflow-hidden rounded-lg border-2 border-dashed border-gray-300 bg-gray-50 transition-colors hover:border-brand-400 hover:bg-gray-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+        className="group relative flex h-16 w-16 items-center justify-center overflow-hidden rounded-lg border-2 border-dashed border-gray-300 bg-gray-50 transition-colors hover:border-primary/30 hover:bg-gray-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
         aria-label="Logo hochladen"
       >
         {uploading ? (
@@ -105,7 +105,7 @@ export function LogoUpload({ currentLogoUrl, onUpload }: LogoUploadProps) {
             className="h-full w-full object-contain"
           />
         ) : (
-          <ImageIcon className="h-6 w-6 text-muted-foreground transition-colors group-hover:text-brand-500" />
+          <ImageIcon className="h-6 w-6 text-muted-foreground transition-colors group-hover:text-primary" />
         )}
 
         {/* Upload overlay on hover (only when not uploading) */}

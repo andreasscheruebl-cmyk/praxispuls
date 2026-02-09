@@ -76,7 +76,7 @@ export default function RegisterPage() {
     <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          <Link href="/" className="mb-4 inline-block text-2xl font-bold text-brand-500">
+          <Link href="/" className="mb-4 inline-block text-2xl font-bold text-primary">
             PraxisPuls
           </Link>
           <CardTitle className="text-xl">Kostenlos registrieren</CardTitle>
@@ -136,7 +136,7 @@ export default function RegisterPage() {
 
           <p className="mt-6 text-center text-sm text-muted-foreground">
             Bereits ein Konto?{" "}
-            <Link href="/login" className="font-medium text-brand-500 hover:underline">
+            <Link href="/login" className="font-medium text-primary hover:underline">
               Anmelden
             </Link>
           </p>

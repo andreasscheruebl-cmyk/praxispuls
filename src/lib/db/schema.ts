@@ -28,6 +28,7 @@ export const practices = pgTable("practices", {
   stripeSubscriptionId: text("stripe_subscription_id"),
   alertEmail: text("alert_email"),
   surveyTemplate: text("survey_template").default("zahnarzt_standard"),
+  theme: text("theme").default("standard"), // standard | vertrauen
   npsThreshold: smallint("nps_threshold").default(9),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow(),

@@ -2,6 +2,12 @@ import Link from "next/link";
 import { getUser } from "@/lib/auth";
 import { LogoutButton } from "@/components/dashboard/logout-button";
 import { MobileNav } from "@/components/dashboard/mobile-nav";
+import { MobileBottomTabs } from "@/components/dashboard/mobile-bottom-tabs";
+import { ThemeProvider } from "@/components/theme-provider";
+import { db } from "@/lib/db";
+import { practices } from "@/lib/db/schema";
+import { eq } from "drizzle-orm";
+import { type ThemeId } from "@/lib/themes";
 import {
   LayoutDashboard,
   MessageSquare,
@@ -30,13 +36,21 @@ export default async function DashboardLayout({
   // This will redirect to /login if not authenticated
   const user = await getUser();
 
+  // Load theme from practice
+  const practice = await db.query.practices.findFirst({
+    where: eq(practices.email, user.email!),
+    columns: { theme: true },
+  });
+  const themeId = (practice?.theme as ThemeId) || "standard";
+
   return (
+    <ThemeProvider themeId={themeId}>
     <div className="flex min-h-screen">
       {/* Sidebar – desktop only */}
       <aside className="hidden w-64 flex-shrink-0 border-r bg-white md:block">
         <div className="flex h-full flex-col">
           <div className="flex h-16 items-center border-b px-6">
-            <Link href="/dashboard" className="text-xl font-bold text-brand-500">
+            <Link href="/dashboard" className="text-xl font-bold text-primary">
               PraxisPuls
             </Link>
           </div>
@@ -59,7 +73,7 @@ export default async function DashboardLayout({
 
           <div className="border-t p-4 space-y-3">
             <Link href="/dashboard/profile" className="flex items-center gap-3 rounded-md px-1 py-1 hover:bg-accent transition-colors">
-              <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-brand-100 text-xs font-medium text-brand-600">
+              <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-medium text-primary">
                 {user.email?.charAt(0).toUpperCase()}
               </div>
               <div className="flex-1 truncate">
@@ -75,17 +89,25 @@ export default async function DashboardLayout({
       <div className="flex flex-1 flex-col">
         {/* Mobile header */}
         <header className="flex h-16 items-center justify-between border-b bg-white px-4 md:hidden">
-          <Link href="/dashboard" className="text-lg font-bold text-brand-500">
+          <Link href="/dashboard" className="text-lg font-bold text-primary">
             PraxisPuls
           </Link>
-          <MobileNav email={user.email || ""} navItems={navItems.map(i => ({ href: i.href, label: i.label }))} />
+          {themeId !== "vertrauen" && (
+            <MobileNav email={user.email || ""} navItems={navItems.map(i => ({ href: i.href, label: i.label }))} />
+          )}
         </header>
 
         {/* Page content */}
-        <main className="flex-1 overflow-y-auto bg-gray-50 p-4 md:p-8">
+        <main className={`flex-1 overflow-y-auto bg-gray-50 p-4 md:p-8 ${themeId === "vertrauen" ? "pb-24 md:pb-8" : ""}`}>
           {children}
         </main>
+
+        {/* Bottom tabs for Vertrauen theme (mobile) */}
+        {themeId === "vertrauen" && (
+          <MobileBottomTabs navItems={navItems.map(i => ({ href: i.href, label: i.label, icon: i.icon }))} />
+        )}
       </div>
     </div>
+    </ThemeProvider>
   );
 }

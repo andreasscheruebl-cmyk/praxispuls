@@ -4,6 +4,8 @@ import { getPractice } from "@/actions/practice";
 import { getDashboardOverview, getNpsTrend, getReviewFunnel } from "@/lib/db/queries/dashboard";
 import { NpsChart } from "@/components/dashboard/nps-chart";
 import { ReviewFunnel } from "@/components/dashboard/review-funnel";
+import { CategoryBars } from "@/components/dashboard/category-bars";
+import { type ThemeId, getThemeConfig } from "@/lib/themes";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
@@ -12,6 +14,9 @@ export const metadata = { title: "Dashboard" };
 export default async function DashboardPage() {
   const practice = await getPractice();
   if (!practice) redirect("/onboarding");
+
+  const themeId = (practice.theme as ThemeId) || "standard";
+  const themeConfig = getThemeConfig(themeId);
 
   const [overview, npsTrend, reviewFunnel] = await Promise.all([
     getDashboardOverview(practice.id),
@@ -87,7 +92,7 @@ export default async function DashboardPage() {
             <CardTitle className="text-lg">NPS-Trend</CardTitle>
           </CardHeader>
           <CardContent>
-            <NpsChart data={npsTrend} />
+            <NpsChart data={npsTrend} color={themeConfig.chart.primaryColor} />
           </CardContent>
         </Card>
       )}
@@ -109,22 +114,34 @@ export default async function DashboardPage() {
         <Card>
           <CardHeader><CardTitle className="text-lg">Kategorie-Bewertungen (Ø)</CardTitle></CardHeader>
           <CardContent>
-            <div className="grid gap-4 md:grid-cols-4">
-              {([
-                { label: "Wartezeit", value: overview.categoryScores.waitTime },
-                { label: "Freundlichkeit", value: overview.categoryScores.friendliness },
-                { label: "Behandlung", value: overview.categoryScores.treatment },
-                { label: "Ausstattung", value: overview.categoryScores.facility },
-              ] as const).map((cat) => (
-                <div key={cat.label} className="text-center">
-                  <p className="text-sm text-muted-foreground">{cat.label}</p>
-                  <p className="mt-1 text-2xl font-bold">{cat.value !== null ? cat.value.toFixed(1) : "–"}</p>
-                  <div className="mt-1 text-yellow-400">
-                    {"★".repeat(Math.round(cat.value || 0))}{"☆".repeat(5 - Math.round(cat.value || 0))}
+            {themeConfig.dashboard.categoryDisplay === "bars" ? (
+              <CategoryBars
+                categories={[
+                  { label: "Wartezeit", value: overview.categoryScores.waitTime },
+                  { label: "Freundlichkeit", value: overview.categoryScores.friendliness },
+                  { label: "Behandlung", value: overview.categoryScores.treatment },
+                  { label: "Ausstattung", value: overview.categoryScores.facility },
+                ]}
+                color={themeConfig.chart.primaryColor}
+              />
+            ) : (
+              <div className="grid gap-4 md:grid-cols-4">
+                {([
+                  { label: "Wartezeit", value: overview.categoryScores.waitTime },
+                  { label: "Freundlichkeit", value: overview.categoryScores.friendliness },
+                  { label: "Behandlung", value: overview.categoryScores.treatment },
+                  { label: "Ausstattung", value: overview.categoryScores.facility },
+                ] as const).map((cat) => (
+                  <div key={cat.label} className="text-center">
+                    <p className="text-sm text-muted-foreground">{cat.label}</p>
+                    <p className="mt-1 text-2xl font-bold">{cat.value !== null ? cat.value.toFixed(1) : "–"}</p>
+                    <div className="mt-1 text-yellow-400">
+                      {"★".repeat(Math.round(cat.value || 0))}{"☆".repeat(5 - Math.round(cat.value || 0))}
+                    </div>
                   </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
           </CardContent>
         </Card>
       )}
@@ -137,7 +154,7 @@ export default async function DashboardPage() {
             <p className="mt-2 max-w-sm text-center text-sm text-muted-foreground">
               Laden Sie Ihren QR-Code herunter und platzieren Sie ihn im Wartezimmer.
             </p>
-            <Link href="/dashboard/qr-codes" className="mt-6 inline-flex h-10 items-center justify-center rounded-md bg-brand-500 px-6 text-sm font-medium text-white hover:bg-brand-600">
+            <Link href="/dashboard/qr-codes" className="mt-6 inline-flex h-10 items-center justify-center rounded-md bg-primary px-6 text-sm font-medium text-white hover:bg-primary/90">
               QR-Code herunterladen
             </Link>
           </CardContent>

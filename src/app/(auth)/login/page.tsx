@@ -41,7 +41,7 @@ export default function LoginPage() {
     <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          <Link href="/" className="mb-4 inline-block text-2xl font-bold text-brand-500">
+          <Link href="/" className="mb-4 inline-block text-2xl font-bold text-primary">
             PraxisPuls
           </Link>
           <CardTitle className="text-xl">Anmelden</CardTitle>
@@ -84,7 +84,7 @@ export default function LoginPage() {
 
           <p className="mt-6 text-center text-sm text-muted-foreground">
             Noch kein Konto?{" "}
-            <Link href="/register" className="font-medium text-brand-500 hover:underline">
+            <Link href="/register" className="font-medium text-primary hover:underline">
               Kostenlos registrieren
             </Link>
           </p>

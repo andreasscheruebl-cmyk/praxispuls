@@ -55,6 +55,7 @@ export const practiceUpdateSchema = z.object({
     .enum(["zahnarzt_standard", "zahnarzt_kurz", "zahnarzt_prophylaxe"])
     .optional(),
   npsThreshold: z.number().int().min(7).max(10).optional(),
+  theme: z.enum(["standard", "vertrauen"]).optional(),
 });
 
 // ============================================================

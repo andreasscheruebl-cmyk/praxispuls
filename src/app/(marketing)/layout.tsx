@@ -11,7 +11,7 @@ export default function MarketingLayout({
       <header className="border-b bg-white">
         <div className="container mx-auto flex h-16 items-center justify-between px-4">
           <Link href="/" className="flex items-center space-x-2">
-            <span className="text-xl font-bold text-brand-500">PraxisPuls</span>
+            <span className="text-xl font-bold text-primary">PraxisPuls</span>
           </Link>
           <nav className="flex items-center space-x-4">
             <Link
@@ -22,7 +22,7 @@ export default function MarketingLayout({
             </Link>
             <Link
               href="/register"
-              className="inline-flex h-9 items-center justify-center rounded-md bg-brand-500 px-4 text-sm font-medium text-white hover:bg-brand-600"
+              className="inline-flex h-9 items-center justify-center rounded-md bg-primary px-4 text-sm font-medium text-white hover:bg-primary/90"
             >
               Kostenlos testen
             </Link>

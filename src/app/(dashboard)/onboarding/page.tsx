@@ -49,12 +49,12 @@ export default function OnboardingPage() {
     <div className="flex min-h-[80vh] items-center justify-center px-4">
       <Card className="w-full max-w-lg">
         <CardHeader className="text-center">
-          <div className="mb-4 text-brand-500 font-bold text-xl">PraxisPuls</div>
+          <div className="mb-4 text-primary font-bold text-xl">PraxisPuls</div>
           <CardTitle className="text-2xl">Praxis einrichten</CardTitle>
           <CardDescription>Schritt {step} von 3</CardDescription>
           <div className="mt-4 flex gap-2 justify-center">
             {[1,2,3].map(s => (
-              <div key={s} className={`h-2 w-16 rounded-full ${s <= step ? "bg-brand-500" : "bg-gray-200"}`} />
+              <div key={s} className={`h-2 w-16 rounded-full ${s <= step ? "bg-primary" : "bg-gray-200"}`} />
             ))}
           </div>
         </CardHeader>
@@ -124,7 +124,7 @@ export default function OnboardingPage() {
                 <Label>Umfrage-Template wählen</Label>
                 {TEMPLATES.map(t => (
                   <button key={t.id} onClick={() => setData({...data, surveyTemplate: t.id})}
-                    className={`w-full rounded-lg border p-4 text-left transition ${data.surveyTemplate === t.id ? "border-brand-500 bg-brand-50" : "hover:bg-gray-50"}`}>
+                    className={`w-full rounded-lg border p-4 text-left transition ${data.surveyTemplate === t.id ? "border-primary bg-primary/5" : "hover:bg-gray-50"}`}>
                     <p className="font-medium">{t.name}</p>
                     <p className="text-sm text-muted-foreground">{t.desc}</p>
                   </button>

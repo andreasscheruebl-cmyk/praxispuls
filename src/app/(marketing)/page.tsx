@@ -9,7 +9,7 @@ export default function HomePage() {
         <div className="container mx-auto px-4 text-center">
           <h1 className="mx-auto max-w-3xl text-4xl font-bold tracking-tight md:text-6xl">
             Patientenfeedback sammeln.{" "}
-            <span className="text-brand-500">Google-Bewertungen steigern.</span>
+            <span className="text-primary">Google-Bewertungen steigern.</span>
           </h1>
           <p className="mx-auto mt-6 max-w-2xl text-lg text-muted-foreground">
             QM-konforme Patientenbefragung mit automatischem Google-Review-Routing
@@ -60,7 +60,7 @@ export default function HomePage() {
               },
             ].map((item) => (
               <div key={item.step} className="text-center">
-                <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-brand-500 text-xl font-bold text-white">
+                <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-primary text-xl font-bold text-white">
                   {item.step}
                 </div>
                 <h3 className="mt-4 text-xl font-semibold">{item.title}</h3>
@@ -97,7 +97,7 @@ export default function HomePage() {
               </Button>
             </div>
             {/* Starter */}
-            <div className="rounded-lg border-2 border-brand-500 p-6 shadow-lg">
+            <div className="rounded-lg border-2 border-primary p-6 shadow-lg">
               <h3 className="text-lg font-semibold">Starter</h3>
               <p className="mt-2 text-3xl font-bold">49 €<span className="text-base font-normal text-muted-foreground">/Monat</span></p>
               <p className="text-sm text-muted-foreground">Für Einzelpraxen</p>
@@ -132,19 +132,59 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* Theme Showcase */}
+      <section className="border-t py-20">
+        <div className="container mx-auto px-4">
+          <h2 className="text-center text-3xl font-bold">
+            Zwei Designs – Ihr Auftritt
+          </h2>
+          <p className="mx-auto mt-4 max-w-2xl text-center text-muted-foreground">
+            Wählen Sie das Design, das zu Ihrer Praxis passt. Jederzeit umschaltbar.
+          </p>
+          <div className="mx-auto mt-12 grid max-w-3xl gap-8 md:grid-cols-2">
+            {/* Standard */}
+            <div className="overflow-hidden rounded-xl border p-6 text-center">
+              <div className="mx-auto mb-4 h-10 w-10 rounded-full bg-blue-500" />
+              <h3 className="text-lg font-semibold">Standard</h3>
+              <p className="mt-2 text-sm text-muted-foreground">
+                Klar & professionell – Blau, modern, bewährt.
+              </p>
+              <div className="mt-4 flex justify-center gap-2">
+                <span className="h-6 w-6 rounded-full bg-blue-500" />
+                <span className="h-6 w-6 rounded-full bg-blue-200" />
+                <span className="h-6 w-6 rounded-full bg-gray-100 border" />
+              </div>
+            </div>
+            {/* Vertrauen */}
+            <div className="overflow-hidden rounded-xl border-2 border-teal-500 bg-creme-100 p-6 text-center">
+              <div className="mx-auto mb-4 h-10 w-10 rounded-full bg-teal-500" />
+              <h3 className="font-heading text-lg font-semibold text-charcoal">Vertrauen</h3>
+              <p className="mt-2 text-sm text-charcoal-400">
+                Warm & premium – Teal, Sage, Creme, Serif-Akzente.
+              </p>
+              <div className="mt-4 flex justify-center gap-2">
+                <span className="h-6 w-6 rounded-full bg-teal-500" />
+                <span className="h-6 w-6 rounded-full bg-sage-400" />
+                <span className="h-6 w-6 rounded-full bg-creme-200" />
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* CTA */}
-      <section className="border-t bg-brand-500 py-16 text-white">
+      <section className="border-t bg-primary py-16 text-white">
         <div className="container mx-auto px-4 text-center">
           <h2 className="text-3xl font-bold">
             Bereit für bessere Google-Bewertungen?
           </h2>
-          <p className="mx-auto mt-4 max-w-xl text-brand-100">
+          <p className="mx-auto mt-4 max-w-xl text-primary-foreground/80">
             In 5 Minuten eingerichtet. Kostenlos testen. Keine Kreditkarte nötig.
           </p>
           <Button
             asChild
             size="lg"
-            className="mt-8 bg-white text-brand-500 hover:bg-gray-100"
+            className="mt-8 bg-white text-primary hover:bg-gray-100"
           >
             <Link href="/register">Kostenlos starten</Link>
           </Button>

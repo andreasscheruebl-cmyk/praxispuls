@@ -3,16 +3,21 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Star } from "lucide-react";
+import { NpsSlider } from "@/components/survey/nps-slider";
+import { RatingCircles } from "@/components/survey/rating-circles";
+import { type ThemeId, getThemeConfig } from "@/lib/themes";
 
 type Props = {
   surveyId: string;
   practiceName: string;
   practiceColor: string;
+  themeId?: ThemeId;
 };
 
 type Step = "nps" | "categories" | "freetext" | "submitting" | "done" | "duplicate";
 
-export function SurveyForm({ surveyId, practiceName, practiceColor }: Props) {
+export function SurveyForm({ surveyId, practiceName, practiceColor, themeId = "standard" }: Props) {
+  const themeConfig = getThemeConfig(themeId);
   const [step, setStep] = useState<Step>("nps");
   const [npsScore, setNpsScore] = useState<number | null>(null);
   const [ratings, setRatings] = useState({
@@ -81,30 +86,50 @@ export function SurveyForm({ surveyId, practiceName, practiceColor }: Props) {
         <p className="text-sm text-muted-foreground">
           0 = sehr unwahrscheinlich · 10 = sehr wahrscheinlich
         </p>
-        <div className="grid grid-cols-6 gap-2 sm:grid-cols-11">
-          {Array.from({ length: 11 }, (_, i) => (
-            <button
-              key={i}
-              onClick={() => {
-                setNpsScore(i);
-                setStep("categories");
-              }}
-              className={`flex h-12 w-full items-center justify-center rounded-lg border-2 text-lg font-semibold transition-all ${
-                npsScore === i
-                  ? "border-transparent text-white"
-                  : "border-gray-200 bg-white hover:border-gray-300"
-              }`}
-              style={
-                npsScore === i
-                  ? { backgroundColor: practiceColor }
-                  : undefined
-              }
-              aria-label={`${i} von 10`}
+
+        {themeConfig.survey.npsStyle === "slider" ? (
+          <div className="space-y-6">
+            <NpsSlider
+              value={npsScore}
+              onChange={setNpsScore}
+              color={practiceColor}
+            />
+            <Button
+              onClick={() => { if (npsScore !== null) setStep("categories"); }}
+              disabled={npsScore === null}
+              className="w-full"
+              size="lg"
+              style={{ backgroundColor: practiceColor }}
             >
-              {i}
-            </button>
-          ))}
-        </div>
+              Weiter
+            </Button>
+          </div>
+        ) : (
+          <div className="grid grid-cols-6 gap-2 sm:grid-cols-11">
+            {Array.from({ length: 11 }, (_, i) => (
+              <button
+                key={i}
+                onClick={() => {
+                  setNpsScore(i);
+                  setStep("categories");
+                }}
+                className={`flex h-12 w-full items-center justify-center rounded-lg border-2 text-lg font-semibold transition-all ${
+                  npsScore === i
+                    ? "border-transparent text-white"
+                    : "border-gray-200 bg-white hover:border-gray-300"
+                }`}
+                style={
+                  npsScore === i
+                    ? { backgroundColor: practiceColor }
+                    : undefined
+                }
+                aria-label={`${i} von 10`}
+              >
+                {i}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
     );
   }
@@ -125,28 +150,37 @@ export function SurveyForm({ surveyId, practiceName, practiceColor }: Props) {
         </h2>
         <div className="space-y-4">
           {categories.map((cat) => (
-            <div key={cat.key} className="rounded-lg bg-white p-4 shadow-sm">
+            <div key={cat.key} className="rounded-lg bg-white p-4 shadow-theme">
               <p className="mb-2 text-sm font-medium">{cat.label}</p>
-              <div className="flex gap-1">
-                {[1, 2, 3, 4, 5].map((star) => (
-                  <button
-                    key={star}
-                    onClick={() =>
-                      setRatings((prev) => ({ ...prev, [cat.key]: star }))
-                    }
-                    className="p-1"
-                    aria-label={`${star} Sterne für ${cat.label}`}
-                  >
-                    <Star
-                      className={`h-8 w-8 ${
-                        star <= ratings[cat.key]
-                          ? "fill-yellow-400 text-yellow-400"
-                          : "text-gray-300"
-                      }`}
-                    />
-                  </button>
-                ))}
-              </div>
+              {themeConfig.survey.ratingStyle === "circles" ? (
+                <RatingCircles
+                  value={ratings[cat.key]}
+                  onChange={(v) => setRatings((prev) => ({ ...prev, [cat.key]: v }))}
+                  label={cat.label}
+                  color={practiceColor}
+                />
+              ) : (
+                <div className="flex gap-1">
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <button
+                      key={star}
+                      onClick={() =>
+                        setRatings((prev) => ({ ...prev, [cat.key]: star }))
+                      }
+                      className="p-1"
+                      aria-label={`${star} Sterne für ${cat.label}`}
+                    >
+                      <Star
+                        className={`h-8 w-8 ${
+                          star <= ratings[cat.key]
+                            ? "fill-yellow-400 text-yellow-400"
+                            : "text-gray-300"
+                        }`}
+                      />
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
           ))}
         </div>
@@ -173,10 +207,13 @@ export function SurveyForm({ surveyId, practiceName, practiceColor }: Props) {
           value={freeText}
           onChange={(e) => setFreeText(e.target.value)}
           placeholder="Ihr Feedback (optional)"
-          className="w-full rounded-lg border border-gray-200 bg-white p-4 text-base focus:outline-none focus:ring-2 focus:ring-brand-500"
+          className="w-full rounded-lg border border-gray-200 bg-white p-4 text-base focus:outline-none focus:ring-2 focus:ring-primary"
           rows={4}
           maxLength={2000}
         />
+        <p className="text-xs text-muted-foreground">
+          Bitte geben Sie keine persönlichen Daten (Name, Adresse, Gesundheitsinformationen) ein.
+        </p>
         <div className="flex gap-3">
           <Button
             onClick={submitSurvey}
@@ -202,7 +239,7 @@ export function SurveyForm({ surveyId, practiceName, practiceColor }: Props) {
   if (step === "submitting") {
     return (
       <div className="flex flex-col items-center justify-center py-16">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-gray-200 border-t-brand-500" />
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-gray-200 border-t-primary" />
         <p className="mt-4 text-muted-foreground">Wird gesendet...</p>
       </div>
     );

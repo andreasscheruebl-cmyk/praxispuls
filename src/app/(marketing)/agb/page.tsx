@@ -95,9 +95,88 @@ export default function AGBPage() {
           <h2 className="text-xl font-semibold text-foreground">&#167; 8 Datenschutz</h2>
           <p className="mt-2">
             Die Verarbeitung personenbezogener Daten erfolgt gem&auml;&szlig; unserer{" "}
-            <a href="/datenschutz" className="text-brand-500 underline">Datenschutzerkl&auml;rung</a>.
-            Zwischen Anbieter und Kunde wird ein Auftragsverarbeitungsvertrag (AVV) nach
-            Art. 28 DSGVO geschlossen.
+            <a href="/datenschutz" className="text-primary underline">Datenschutzerkl&auml;rung</a>.
+          </p>
+          <p className="mt-2">
+            Soweit der Anbieter im Auftrag des Kunden personenbezogene Daten verarbeitet,
+            schlie&szlig;en die Parteien einen Auftragsverarbeitungsvertrag (AVV) nach Art. 28 DSGVO.
+            Die nachfolgenden Regelungen gelten als AVV im Sinne der DSGVO:
+          </p>
+
+          <h3 className="mt-4 text-lg font-semibold text-foreground">8.1 Gegenstand und Dauer der Verarbeitung</h3>
+          <p className="mt-2">
+            Der Anbieter verarbeitet im Auftrag des Kunden anonymisierte Umfrageantworten
+            (NPS-Score, Kategorie-Bewertungen, Freitext) sowie technische Metadaten
+            (Ger&auml;tetyp, Kanal, Session-Hash). Die Verarbeitung dauert f&uuml;r die Laufzeit
+            des Vertragverh&auml;ltnisses. Personenbezogene Daten des Kunden (E-Mail, Praxisname)
+            werden als Bestandsdaten im Rahmen des Hauptvertrages verarbeitet.
+          </p>
+
+          <h3 className="mt-4 text-lg font-semibold text-foreground">8.2 Art und Zweck der Verarbeitung</h3>
+          <p className="mt-2">
+            Zweck der Datenverarbeitung ist die Bereitstellung des SaaS-Dienstes PraxisPuls,
+            insbesondere die Erfassung, Speicherung und Auswertung anonymer Patientenumfragen,
+            das Routing zufriedener Patienten zu Google-Bewertungen sowie die Benachrichtigung
+            des Kunden bei kritischem Feedback (Detractor-Alerts).
+          </p>
+
+          <h3 className="mt-4 text-lg font-semibold text-foreground">8.3 Kategorien betroffener Personen und Daten</h3>
+          <ul className="mt-2 list-inside list-disc space-y-1">
+            <li><strong>Betroffene Personen:</strong> Patienten des Kunden (anonym), Praxismitarbeiter (Konto-Inhaber).</li>
+            <li><strong>Datenkategorien:</strong> Umfrageantworten (anonymisiert), E-Mail-Adresse und Praxisdaten des Kunden, technische Nutzungsdaten.</li>
+          </ul>
+
+          <h3 className="mt-4 text-lg font-semibold text-foreground">8.4 Pflichten des Anbieters (Auftragsverarbeiter)</h3>
+          <ol className="mt-2 list-inside list-decimal space-y-1">
+            <li>Der Anbieter verarbeitet Daten ausschlie&szlig;lich auf dokumentierte Weisung des Kunden, es sei denn, eine Verarbeitung ist nach Unionsrecht oder dem Recht des betreffenden Mitgliedstaats erforderlich.</li>
+            <li>Der Anbieter gew&auml;hrleistet, dass sich die zur Verarbeitung befugten Personen zur Vertraulichkeit verpflichtet haben.</li>
+            <li>Der Anbieter ergreift geeignete technische und organisatorische Ma&szlig;nahmen gem. Art. 32 DSGVO, insbesondere:
+              <ul className="ml-6 mt-1 list-inside list-disc space-y-1">
+                <li>Verschl&uuml;sselung der Daten&uuml;bertragung (TLS/HTTPS)</li>
+                <li>Hosting in der EU (Supabase, Region Frankfurt)</li>
+                <li>Zugriffskontrolle und Authentifizierung</li>
+                <li>Regelm&auml;&szlig;ige Sicherheitsupdates</li>
+              </ul>
+            </li>
+            <li>Der Anbieter unterst&uuml;tzt den Kunden bei der Erf&uuml;llung seiner Pflichten aus Art. 32–36 DSGVO (Sicherheit, Datenschutz-Folgenabsch&auml;tzung, Meldepflichten).</li>
+            <li>Nach Beendigung des Auftrags l&ouml;scht der Anbieter alle personenbezogenen Daten, sofern keine gesetzliche Aufbewahrungspflicht besteht.</li>
+          </ol>
+
+          <h3 className="mt-4 text-lg font-semibold text-foreground">8.5 Unterauftragsverarbeiter</h3>
+          <p className="mt-2">
+            Der Kunde stimmt der Beauftragung folgender Unterauftragsverarbeiter zu:
+          </p>
+          <ul className="mt-2 list-inside list-disc space-y-1">
+            <li><strong>Supabase Inc.</strong> (Hosting, Datenbank, Authentifizierung) – Rechenzentrum Frankfurt, EU</li>
+            <li><strong>Vercel Inc.</strong> (Hosting der Webanwendung) – Edge Network, EU-Regionen</li>
+            <li><strong>Stripe Inc.</strong> (Zahlungsabwicklung) – EU-konform, eigener AVV</li>
+            <li><strong>Resend Inc.</strong> (E-Mail-Versand) – f&uuml;r transaktionale E-Mails</li>
+          </ul>
+          <p className="mt-2">
+            Der Anbieter informiert den Kunden &uuml;ber beabsichtigte &Auml;nderungen bei Unterauftragsverarbeitern.
+            Der Kunde kann innerhalb von 14 Tagen Einspruch erheben.
+          </p>
+
+          <h3 className="mt-4 text-lg font-semibold text-foreground">8.6 Rechte der betroffenen Personen</h3>
+          <p className="mt-2">
+            Der Anbieter unterst&uuml;tzt den Kunden bei der Beantwortung von Anfragen betroffener
+            Personen (Auskunft, L&ouml;schung, Berichtigung gem. Art. 15–22 DSGVO). Da
+            Patientenumfragen anonym erfasst werden, ist eine nachtr&auml;gliche Zuordnung zu
+            einzelnen Personen technisch nicht m&ouml;glich.
+          </p>
+
+          <h3 className="mt-4 text-lg font-semibold text-foreground">8.7 Meldepflichten bei Datenpannen</h3>
+          <p className="mt-2">
+            Der Anbieter informiert den Kunden unverz&uuml;glich &uuml;ber Verletzungen des Schutzes
+            personenbezogener Daten (Art. 33 DSGVO) und unterst&uuml;tzt bei der Erf&uuml;llung
+            der Meldepflichten gegen&uuml;ber der Aufsichtsbeh&ouml;rde.
+          </p>
+
+          <h3 className="mt-4 text-lg font-semibold text-foreground">8.8 Kontrollrechte</h3>
+          <p className="mt-2">
+            Der Kunde hat das Recht, die Einhaltung dieses AVV zu &uuml;berpr&uuml;fen. Der Anbieter
+            stellt hierf&uuml;r die erforderlichen Informationen bereit und erm&ouml;glicht auf Anfrage
+            &Uuml;berpr&uuml;fungen.
           </p>
         </section>
 

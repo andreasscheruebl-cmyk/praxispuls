@@ -82,7 +82,7 @@ export default function DatenschutzPage() {
           </p>
           <p className="mt-2">
             Datenschutzhinweise von Stripe:{" "}
-            <a href="https://stripe.com/de/privacy" target="_blank" rel="noopener noreferrer" className="text-brand-500 underline">
+            <a href="https://stripe.com/de/privacy" target="_blank" rel="noopener noreferrer" className="text-primary underline">
               stripe.com/de/privacy
             </a>
           </p>
