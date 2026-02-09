@@ -170,7 +170,7 @@ export default function BillingPage() {
           return (
             <Card
               key={plan.id}
-              className={`relative ${
+              className={`relative flex flex-col ${
                 plan.popular
                   ? "border-primary shadow-md"
                   : ""
@@ -193,8 +193,8 @@ export default function BillingPage() {
                   )}
                 </div>
               </CardHeader>
-              <CardContent className="space-y-4">
-                <ul className="space-y-2">
+              <CardContent className="flex flex-1 flex-col">
+                <ul className="flex-1 space-y-2">
                   {plan.features.map((feature) => (
                     <li key={feature} className="flex items-start gap-2 text-sm">
                       <Check className="mt-0.5 h-4 w-4 flex-shrink-0 text-green-500" />

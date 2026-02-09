@@ -20,7 +20,6 @@ import {
   generateA6MinimalInfographic,
   type PdfConfig,
 } from "@/lib/qr-pdf";
-import { type ThemeId, getThemeConfig } from "@/lib/themes";
 
 type PdfDesignType =
   | "a4-light"
@@ -65,11 +64,11 @@ const INFOGRAPHIC_DESIGNS: DesignInfo[] = [
   { type: "a6-minimal", label: "A6 Minimal", format: "A6", description: "Clean mit Accent-Stripe, icon-driven", filename: "praxispuls-minimal-a6.pdf" },
 ];
 
-function LightMiniPreview({ color }: { color: string }) {
+function LightMiniPreview({ color, headline }: { color: string; headline?: string }) {
   return (
     <div className="flex h-64 w-44 flex-col items-center justify-between rounded-lg border bg-white p-3 shadow-md">
       <div className="h-4 w-full rounded-sm" style={{ backgroundColor: color }} />
-      <p className="text-xs font-bold" style={{ color }}>Ihre Meinung zählt!</p>
+      <p className="text-xs font-bold" style={{ color }}>{headline || "Ihre Meinung zählt!"}</p>
       <div className="flex h-20 w-20 items-center justify-center rounded-lg bg-gray-100">
         <QrCode className="h-14 w-14 text-gray-300" />
       </div>
@@ -79,11 +78,11 @@ function LightMiniPreview({ color }: { color: string }) {
   );
 }
 
-function DarkMiniPreview({ color }: { color: string }) {
+function DarkMiniPreview({ color, headline }: { color: string; headline?: string }) {
   return (
     <div className="flex h-64 w-44 flex-col items-center justify-between rounded-lg border bg-slate-900 p-3 shadow-md">
       <p className="text-xs font-bold text-white">Praxis</p>
-      <p className="text-[10px] font-bold" style={{ color }}>Ihre Meinung zählt!</p>
+      <p className="text-[10px] font-bold" style={{ color }}>{headline || "Ihre Meinung zählt!"}</p>
       <div className="relative flex h-20 w-20 items-center justify-center">
         <div className="absolute inset-0 rounded-lg opacity-20" style={{ backgroundColor: color }} />
         <div className="flex h-16 w-16 items-center justify-center rounded-lg bg-white">
@@ -100,11 +99,11 @@ function DarkMiniPreview({ color }: { color: string }) {
   );
 }
 
-function InfographicMiniPreview({ color }: { color: string }) {
+function InfographicMiniPreview({ color, headline }: { color: string; headline?: string }) {
   return (
     <div className="flex h-64 w-44 flex-col items-center justify-between rounded-lg border p-3 shadow-md" style={{ background: `linear-gradient(135deg, ${color}, ${color}cc)` }}>
       <p className="text-[10px] font-bold text-white/70">Praxis</p>
-      <p className="text-xs font-bold text-white">Ihre Meinung zählt!</p>
+      <p className="line-clamp-2 text-center text-xs font-bold text-white">{headline || "Ihre Meinung zählt!"}</p>
       <div className="flex gap-1.5">
         {["1", "2", "3"].map((n) => (
           <div key={n} className="flex h-6 w-6 items-center justify-center rounded-md bg-white/15 text-[9px] font-bold text-white">{n}</div>
@@ -129,7 +128,6 @@ export default function QrCodesPage() {
   const [practiceColor, setPracticeColor] = useState("#0D9488");
   const [loading, setLoading] = useState(true);
   const [pdfLoading, setPdfLoading] = useState<string | null>(null);
-  const [themeId, setThemeId] = useState<ThemeId>("standard");
   const [hoveredItem, setHoveredItem] = useState<string | null>(null);
   const [designMode, setDesignMode] = useState<"light" | "dark" | "infographic">("light");
 
@@ -146,7 +144,6 @@ export default function QrCodesPage() {
       if (qrData) { setQrDataUrl(qrData.qrCodeDataUrl); setSurveyUrl(qrData.surveyUrl); }
       if (practiceData) {
         setPracticeName(practiceData.name || "Praxis");
-        if (practiceData.theme) setThemeId(practiceData.theme as ThemeId);
         if (practiceData.primaryColor) {
           setPracticeColor(practiceData.primaryColor);
           setCustomColor(practiceData.primaryColor);
@@ -186,16 +183,15 @@ export default function QrCodesPage() {
     if (!qrDataUrl) return;
     setPdfLoading(design.type);
 
-    // Use custom color for infographic designs, theme color for others
-    const isInfographic = ["a4-magazine", "a4-bold", "a5-landscape", "a6-minimal"].includes(design.type);
-    const brandColor = isInfographic ? hexToRgb(customColor) : getThemeConfig(themeId).pdf.brandColor;
+    // All designs use the customColor + customHeadline
+    const brandColor = hexToRgb(customColor);
 
     const config: PdfConfig = {
       qrDataUrl,
       practiceName,
       surveyUrl,
       brandColor,
-      headline: isInfographic && customHeadline ? customHeadline : undefined,
+      headline: customHeadline || undefined,
       logoDataUrl: logoDataUrl || undefined,
     };
 
@@ -298,37 +294,35 @@ export default function QrCodesPage() {
               </div>
             </CardHeader>
             <CardContent className="space-y-4">
-              {/* Infographic configuration */}
-              {designMode === "infographic" && (
-                <div className="rounded-lg border border-primary/20 bg-primary/5 p-4">
-                  <p className="mb-3 text-sm font-medium">Design anpassen</p>
-                  <div className="grid gap-4 sm:grid-cols-2">
-                    <div className="space-y-1.5">
-                      <Label htmlFor="headline" className="text-xs">Headline (optional)</Label>
-                      <Input
-                        id="headline"
-                        placeholder="Ihre Meinung zählt!"
-                        value={customHeadline}
-                        onChange={(e) => setCustomHeadline(e.target.value)}
-                        className="h-9 text-sm"
+              {/* Design configuration */}
+              <div className="rounded-lg border border-primary/20 bg-primary/5 p-4">
+                <p className="mb-3 text-sm font-medium">Design anpassen</p>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="space-y-1.5">
+                    <Label htmlFor="headline" className="text-xs">Headline (optional)</Label>
+                    <Input
+                      id="headline"
+                      placeholder="Ihre Meinung zählt!"
+                      value={customHeadline}
+                      onChange={(e) => setCustomHeadline(e.target.value)}
+                      className="h-9 text-sm"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="pdfColor" className="text-xs">Primärfarbe</Label>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="color"
+                        id="pdfColor"
+                        value={customColor}
+                        onChange={(e) => setCustomColor(e.target.value)}
+                        className="h-9 w-12 cursor-pointer rounded border"
                       />
-                    </div>
-                    <div className="space-y-1.5">
-                      <Label htmlFor="pdfColor" className="text-xs">Primärfarbe</Label>
-                      <div className="flex items-center gap-2">
-                        <input
-                          type="color"
-                          id="pdfColor"
-                          value={customColor}
-                          onChange={(e) => setCustomColor(e.target.value)}
-                          className="h-9 w-12 cursor-pointer rounded border"
-                        />
-                        <span className="text-xs text-muted-foreground">{customColor}</span>
-                      </div>
+                      <span className="text-xs text-muted-foreground">{customColor}</span>
                     </div>
                   </div>
                 </div>
-              )}
+              </div>
 
               <div className="grid gap-3 sm:grid-cols-2">
                 {currentDesigns.map((design) => (
@@ -349,11 +343,11 @@ export default function QrCodesPage() {
                     {hoveredItem === design.type && (
                       <div className="pointer-events-none absolute left-1/2 top-full z-10 mt-2 -translate-x-1/2">
                         {designMode === "light" ? (
-                          <LightMiniPreview color={practiceColor} />
+                          <LightMiniPreview color={practiceColor} headline={customHeadline || undefined} />
                         ) : designMode === "dark" ? (
-                          <DarkMiniPreview color={practiceColor} />
+                          <DarkMiniPreview color={practiceColor} headline={customHeadline || undefined} />
                         ) : (
-                          <InfographicMiniPreview color={customColor} />
+                          <InfographicMiniPreview color={customColor} headline={customHeadline || undefined} />
                         )}
                       </div>
                     )}

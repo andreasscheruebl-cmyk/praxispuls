@@ -252,6 +252,44 @@ function drawStarIcon(
 }
 
 // ---------------------------------------------------------------------------
+// Privacy badge helper – "Anonym · DSGVO-konform" hint
+// ---------------------------------------------------------------------------
+
+function drawPrivacyBadge(
+  doc: jsPDF,
+  centerX: number,
+  y: number,
+  variant: "light" | "dark" = "light"
+) {
+  const text = "\u{1F512} 100\u00a0% anonym \u00B7 DSGVO-konform";
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(7);
+  const tw = doc.getTextWidth(text);
+  const padX = 6;
+  const padY = 3;
+  const bw = tw + padX * 2;
+  const bh = 7 + padY;
+  const bx = centerX - bw / 2;
+
+  if (variant === "dark") {
+    // Subtle glass-style on dark backgrounds
+    const gs = doc.GState({ opacity: 0.15 });
+    doc.saveGraphicsState();
+    doc.setGState(gs);
+    doc.setFillColor(255, 255, 255);
+    doc.roundedRect(bx, y, bw, bh, bh / 2, bh / 2, "F");
+    doc.restoreGraphicsState();
+    doc.setTextColor(200, 210, 225);
+  } else {
+    // Light muted pill
+    doc.setFillColor(241, 245, 249); // slate-100
+    doc.roundedRect(bx, y, bw, bh, bh / 2, bh / 2, "F");
+    doc.setTextColor(100, 116, 139); // slate-500
+  }
+  doc.text(text, centerX - tw / 2, y + bh / 2 + 1.5);
+}
+
+// ---------------------------------------------------------------------------
 // Branding footer helper
 // ---------------------------------------------------------------------------
 
@@ -383,6 +421,9 @@ export async function generateA4Poster(config: PdfConfig): Promise<Blob> {
   doc.setTextColor(...TEXT_MUTED);
   doc.text(surveyUrl, getCenteredX(doc, surveyUrl, pw), stepsY + 18);
 
+  // --- Privacy badge ---
+  drawPrivacyBadge(doc, pw / 2, stepsY + 24, "light");
+
   // --- Branding bar ---
   drawBrandingBar(doc, pw, ph, brandColor, 12);
 
@@ -436,6 +477,9 @@ export async function generateA6Card(config: PdfConfig): Promise<Blob> {
   doc.setFontSize(7);
   doc.setTextColor(...TEXT_MUTED);
   doc.text(surveyUrl, getCenteredX(doc, surveyUrl, pw), nameY + 17);
+
+  // --- Privacy badge ---
+  drawPrivacyBadge(doc, pw / 2, nameY + 21, "light");
 
   // --- Branding bar ---
   drawBrandingBar(doc, pw, ph, brandColor, 8);
@@ -555,6 +599,9 @@ export async function generateA5TableTentLight(config: PdfConfig): Promise<Blob>
   const urlY = qrY + qrSize + 6;
   doc.text(surveyUrl, half + (half - doc.getTextWidth(surveyUrl)) / 2, urlY);
 
+  // --- Privacy badge (left panel bottom) ---
+  drawPrivacyBadge(doc, half / 2, ph - 20, "dark");
+
   // Branding line at bottom right
   doc.setFont("helvetica", "normal");
   doc.setFontSize(6);
@@ -622,6 +669,13 @@ export async function generateBusinessCardLight(config: PdfConfig): Promise<Blob
   doc.setFontSize(5.5);
   doc.setTextColor(...TEXT_MUTED);
   doc.text(surveyUrl, cardX + cardW / 2 - doc.getTextWidth(surveyUrl) / 2, cardY + cardH - 4);
+
+  // --- Privacy hint below card ---
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(6);
+  doc.setTextColor(...TEXT_MUTED);
+  const privText = "100\u00a0% anonym \u00B7 DSGVO-konform";
+  doc.text(privText, pw / 2 - doc.getTextWidth(privText) / 2, cardY + cardH + 12);
 
   return doc.output("blob");
 }
@@ -743,6 +797,9 @@ export async function generateA4InfographicDark(config: PdfConfig): Promise<Blob
   doc.setTextColor(150, 155, 170);
   doc.text(surveyUrl, getCenteredX(doc, surveyUrl, pw), pillY + 20);
 
+  // --- Privacy badge ---
+  drawPrivacyBadge(doc, pw / 2, pillY + 26, "dark");
+
   // --- Branding ---
   drawBrandingBarDark(doc, pw, ph, brandColor, 10);
 
@@ -817,6 +874,9 @@ export async function generateA6BoldDark(config: PdfConfig): Promise<Blob> {
   doc.setFontSize(6.5);
   doc.setTextColor(150, 155, 170);
   doc.text(surveyUrl, getCenteredX(doc, surveyUrl, pw), badgeY + 16);
+
+  // --- Privacy badge ---
+  drawPrivacyBadge(doc, pw / 2, badgeY + 20, "dark");
 
   // --- Branding ---
   drawBrandingBarDark(doc, pw, ph, brandColor, 8);
@@ -896,6 +956,9 @@ export async function generateA5TableTentDark(config: PdfConfig): Promise<Blob> 
     doc.text(st, statX + (tw - doc.getTextWidth(st)) / 2, statsY + 5.5);
     statX += tw + 5;
   });
+
+  // --- Privacy badge (left panel bottom) ---
+  drawPrivacyBadge(doc, half / 2, statsY + 14, "dark");
 
   // --- Right: QR with glow ---
   const qrSize = 60;
@@ -1016,6 +1079,13 @@ export async function generateBusinessCardDark(config: PdfConfig): Promise<Blob>
   doc.setFontSize(5);
   doc.setTextColor(120, 125, 140);
   doc.text(surveyUrl, cardX + cardW / 2 - doc.getTextWidth(surveyUrl) / 2, cardY + cardH - 3);
+
+  // --- Privacy hint below card ---
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(6);
+  doc.setTextColor(140, 145, 160);
+  const privText = "100\u00a0% anonym \u00B7 DSGVO-konform";
+  doc.text(privText, pw / 2 - doc.getTextWidth(privText) / 2, cardY + cardH + 12);
 
   return doc.output("blob");
 }
@@ -1169,6 +1239,9 @@ export async function generateA4MagazineInfographic(config: PdfConfig): Promise<
   doc.text(surveyUrl, getCenteredX(doc, surveyUrl, pw), statsY + 20);
   doc.restoreGraphicsState();
 
+  // --- Privacy badge ---
+  drawPrivacyBadge(doc, pw / 2, statsY + 26, "dark");
+
   // --- Bottom branding ---
   doc.setFont("helvetica", "normal");
   doc.setFontSize(7);
@@ -1277,6 +1350,9 @@ export async function generateA4BoldGraphic(config: PdfConfig): Promise<Blob> {
   doc.setTextColor(...TEXT_MUTED);
   doc.text(surveyUrl, getCenteredX(doc, surveyUrl, pw), stepsY + 18);
 
+  // --- Privacy badge ---
+  drawPrivacyBadge(doc, pw / 2, stepsY + 24, "light");
+
   // --- Bottom brandColor bar ---
   doc.setFillColor(...brandColor);
   doc.rect(0, ph - 10, pw, 10, "F");
@@ -1378,6 +1454,9 @@ export async function generateA5LandscapeInfographic(config: PdfConfig): Promise
   doc.setTextColor(150, 155, 170);
   doc.text(surveyUrl, rightCenter - doc.getTextWidth(surveyUrl) / 2, ph / 2 + qrSize / 2 + 12);
 
+  // --- Privacy badge (left side bottom) ---
+  drawPrivacyBadge(doc, pw * 0.25, ph - 16, "dark");
+
   // Branding bottom right
   doc.setFont("helvetica", "normal");
   doc.setFontSize(6);
@@ -1469,6 +1548,9 @@ export async function generateA6MinimalInfographic(config: PdfConfig): Promise<B
   doc.setFontSize(7);
   doc.setTextColor(...TEXT_MUTED);
   doc.text(surveyUrl, getCenteredX(doc, surveyUrl, pw), qrY + qrSize + 8);
+
+  // --- Privacy badge ---
+  drawPrivacyBadge(doc, pw / 2, qrY + qrSize + 13, "light");
 
   // --- Bottom branding ---
   drawBrandingBar(doc, pw, ph, brandColor, 7);

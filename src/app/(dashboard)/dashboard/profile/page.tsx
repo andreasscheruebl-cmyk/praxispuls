@@ -5,7 +5,9 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { LogOut, Trash2, AlertTriangle, Monitor, Smartphone, Globe } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { LogOut, Trash2, AlertTriangle, Monitor, Smartphone, Globe, KeyRound, Check } from "lucide-react";
 
 type LoginEvent = {
   id: string;
@@ -68,9 +70,13 @@ export default function ProfilePage() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
   const [loginHistory, setLoginHistory] = useState<LoginEvent[]>([]);
   const [historyLoading, setHistoryLoading] = useState(true);
   const [userEmail, setUserEmail] = useState<string | null>(null);
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [pwLoading, setPwLoading] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -93,6 +99,35 @@ export default function ProfilePage() {
     await supabase.auth.signOut();
     router.push("/login");
     router.refresh();
+  }
+
+  async function handlePasswordChange() {
+    if (newPassword.length < 8) {
+      setError("Passwort muss mindestens 8 Zeichen lang sein.");
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      setError("Passwörter stimmen nicht überein.");
+      return;
+    }
+    setPwLoading(true);
+    setError(null);
+    setSuccess(null);
+    try {
+      const supabase = createClient();
+      const { error: pwError } = await supabase.auth.updateUser({ password: newPassword });
+      if (pwError) {
+        setError(pwError.message);
+      } else {
+        setSuccess("Passwort erfolgreich geändert.");
+        setNewPassword("");
+        setConfirmPassword("");
+      }
+    } catch {
+      setError("Verbindungsfehler. Bitte versuchen Sie es erneut.");
+    } finally {
+      setPwLoading(false);
+    }
   }
 
   async function handleDeleteAccount() {
@@ -130,6 +165,12 @@ export default function ProfilePage() {
           {error}
         </div>
       )}
+      {success && (
+        <div className="flex items-center gap-2 rounded-md border border-green-200 bg-green-50 p-4 text-sm text-green-700">
+          <Check className="h-4 w-4" />
+          {success}
+        </div>
+      )}
 
       {/* Account Info */}
       {userEmail && (
@@ -150,6 +191,43 @@ export default function ProfilePage() {
           </CardContent>
         </Card>
       )}
+
+      {/* Password Change */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-lg">
+            <KeyRound className="h-5 w-5" />
+            Passwort ändern
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="max-w-sm space-y-4">
+            <div className="space-y-1.5">
+              <Label htmlFor="newPw" className="text-sm">Neues Passwort</Label>
+              <Input
+                id="newPw"
+                type="password"
+                placeholder="Mindestens 8 Zeichen"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="confirmPw" className="text-sm">Passwort bestätigen</Label>
+              <Input
+                id="confirmPw"
+                type="password"
+                placeholder="Passwort wiederholen"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+              />
+            </div>
+            <Button onClick={handlePasswordChange} disabled={pwLoading || !newPassword}>
+              {pwLoading ? "Wird gespeichert…" : "Passwort ändern"}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Login History */}
       <Card>

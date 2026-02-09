@@ -34,6 +34,12 @@ export default function SettingsPage() {
       if (!uploadRes.ok) throw new Error("Upload failed");
       const data = await uploadRes.json();
       setPractice((prev) => prev ? { ...prev, logoUrl: data.logoUrl } : prev);
+      // Auto-save the logo URL to practice
+      await fetch("/api/practice", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ logoUrl: data.logoUrl }),
+      });
     } catch {
       // Silently fail — user can retry or upload manually
     } finally {
@@ -47,7 +53,9 @@ export default function SettingsPage() {
       const res = await fetch(`/api/practice/website-logos?url=${encodeURIComponent(websiteUrl)}`);
       if (res.ok) {
         const data = await res.json();
-        setWebsiteLogos(data.logos || []);
+        // Deduplicate logos by URL
+        const unique = [...new Set((data.logos || []) as string[])];
+        setWebsiteLogos(unique);
       }
     } catch { /* ignore */ }
   }
@@ -210,9 +218,6 @@ export default function SettingsPage() {
               <select value={Number(practice.npsThreshold || 9)} onChange={e => setPractice({...practice, npsThreshold: parseInt(e.target.value)})} className="w-full rounded-md border bg-white px-3 py-2 text-sm">
                 <option value={8}>8+ (mehr Bewertungen)</option><option value={9}>9+ (Standard)</option><option value={10}>Nur 10</option>
               </select>
-            </div>
-            <div className="space-y-2"><Label>Praxis-Farbe</Label>
-              <div className="flex items-center gap-3"><input type="color" value={String(practice.primaryColor || "#2563EB")} onChange={e => setPractice({...practice, primaryColor: e.target.value})} className="h-10 w-14 cursor-pointer rounded border" /><span className="text-sm text-muted-foreground">{String(practice.primaryColor || "#2563EB")}</span></div>
             </div>
           </CardContent>
         </Card>

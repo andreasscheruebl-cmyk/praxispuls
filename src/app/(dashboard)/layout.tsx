@@ -15,6 +15,7 @@ import {
   Settings,
   CreditCard,
   Bell,
+  UserCircle,
 } from "lucide-react";
 
 const navItems = [
@@ -24,9 +25,10 @@ const navItems = [
   { href: "/dashboard/qr-codes", label: "QR-Codes", icon: "QrCode" as const },
   { href: "/dashboard/settings", label: "Einstellungen", icon: "Settings" as const },
   { href: "/dashboard/billing", label: "Abrechnung", icon: "CreditCard" as const },
+  { href: "/dashboard/profile", label: "Profil", icon: "UserCircle" as const },
 ];
 
-const iconMap = { LayoutDashboard, MessageSquare, Bell, QrCode, Settings, CreditCard };
+const iconMap = { LayoutDashboard, MessageSquare, Bell, QrCode, Settings, CreditCard, UserCircle };
 
 export default async function DashboardLayout({
   children,
@@ -71,15 +73,13 @@ export default async function DashboardLayout({
             })}
           </nav>
 
-          <div className="border-t p-4 space-y-3">
-            <Link href="/dashboard/profile" className="flex items-center gap-3 rounded-md px-1 py-1 hover:bg-accent transition-colors">
+          <div className="border-t p-4 space-y-2">
+            <div className="flex items-center gap-3 px-1 py-1">
               <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-medium text-primary">
                 {user.email?.charAt(0).toUpperCase()}
               </div>
-              <div className="flex-1 truncate">
-                <p className="truncate text-sm font-medium">{user.email}</p>
-              </div>
-            </Link>
+              <p className="flex-1 truncate text-xs text-muted-foreground">{user.email}</p>
+            </div>
             <LogoutButton />
           </div>
         </div>

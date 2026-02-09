@@ -9,6 +9,7 @@ import {
   QrCode,
   Settings,
   CreditCard,
+  UserCircle,
 } from "lucide-react";
 
 const iconMap: Record<string, typeof LayoutDashboard> = {
@@ -18,15 +19,16 @@ const iconMap: Record<string, typeof LayoutDashboard> = {
   QrCode,
   Settings,
   CreditCard,
+  UserCircle,
 };
 
-// Show max 5 tabs – group the rest under "Mehr" or just pick the most important
+// Show max 5 tabs on mobile bottom bar
 const PRIMARY_TABS = [
   "LayoutDashboard",
   "MessageSquare",
-  "Bell",
   "QrCode",
   "Settings",
+  "UserCircle",
 ];
 
 type NavItem = {
