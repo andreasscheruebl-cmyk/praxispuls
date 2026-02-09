@@ -7,7 +7,7 @@ import { jsPDF } from "jspdf";
 export type PdfConfig = {
   qrDataUrl: string;
   practiceName: string;
-  surveyUrl: string;
+  surveyUrl?: string;
   brandColor: [number, number, number];
   headline?: string;
   logoDataUrl?: string;
@@ -334,7 +334,7 @@ function drawBrandingBarDark(
  * 1. A4 Poster Light – Infographic style with star decoration and CTA badge
  */
 export async function generateA4Poster(config: PdfConfig): Promise<Blob> {
-  const { qrDataUrl, practiceName, surveyUrl, brandColor, headline, logoDataUrl } = config;
+  const { qrDataUrl, practiceName, brandColor, headline, logoDataUrl } = config;
   const pw = 210;
   const ph = 297;
   const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
@@ -415,14 +415,8 @@ export async function generateA4Poster(config: PdfConfig): Promise<Blob> {
     doc.text(step.substring(3), sx + 18, stepsY + 2);
   });
 
-  // --- URL ---
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(9);
-  doc.setTextColor(...TEXT_MUTED);
-  doc.text(surveyUrl, getCenteredX(doc, surveyUrl, pw), stepsY + 18);
-
   // --- Privacy badge ---
-  drawPrivacyBadge(doc, pw / 2, stepsY + 24, "light");
+  drawPrivacyBadge(doc, pw / 2, stepsY + 16, "light");
 
   // --- Branding bar ---
   drawBrandingBar(doc, pw, ph, brandColor, 12);
@@ -434,7 +428,7 @@ export async function generateA4Poster(config: PdfConfig): Promise<Blob> {
  * 2. A6 Aufsteller Light – Header stripe + tinted QR background
  */
 export async function generateA6Card(config: PdfConfig): Promise<Blob> {
-  const { qrDataUrl, practiceName, surveyUrl, brandColor, headline } = config;
+  const { qrDataUrl, practiceName, brandColor, headline } = config;
   const pw = 105;
   const ph = 148;
   const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: [pw, ph] });
@@ -472,14 +466,8 @@ export async function generateA6Card(config: PdfConfig): Promise<Blob> {
   const hint = "Scannen \u2192 Bewerten \u2192 Fertig!";
   doc.text(hint, getCenteredX(doc, hint, pw), nameY + 10);
 
-  // --- URL ---
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(7);
-  doc.setTextColor(...TEXT_MUTED);
-  doc.text(surveyUrl, getCenteredX(doc, surveyUrl, pw), nameY + 17);
-
   // --- Privacy badge ---
-  drawPrivacyBadge(doc, pw / 2, nameY + 21, "light");
+  drawPrivacyBadge(doc, pw / 2, nameY + 14, "light");
 
   // --- Branding bar ---
   drawBrandingBar(doc, pw, ph, brandColor, 8);
@@ -491,7 +479,7 @@ export async function generateA6Card(config: PdfConfig): Promise<Blob> {
  * 3. A5 Tischaufsteller Light – Split layout (brand left, white right)
  */
 export async function generateA5TableTentLight(config: PdfConfig): Promise<Blob> {
-  const { qrDataUrl, practiceName, surveyUrl, brandColor, headline } = config;
+  const { qrDataUrl, practiceName, brandColor, headline } = config;
   const pw = 210;
   const ph = 148;
   const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: "a5" });
@@ -592,13 +580,6 @@ export async function generateA5TableTentLight(config: PdfConfig): Promise<Blob>
   const qrY = stepStartY + 48;
   doc.addImage(qrDataUrl, "PNG", qrX, qrY, qrSize, qrSize);
 
-  // URL
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(7);
-  doc.setTextColor(...TEXT_MUTED);
-  const urlY = qrY + qrSize + 6;
-  doc.text(surveyUrl, half + (half - doc.getTextWidth(surveyUrl)) / 2, urlY);
-
   // --- Privacy badge (left panel bottom) ---
   drawPrivacyBadge(doc, half / 2, ph - 20, "dark");
 
@@ -616,7 +597,7 @@ export async function generateA5TableTentLight(config: PdfConfig): Promise<Blob>
  * 4. Visitenkarte Light – Business card centered on A6 page with cut marks
  */
 export async function generateBusinessCardLight(config: PdfConfig): Promise<Blob> {
-  const { qrDataUrl, practiceName, surveyUrl, brandColor, headline } = config;
+  const { qrDataUrl, practiceName, brandColor, headline } = config;
   const pw = 105;
   const ph = 148;
   const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: [pw, ph] });
@@ -664,12 +645,6 @@ export async function generateBusinessCardLight(config: PdfConfig): Promise<Blob
   const qrY = cardY + 8;
   doc.addImage(qrDataUrl, "PNG", qrX, qrY, qrSize, qrSize);
 
-  // --- URL at bottom ---
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(5.5);
-  doc.setTextColor(...TEXT_MUTED);
-  doc.text(surveyUrl, cardX + cardW / 2 - doc.getTextWidth(surveyUrl) / 2, cardY + cardH - 4);
-
   // --- Privacy hint below card ---
   doc.setFont("helvetica", "normal");
   doc.setFontSize(6);
@@ -688,7 +663,7 @@ export async function generateBusinessCardLight(config: PdfConfig): Promise<Blob
  * 5. A4 Infographic Dark – Gradient background, glass cards, glow QR
  */
 export async function generateA4InfographicDark(config: PdfConfig): Promise<Blob> {
-  const { qrDataUrl, practiceName, surveyUrl, brandColor, headline, logoDataUrl } = config;
+  const { qrDataUrl, practiceName, brandColor, headline, logoDataUrl } = config;
   const pw = 210;
   const ph = 297;
   const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
@@ -791,14 +766,8 @@ export async function generateA4InfographicDark(config: PdfConfig): Promise<Blob
     doc.text(p, px + (pillW - doc.getTextWidth(p)) / 2, pillY + pillH / 2 + 1);
   });
 
-  // --- URL ---
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(9);
-  doc.setTextColor(150, 155, 170);
-  doc.text(surveyUrl, getCenteredX(doc, surveyUrl, pw), pillY + 20);
-
   // --- Privacy badge ---
-  drawPrivacyBadge(doc, pw / 2, pillY + 26, "dark");
+  drawPrivacyBadge(doc, pw / 2, pillY + 18, "dark");
 
   // --- Branding ---
   drawBrandingBarDark(doc, pw, ph, brandColor, 10);
@@ -810,7 +779,7 @@ export async function generateA4InfographicDark(config: PdfConfig): Promise<Blob
  * 6. A6 Bold Aufsteller Dark – Dark background, step pills, glow QR
  */
 export async function generateA6BoldDark(config: PdfConfig): Promise<Blob> {
-  const { qrDataUrl, practiceName, surveyUrl, brandColor, headline } = config;
+  const { qrDataUrl, practiceName, brandColor, headline } = config;
   const pw = 105;
   const ph = 148;
   const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: [pw, ph] });
@@ -869,14 +838,8 @@ export async function generateA6BoldDark(config: PdfConfig): Promise<Blob> {
   const badgeW = doc.getTextWidth(badgeText) + 14;
   drawPill(doc, (pw - badgeW) / 2, badgeY, badgeW, 8, brandColor, WHITE, badgeText);
 
-  // --- URL ---
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(6.5);
-  doc.setTextColor(150, 155, 170);
-  doc.text(surveyUrl, getCenteredX(doc, surveyUrl, pw), badgeY + 16);
-
   // --- Privacy badge ---
-  drawPrivacyBadge(doc, pw / 2, badgeY + 20, "dark");
+  drawPrivacyBadge(doc, pw / 2, badgeY + 14, "dark");
 
   // --- Branding ---
   drawBrandingBarDark(doc, pw, ph, brandColor, 8);
@@ -888,7 +851,7 @@ export async function generateA6BoldDark(config: PdfConfig): Promise<Blob> {
  * 7. A5 Tisch-Infographic Dark – Split dark layout with steps + QR
  */
 export async function generateA5TableTentDark(config: PdfConfig): Promise<Blob> {
-  const { qrDataUrl, practiceName, surveyUrl, brandColor, headline } = config;
+  const { qrDataUrl, practiceName, brandColor, headline } = config;
   const pw = 210;
   const ph = 148;
   const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: "a5" });
@@ -979,12 +942,6 @@ export async function generateA5TableTentDark(config: PdfConfig): Promise<Blob> 
   const nameX = half + (half - doc.getTextWidth(practiceName)) / 2;
   doc.text(practiceName, nameX, qrY + qrSize + 14);
 
-  // --- Right: URL ---
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(7);
-  doc.setTextColor(150, 155, 170);
-  doc.text(surveyUrl, half + (half - doc.getTextWidth(surveyUrl)) / 2, qrY + qrSize + 22);
-
   // --- Branding ---
   doc.setFont("helvetica", "normal");
   doc.setFontSize(6);
@@ -999,7 +956,7 @@ export async function generateA5TableTentDark(config: PdfConfig): Promise<Blob> 
  * 8. Visitenkarte Dark – Business card on dark A6 with brand accent stripe
  */
 export async function generateBusinessCardDark(config: PdfConfig): Promise<Blob> {
-  const { qrDataUrl, practiceName, surveyUrl, brandColor, headline } = config;
+  const { qrDataUrl, practiceName, brandColor, headline } = config;
   const pw = 105;
   const ph = 148;
   const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: [pw, ph] });
@@ -1074,12 +1031,6 @@ export async function generateBusinessCardDark(config: PdfConfig): Promise<Blob>
   doc.roundedRect(qrX - 1, qrY - 1, qrSize + 2, qrSize + 2, 1, 1, "F");
   doc.addImage(qrDataUrl, "PNG", qrX, qrY, qrSize, qrSize);
 
-  // --- URL at bottom of card ---
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(5);
-  doc.setTextColor(120, 125, 140);
-  doc.text(surveyUrl, cardX + cardW / 2 - doc.getTextWidth(surveyUrl) / 2, cardY + cardH - 3);
-
   // --- Privacy hint below card ---
   doc.setFont("helvetica", "normal");
   doc.setFontSize(6);
@@ -1098,7 +1049,7 @@ export async function generateBusinessCardDark(config: PdfConfig): Promise<Blob>
  * 9. A4 Magazine Infographic – Full-page editorial style
  */
 export async function generateA4MagazineInfographic(config: PdfConfig): Promise<Blob> {
-  const { qrDataUrl, practiceName, surveyUrl, brandColor, headline } = config;
+  const { qrDataUrl, practiceName, brandColor, headline } = config;
   const pw = 210;
   const ph = 297;
   const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
@@ -1229,18 +1180,8 @@ export async function generateA4MagazineInfographic(config: PdfConfig): Promise<
     statCursor += 40;
   });
 
-  // --- URL ---
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(9);
-  const urlOp = doc.GState({ opacity: 0.7 });
-  doc.saveGraphicsState();
-  doc.setGState(urlOp);
-  doc.setTextColor(255, 255, 255);
-  doc.text(surveyUrl, getCenteredX(doc, surveyUrl, pw), statsY + 20);
-  doc.restoreGraphicsState();
-
   // --- Privacy badge ---
-  drawPrivacyBadge(doc, pw / 2, statsY + 26, "dark");
+  drawPrivacyBadge(doc, pw / 2, statsY + 18, "dark");
 
   // --- Bottom branding ---
   doc.setFont("helvetica", "normal");
@@ -1260,7 +1201,7 @@ export async function generateA4MagazineInfographic(config: PdfConfig): Promise<
  * 10. A4 Bold Graphic – High contrast editorial with large typography
  */
 export async function generateA4BoldGraphic(config: PdfConfig): Promise<Blob> {
-  const { qrDataUrl, practiceName, surveyUrl, brandColor, headline } = config;
+  const { qrDataUrl, practiceName, brandColor, headline } = config;
   const pw = 210;
   const ph = 297;
   const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
@@ -1344,14 +1285,8 @@ export async function generateA4BoldGraphic(config: PdfConfig): Promise<Blob> {
     doc.text(s.substring(3), sx + 20, stepsY + 2);
   });
 
-  // --- URL ---
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(9);
-  doc.setTextColor(...TEXT_MUTED);
-  doc.text(surveyUrl, getCenteredX(doc, surveyUrl, pw), stepsY + 18);
-
   // --- Privacy badge ---
-  drawPrivacyBadge(doc, pw / 2, stepsY + 24, "light");
+  drawPrivacyBadge(doc, pw / 2, stepsY + 16, "light");
 
   // --- Bottom brandColor bar ---
   doc.setFillColor(...brandColor);
@@ -1369,7 +1304,7 @@ export async function generateA4BoldGraphic(config: PdfConfig): Promise<Blob> {
  * 11. A5 Landscape Infographic – Horizontal split with timeline
  */
 export async function generateA5LandscapeInfographic(config: PdfConfig): Promise<Blob> {
-  const { qrDataUrl, practiceName, surveyUrl, brandColor, headline } = config;
+  const { qrDataUrl, practiceName, brandColor, headline } = config;
   const pw = 210;
   const ph = 148;
   const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: "a5" });
@@ -1448,12 +1383,6 @@ export async function generateA5LandscapeInfographic(config: PdfConfig): Promise
   doc.roundedRect(rightCenter - qrSize / 2 - 3, ph / 2 - qrSize / 2 - 3, qrSize + 6, qrSize + 6, 3, 3, "F");
   doc.addImage(qrDataUrl, "PNG", rightCenter - qrSize / 2, ph / 2 - qrSize / 2, qrSize, qrSize);
 
-  // URL below QR
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(7);
-  doc.setTextColor(150, 155, 170);
-  doc.text(surveyUrl, rightCenter - doc.getTextWidth(surveyUrl) / 2, ph / 2 + qrSize / 2 + 12);
-
   // --- Privacy badge (left side bottom) ---
   drawPrivacyBadge(doc, pw * 0.25, ph - 16, "dark");
 
@@ -1475,7 +1404,7 @@ export async function generateA5LandscapeInfographic(config: PdfConfig): Promise
  * 12. A6 Minimal Infographic – Clean, icon-driven compact card
  */
 export async function generateA6MinimalInfographic(config: PdfConfig): Promise<Blob> {
-  const { qrDataUrl, practiceName, surveyUrl, brandColor, headline } = config;
+  const { qrDataUrl, practiceName, brandColor, headline } = config;
   const pw = 105;
   const ph = 148;
   const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: [pw, ph] });
@@ -1543,14 +1472,8 @@ export async function generateA6MinimalInfographic(config: PdfConfig): Promise<B
   doc.roundedRect(qrX - 4, qrY - 4, qrSize + 8, qrSize + 8, 3, 3, "F");
   doc.addImage(qrDataUrl, "PNG", qrX, qrY, qrSize, qrSize);
 
-  // --- URL ---
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(7);
-  doc.setTextColor(...TEXT_MUTED);
-  doc.text(surveyUrl, getCenteredX(doc, surveyUrl, pw), qrY + qrSize + 8);
-
   // --- Privacy badge ---
-  drawPrivacyBadge(doc, pw / 2, qrY + qrSize + 13, "light");
+  drawPrivacyBadge(doc, pw / 2, qrY + qrSize + 8, "light");
 
   // --- Bottom branding ---
   drawBrandingBar(doc, pw, ph, brandColor, 7);

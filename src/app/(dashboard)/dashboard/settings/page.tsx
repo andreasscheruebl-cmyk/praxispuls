@@ -19,29 +19,22 @@ export default function SettingsPage() {
   const [logoUploading, setLogoUploading] = useState<string | null>(null);
   const [websiteLogos, setWebsiteLogos] = useState<string[]>([]);
 
-  /** Fetch a remote image, upload it via the logo API, and update practice state */
+  /** Upload image via server-side proxy (bypasses CORS) */
   async function applyImageAsLogo(imageUrl: string, sourceKey: string) {
     setLogoUploading(sourceKey);
     try {
-      const imgRes = await fetch(imageUrl);
-      if (!imgRes.ok) throw new Error("Fetch failed");
-      const blob = await imgRes.blob();
-      const ext = blob.type.includes("png") ? "png" : blob.type.includes("svg") ? "svg" : blob.type.includes("webp") ? "webp" : "jpg";
-      const file = new File([blob], `logo.${ext}`, { type: blob.type || "image/png" });
-      const formData = new FormData();
-      formData.append("file", file);
-      const uploadRes = await fetch("/api/practice/logo", { method: "POST", body: formData });
-      if (!uploadRes.ok) throw new Error("Upload failed");
-      const data = await uploadRes.json();
-      setPractice((prev) => prev ? { ...prev, logoUrl: data.logoUrl } : prev);
-      // Auto-save the logo URL to practice
-      await fetch("/api/practice", {
-        method: "PUT",
+      // Use server-side proxy to fetch + upload (avoids CORS)
+      const res = await fetch("/api/practice/logo-from-url", {
+        method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ logoUrl: data.logoUrl }),
+        body: JSON.stringify({ url: imageUrl }),
       });
+      if (!res.ok) throw new Error("Upload failed");
+      const data = await res.json();
+      setPractice((prev) => prev ? { ...prev, logoUrl: data.logoUrl } : prev);
+      setMessage("Logo übernommen!");
     } catch {
-      // Silently fail — user can retry or upload manually
+      setMessage("Logo konnte nicht übernommen werden. Bitte manuell hochladen.");
     } finally {
       setLogoUploading(null);
     }
