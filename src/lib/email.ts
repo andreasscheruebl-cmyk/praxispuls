@@ -1,8 +1,13 @@
 import { Resend } from "resend";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
-
 const FROM_EMAIL = "PraxisPuls <noreply@praxispuls.de>";
+
+function getResend() {
+  if (!process.env.RESEND_API_KEY) {
+    throw new Error("RESEND_API_KEY is not set");
+  }
+  return new Resend(process.env.RESEND_API_KEY);
+}
 
 /**
  * Send detractor alert email to practice owner
@@ -24,7 +29,7 @@ export async function sendDetractorAlert(params: {
     minute: "2-digit",
   });
 
-  await resend.emails.send({
+  await getResend().emails.send({
     from: FROM_EMAIL,
     to,
     subject: `⚠️ Kritisches Patientenfeedback – NPS ${npsScore}`,
@@ -60,7 +65,7 @@ export async function sendWelcomeEmail(params: {
   to: string;
   practiceName: string;
 }) {
-  await resend.emails.send({
+  await getResend().emails.send({
     from: FROM_EMAIL,
     to: params.to,
     subject: "Willkommen bei PraxisPuls! 🎉",
@@ -97,7 +102,7 @@ export async function sendUpgradeReminder(params: {
   currentCount: number;
   limit: number;
 }) {
-  await resend.emails.send({
+  await getResend().emails.send({
     from: FROM_EMAIL,
     to: params.to,
     subject: "📊 Ihr Antwort-Limit ist fast erreicht",

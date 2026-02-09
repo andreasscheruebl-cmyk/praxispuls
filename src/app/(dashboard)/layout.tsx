@@ -12,6 +12,7 @@ import {
 const navItems = [
   { href: "/dashboard", label: "Übersicht", icon: LayoutDashboard },
   { href: "/dashboard/responses", label: "Antworten", icon: MessageSquare },
+  { href: "/dashboard/alerts", label: "Alerts", icon: Bell },
   { href: "/dashboard/qr-codes", label: "QR-Codes", icon: QrCode },
   { href: "/dashboard/settings", label: "Einstellungen", icon: Settings },
   { href: "/dashboard/billing", label: "Abrechnung", icon: CreditCard },

@@ -5,6 +5,10 @@ import { surveyResponseSchema } from "@/lib/validations";
 import { getNpsCategory } from "@/lib/utils";
 import { routeByNps } from "@/lib/review-router";
 import { eq } from "drizzle-orm";
+import { getMonthlyResponseCount } from "@/lib/db/queries/dashboard";
+import { PLAN_LIMITS } from "@/types";
+import type { PlanId } from "@/types";
+import { sendDetractorAlert } from "@/lib/email";
 
 export async function POST(request: Request) {
   try {
@@ -34,6 +38,22 @@ export async function POST(request: Request) {
     }
 
     const practice = survey.practice;
+
+    // Check plan limits
+    const planId = (practice.plan || "free") as PlanId;
+    const limits = PLAN_LIMITS[planId];
+    const monthlyCount = await getMonthlyResponseCount(practice.id);
+
+    if (monthlyCount >= limits.maxResponsesPerMonth) {
+      return NextResponse.json(
+        {
+          error: "Das monatliche Antwort-Limit dieser Praxis wurde erreicht.",
+          code: "LIMIT_REACHED",
+        },
+        { status: 429 }
+      );
+    }
+
     const npsCategory = getNpsCategory(data.npsScore);
     const routeResult = routeByNps(
       data.npsScore,
@@ -62,7 +82,7 @@ export async function POST(request: Request) {
       })
       .returning();
 
-    // Create alert for detractors
+    // Create alert + send email for detractors
     if (routeResult.alertRequired && response) {
       await db.insert(alerts).values({
         practiceId: practice.id,
@@ -70,7 +90,37 @@ export async function POST(request: Request) {
         type: "detractor",
       });
 
-      // TODO: Send email alert via Resend (Sprint 5-6)
+      // Send email alert (only for paid plans with alerts enabled, or all plans with alertEmail)
+      const alertEmail = practice.alertEmail || practice.email;
+      if (alertEmail && limits.hasAlerts) {
+        sendDetractorAlert({
+          to: alertEmail,
+          practiceName: practice.name,
+          npsScore: data.npsScore,
+          freeText: data.freeText,
+          responseDate: new Date(),
+        }).catch((err) => {
+          console.error("Failed to send detractor alert email:", err);
+        });
+      }
+    }
+
+    // Send upgrade reminder when approaching limit (at 80% and 100%)
+    const newCount = monthlyCount + 1;
+    const limitThreshold = Math.floor(limits.maxResponsesPerMonth * 0.8);
+    if (
+      limits.maxResponsesPerMonth < Infinity &&
+      (newCount === limitThreshold || newCount === limits.maxResponsesPerMonth)
+    ) {
+      const { sendUpgradeReminder } = await import("@/lib/email");
+      sendUpgradeReminder({
+        to: practice.email,
+        practiceName: practice.name,
+        currentCount: newCount,
+        limit: limits.maxResponsesPerMonth,
+      }).catch((err) => {
+        console.error("Failed to send upgrade reminder:", err);
+      });
     }
 
     return NextResponse.json({

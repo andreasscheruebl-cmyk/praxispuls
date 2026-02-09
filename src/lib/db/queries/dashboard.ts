@@ -114,3 +114,74 @@ export async function getRecentResponses(
     limit,
   });
 }
+
+/**
+ * Count responses for a practice in the current calendar month
+ */
+export async function getMonthlyResponseCount(practiceId: string) {
+  const now = new Date();
+  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+
+  const [result] = await db
+    .select({ count: count() })
+    .from(responses)
+    .where(
+      and(
+        eq(responses.practiceId, practiceId),
+        gte(responses.createdAt, startOfMonth)
+      )
+    );
+
+  return result?.count ?? 0;
+}
+
+/**
+ * Get NPS trend data grouped by week for chart display
+ */
+export async function getNpsTrend(
+  practiceId: string,
+  weeks: number = 12
+) {
+  const since = new Date();
+  since.setDate(since.getDate() - weeks * 7);
+
+  const rows = await db
+    .select({
+      week: sql<string>`to_char(date_trunc('week', ${responses.createdAt}), 'IYYY-IW')`,
+      weekStart: sql<string>`to_char(date_trunc('week', ${responses.createdAt}), 'DD.MM.')`,
+      total: count(),
+      promoters: count(
+        sql`CASE WHEN ${responses.npsCategory} = 'promoter' THEN 1 END`
+      ),
+      detractors: count(
+        sql`CASE WHEN ${responses.npsCategory} = 'detractor' THEN 1 END`
+      ),
+    })
+    .from(responses)
+    .where(
+      and(
+        eq(responses.practiceId, practiceId),
+        gte(responses.createdAt, since)
+      )
+    )
+    .groupBy(
+      sql`date_trunc('week', ${responses.createdAt})`
+    )
+    .orderBy(sql`date_trunc('week', ${responses.createdAt})`);
+
+  return rows.map((row) => {
+    const total = Number(row.total);
+    const promoters = Number(row.promoters);
+    const detractors = Number(row.detractors);
+    const nps = total > 0 ? Math.round(((promoters - detractors) / total) * 100) : 0;
+
+    return {
+      week: row.week,
+      label: row.weekStart,
+      nps,
+      responses: total,
+      promoters,
+      detractors,
+    };
+  });
+}

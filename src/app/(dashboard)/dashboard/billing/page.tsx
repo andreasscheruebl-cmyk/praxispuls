@@ -1,11 +1,132 @@
-import { Card, CardContent } from "@/components/ui/card";
-import { CreditCard } from "lucide-react";
+"use client";
 
-export const metadata = {
-  title: "Abrechnung",
-};
+import { useEffect, useState } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { CreditCard, Check, Zap, Crown } from "lucide-react";
+
+type PlanId = "free" | "starter" | "professional";
+
+const PLANS = [
+  {
+    id: "free" as PlanId,
+    name: "Free",
+    price: "0 €",
+    period: "",
+    features: [
+      "30 Antworten / Monat",
+      "1 Umfrage-Template",
+      "Google Review Routing",
+      "QR-Code Download",
+      "Basis-Dashboard",
+    ],
+    missingFeatures: [
+      "E-Mail-Alerts",
+      "Praxis-Branding",
+      "Zeitraum-Filter",
+    ],
+  },
+  {
+    id: "starter" as PlanId,
+    name: "Starter",
+    price: "49 €",
+    period: "/ Monat",
+    popular: true,
+    features: [
+      "200 Antworten / Monat",
+      "Alle 3 Templates",
+      "Google Review Routing",
+      "QR-Code Download",
+      "Vollständiges Dashboard",
+      "E-Mail-Alerts",
+      "Praxis-Branding (Logo & Farben)",
+      "Freier Zeitraum-Filter",
+    ],
+    missingFeatures: [],
+  },
+  {
+    id: "professional" as PlanId,
+    name: "Professional",
+    price: "99 €",
+    period: "/ Monat",
+    features: [
+      "Unbegrenzte Antworten",
+      "Alle 3 Templates",
+      "Google Review Routing",
+      "QR-Code Download",
+      "Vollständiges Dashboard",
+      "E-Mail-Alerts",
+      "Praxis-Branding (Logo & Farben)",
+      "Freier Zeitraum-Filter",
+      "Prioritäts-Support",
+    ],
+    missingFeatures: [],
+  },
+];
 
 export default function BillingPage() {
+  const [currentPlan, setCurrentPlan] = useState<PlanId>("free");
+  const [hasStripeCustomer, setHasStripeCustomer] = useState(false);
+  const [loading, setLoading] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetch("/api/practice")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.plan) setCurrentPlan(data.plan as PlanId);
+        if (data.stripeCustomerId) setHasStripeCustomer(true);
+      })
+      .catch(() => {});
+  }, []);
+
+  async function handleCheckout(plan: "starter" | "professional") {
+    setLoading(plan);
+    setError(null);
+    try {
+      const res = await fetch("/api/billing/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ plan }),
+      });
+      const data = await res.json();
+      if (data.url) {
+        window.location.href = data.url;
+      } else {
+        setError(data.error || "Fehler beim Erstellen der Checkout-Session.");
+      }
+    } catch {
+      setError("Verbindungsfehler. Bitte versuchen Sie es erneut.");
+    } finally {
+      setLoading(null);
+    }
+  }
+
+  async function handlePortal() {
+    setLoading("portal");
+    setError(null);
+    try {
+      const res = await fetch("/api/billing/portal", {
+        method: "POST",
+      });
+      const data = await res.json();
+      if (data.url) {
+        window.location.href = data.url;
+      } else {
+        setError(data.error || "Fehler beim Öffnen des Kundenportals.");
+      }
+    } catch {
+      setError("Verbindungsfehler. Bitte versuchen Sie es erneut.");
+    } finally {
+      setLoading(null);
+    }
+  }
+
+  const planIcon = (id: PlanId) => {
+    if (id === "professional") return Crown;
+    if (id === "starter") return Zap;
+    return CreditCard;
+  };
+
   return (
     <div className="space-y-8">
       <div>
@@ -15,21 +136,121 @@ export default function BillingPage() {
         </p>
       </div>
 
-      <Card>
-        <CardContent className="flex flex-col items-center justify-center py-16">
-          <CreditCard className="h-12 w-12 text-muted-foreground/50" />
-          <h3 className="mt-4 text-lg font-semibold">
-            Free-Plan aktiv
-          </h3>
-          <p className="mt-2 max-w-sm text-center text-sm text-muted-foreground">
-            Sie nutzen aktuell den kostenlosen Plan mit 30 Antworten pro Monat.
-            Upgraden Sie für mehr Funktionen.
-          </p>
-          <button className="mt-6 inline-flex h-10 items-center justify-center rounded-md bg-brand-500 px-6 text-sm font-medium text-white hover:bg-brand-600">
-            Auf Starter upgraden
-          </button>
-        </CardContent>
-      </Card>
+      {error && (
+        <div className="rounded-md border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+          {error}
+        </div>
+      )}
+
+      {/* Plan cards */}
+      <div className="grid gap-6 md:grid-cols-3">
+        {PLANS.map((plan) => {
+          const isActive = currentPlan === plan.id;
+          const Icon = planIcon(plan.id);
+
+          return (
+            <Card
+              key={plan.id}
+              className={`relative ${
+                plan.popular
+                  ? "border-brand-500 shadow-md"
+                  : ""
+              } ${isActive ? "ring-2 ring-brand-500" : ""}`}
+            >
+              {plan.popular && (
+                <div className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-brand-500 px-3 py-1 text-xs font-medium text-white">
+                  Beliebt
+                </div>
+              )}
+              <CardHeader className="text-center">
+                <Icon className="mx-auto h-8 w-8 text-brand-500" />
+                <CardTitle className="text-lg">{plan.name}</CardTitle>
+                <div className="mt-2">
+                  <span className="text-3xl font-bold">{plan.price}</span>
+                  {plan.period && (
+                    <span className="text-muted-foreground">
+                      {plan.period}
+                    </span>
+                  )}
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <ul className="space-y-2">
+                  {plan.features.map((feature) => (
+                    <li key={feature} className="flex items-start gap-2 text-sm">
+                      <Check className="mt-0.5 h-4 w-4 flex-shrink-0 text-green-500" />
+                      {feature}
+                    </li>
+                  ))}
+                  {plan.missingFeatures.map((feature) => (
+                    <li
+                      key={feature}
+                      className="flex items-start gap-2 text-sm text-muted-foreground line-through"
+                    >
+                      <span className="mt-0.5 h-4 w-4 flex-shrink-0" />
+                      {feature}
+                    </li>
+                  ))}
+                </ul>
+
+                <div className="pt-2">
+                  {isActive ? (
+                    <div className="text-center">
+                      <span className="inline-flex items-center rounded-md bg-brand-50 px-3 py-1.5 text-sm font-medium text-brand-700">
+                        Aktueller Plan
+                      </span>
+                    </div>
+                  ) : plan.id === "free" ? (
+                    // No downgrade button for free – use Stripe Portal
+                    hasStripeCustomer ? (
+                      <button
+                        onClick={handlePortal}
+                        disabled={loading !== null}
+                        className="w-full rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+                      >
+                        {loading === "portal" ? "Wird geladen…" : "Abo verwalten"}
+                      </button>
+                    ) : null
+                  ) : (
+                    <button
+                      onClick={() => handleCheckout(plan.id as "starter" | "professional")}
+                      disabled={loading !== null}
+                      className="w-full rounded-md bg-brand-500 px-4 py-2 text-sm font-medium text-white hover:bg-brand-600 disabled:opacity-50"
+                    >
+                      {loading === plan.id
+                        ? "Wird geladen…"
+                        : currentPlan === "free"
+                        ? `Auf ${plan.name} upgraden`
+                        : `Zu ${plan.name} wechseln`}
+                    </button>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          );
+        })}
+      </div>
+
+      {/* Stripe Portal link for existing customers */}
+      {hasStripeCustomer && (
+        <Card>
+          <CardContent className="flex items-center justify-between py-6">
+            <div>
+              <h3 className="font-semibold">Rechnungen & Zahlungsmethode</h3>
+              <p className="text-sm text-muted-foreground">
+                Verwalten Sie Ihre Zahlungsdaten und laden Sie Rechnungen herunter.
+              </p>
+            </div>
+            <button
+              onClick={handlePortal}
+              disabled={loading !== null}
+              className="rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+            >
+              {loading === "portal" ? "Wird geladen…" : "Stripe-Portal öffnen"}
+            </button>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }

@@ -1,7 +1,8 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { TrendingUp, MessageSquare, Star, AlertTriangle } from "lucide-react";
 import { getPractice } from "@/actions/practice";
-import { getDashboardOverview } from "@/lib/db/queries/dashboard";
+import { getDashboardOverview, getNpsTrend } from "@/lib/db/queries/dashboard";
+import { NpsChart } from "@/components/dashboard/nps-chart";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
@@ -11,7 +12,10 @@ export default async function DashboardPage() {
   const practice = await getPractice();
   if (!practice) redirect("/onboarding");
 
-  const overview = await getDashboardOverview(practice.id);
+  const [overview, npsTrend] = await Promise.all([
+    getDashboardOverview(practice.id),
+    getNpsTrend(practice.id),
+  ]);
   const hasData = overview.totalResponses > 0;
 
   return (
@@ -61,11 +65,32 @@ export default async function DashboardPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{overview.unreadAlerts}</div>
-            <p className="text-xs text-muted-foreground">{overview.unreadAlerts > 0 ? "Kritisches Feedback" : "Alles gut 👍"}</p>
+            <p className="text-xs text-muted-foreground">
+              {overview.unreadAlerts > 0 ? (
+                <Link href="/dashboard/alerts" className="text-red-600 hover:underline">
+                  Kritisches Feedback ansehen
+                </Link>
+              ) : (
+                "Alles gut"
+              )}
+            </p>
           </CardContent>
         </Card>
       </div>
 
+      {/* NPS Trend Chart */}
+      {hasData && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">NPS-Trend</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <NpsChart data={npsTrend} />
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Category Scores */}
       {hasData && (
         <Card>
           <CardHeader><CardTitle className="text-lg">Kategorie-Bewertungen (Ø)</CardTitle></CardHeader>

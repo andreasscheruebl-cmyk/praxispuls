@@ -74,11 +74,19 @@ Wenn Andi eines davon anfragt: "⚠️ Das ist v2. Soll ich es trotzdem machen?"
 - **Kosten:** API-Kosten abschätzen bei externen Services
 
 ## Aktuelle Prioritäten
-1. Build-Fehler fixen, `npm run dev` muss sauber laufen
-2. Git initialisieren
-3. Supabase DB aufsetzen (Migration)
-4. Alle Features E2E testen
-5. Fehlende Features: Billing-Seite, Stripe Webhook, NPS-Chart
+1. ~~Build-Fehler fixen~~ ✅ Build sauber
+2. ~~Git initialisieren~~ ✅ Repo + 3 Commits
+3. Supabase DB aufsetzen (Migration) – `npm run db:push` gegen Supabase
+4. ~~Fehlende Features~~ ✅ Alle implementiert:
+   - ✅ Stripe Webhook (`/api/webhooks/stripe`)
+   - ✅ Billing-Seite (3 Pläne, Checkout, Portal)
+   - ✅ Plan-Limits enforcing (Free=30, Starter=200)
+   - ✅ Alert-E-Mails + Alerts-UI (`/dashboard/alerts`)
+   - ✅ NPS-Trend-Chart (Recharts, `/dashboard`)
+   - ✅ E-Mail-Integration (Welcome, Detractor-Alert, Upgrade-Reminder)
+5. Alle Features E2E testen
+6. Legal Pages finalisieren (Impressum, Datenschutz, AGB)
+7. SEO + Monitoring (Meta Tags, Sentry, Plausible)
 
 ## Projektstruktur
 Siehe README.md für die vollständige Struktur.
