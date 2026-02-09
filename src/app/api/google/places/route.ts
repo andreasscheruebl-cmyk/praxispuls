@@ -26,11 +26,12 @@ export async function GET(request: Request) {
     }
 
     // Search by query
-    if (!query || query.length < 3) {
+    if (!query || query.length < 2) {
       return NextResponse.json([]);
     }
 
-    const results = await searchPlaces(query);
+    const postalCode = searchParams.get("postalCode") || undefined;
+    const results = await searchPlaces(query, postalCode);
     return NextResponse.json(results);
   } catch {
     return NextResponse.json({ error: "Interner Fehler" }, { status: 500 });

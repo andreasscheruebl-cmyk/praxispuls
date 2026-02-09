@@ -25,6 +25,8 @@ type GooglePlacesSearchProps = {
   selectedName?: string;
   /** Auto-search this query on mount (e.g. practice name) */
   initialQuery?: string;
+  /** Postal code for better local search results */
+  postalCode?: string;
 };
 
 /**
@@ -37,6 +39,7 @@ export function GooglePlacesSearch({
   onChange,
   selectedName,
   initialQuery,
+  postalCode,
 }: GooglePlacesSearchProps) {
   const [results, setResults] = useState<PlaceResult[]>([]);
   const [isOpen, setIsOpen] = useState(false);
@@ -80,16 +83,16 @@ export function GooglePlacesSearch({
   }, []);
 
   const fetchPlaces = useCallback(async (searchQuery: string) => {
-    if (searchQuery.trim().length < 2) {
+    if (searchQuery.trim().length < 1) {
       setResults([]);
       setIsOpen(false);
       return;
     }
     setIsLoading(true);
     try {
-      const response = await fetch(
-        `/api/google/places?q=${encodeURIComponent(searchQuery.trim())}`
-      );
+      const params = new URLSearchParams({ q: searchQuery.trim() });
+      if (postalCode) params.set("postalCode", postalCode);
+      const response = await fetch(`/api/google/places?${params}`);
       if (!response.ok) {
         setResults([]);
         return;
@@ -102,7 +105,7 @@ export function GooglePlacesSearch({
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [postalCode]);
 
   // Fetch place details for verification
   async function verifyPlace(place: PlaceResult) {

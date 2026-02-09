@@ -17,18 +17,22 @@ interface PlaceDetails {
 }
 
 /**
- * Search for a dental practice via Google Places Autocomplete
+ * Search for a dental practice via Google Places Autocomplete.
+ * If postalCode is provided, appends it to the query for better local results.
  */
-export async function searchPlaces(query: string): Promise<PlacePrediction[]> {
+export async function searchPlaces(query: string, postalCode?: string): Promise<PlacePrediction[]> {
   if (!GOOGLE_API_KEY) {
     console.warn("GOOGLE_PLACES_API_KEY not set");
     return [];
   }
 
+  // Append postal code to query for better local relevance
+  const searchInput = postalCode ? `${query} ${postalCode}` : query;
+
   const url = new URL(
     "https://maps.googleapis.com/maps/api/place/autocomplete/json"
   );
-  url.searchParams.set("input", query);
+  url.searchParams.set("input", searchInput);
   url.searchParams.set("types", "establishment");
   url.searchParams.set("components", "country:de");
   url.searchParams.set("language", "de");

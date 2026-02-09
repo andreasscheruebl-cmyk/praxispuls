@@ -90,6 +90,7 @@ export default function SettingsPage() {
                 if (!placeId) setCurrentPlaceInfo(null);
               }}
               selectedName={currentPlaceInfo?.name || ""}
+              postalCode={practice.postalCode ? String(practice.postalCode) : undefined}
             />
             <p className="text-xs text-muted-foreground">
               {practice.googlePlaceId

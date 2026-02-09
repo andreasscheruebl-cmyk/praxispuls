@@ -8,7 +8,6 @@ import {
   Settings,
   CreditCard,
   Bell,
-  User,
 } from "lucide-react";
 
 const navItems = [
@@ -18,7 +17,6 @@ const navItems = [
   { href: "/dashboard/qr-codes", label: "QR-Codes", icon: QrCode },
   { href: "/dashboard/settings", label: "Einstellungen", icon: Settings },
   { href: "/dashboard/billing", label: "Abrechnung", icon: CreditCard },
-  { href: "/dashboard/profile", label: "Profil", icon: User },
 ];
 
 export default async function DashboardLayout({
@@ -57,14 +55,14 @@ export default async function DashboardLayout({
 
           {/* User info + logout */}
           <div className="border-t p-4 space-y-3">
-            <div className="flex items-center gap-3">
-              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-brand-100 text-xs font-medium text-brand-600">
+            <Link href="/dashboard/profile" className="flex items-center gap-3 rounded-md px-1 py-1 hover:bg-accent transition-colors">
+              <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-brand-100 text-xs font-medium text-brand-600">
                 {user.email?.charAt(0).toUpperCase()}
               </div>
               <div className="flex-1 truncate">
                 <p className="truncate text-sm font-medium">{user.email}</p>
               </div>
-            </div>
+            </Link>
             <LogoutButton />
           </div>
         </div>
@@ -78,9 +76,10 @@ export default async function DashboardLayout({
             PraxisPuls
           </Link>
           <div className="flex items-center gap-2">
-            <Link href="/dashboard" className="p-2">
-              <Bell className="h-5 w-5 text-muted-foreground" />
+            <Link href="/dashboard/profile" className="flex items-center gap-2 rounded-md px-2 py-1 text-sm text-muted-foreground hover:text-foreground">
+              <span className="max-w-[120px] truncate">{user.email}</span>
             </Link>
+            <LogoutButton variant="icon" />
           </div>
         </header>
 

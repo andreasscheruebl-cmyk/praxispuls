@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { LogOut } from "lucide-react";
 
-export function LogoutButton() {
+export function LogoutButton({ variant = "full" }: { variant?: "full" | "icon" }) {
   const router = useRouter();
 
   async function handleLogout() {
@@ -12,6 +12,18 @@ export function LogoutButton() {
     await supabase.auth.signOut();
     router.push("/login");
     router.refresh();
+  }
+
+  if (variant === "icon") {
+    return (
+      <button
+        onClick={handleLogout}
+        className="rounded-md p-2 text-muted-foreground hover:bg-accent hover:text-foreground"
+        aria-label="Abmelden"
+      >
+        <LogOut className="h-5 w-5" />
+      </button>
+    );
   }
 
   return (

@@ -95,7 +95,8 @@ export default function OnboardingPage() {
                   value={data.googlePlaceId}
                   onChange={(placeId) => setData({...data, googlePlaceId: placeId})}
                   selectedName=""
-                  initialQuery={data.name ? `${data.name} Zahnarzt ${data.postalCode}`.trim() : undefined}
+                  initialQuery={data.name || undefined}
+                  postalCode={data.postalCode || undefined}
                 />
                 {data.googlePlaceId && (
                   <p className="text-xs text-green-600">
