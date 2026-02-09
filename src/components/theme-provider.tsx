@@ -22,6 +22,10 @@ export function ThemeProvider({
 }) {
   useEffect(() => {
     document.documentElement.setAttribute("data-theme", themeId);
+    return () => {
+      // Reset to default theme on unmount (prevents stale theme on navigation)
+      document.documentElement.setAttribute("data-theme", "vertrauen");
+    };
   }, [themeId]);
 
   const config = getThemeConfig(themeId);

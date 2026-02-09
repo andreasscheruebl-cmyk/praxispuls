@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import { Upload, Image as ImageIcon, Loader2 } from "lucide-react";
 
 const MAX_FILE_SIZE = 2 * 1024 * 1024; // 2 MB
@@ -28,6 +28,13 @@ export function LogoUpload({ currentLogoUrl, onUpload }: LogoUploadProps) {
   const [previewUrl, setPreviewUrl] = useState<string | null>(
     currentLogoUrl
   );
+
+  // Sync preview when parent changes logoUrl (e.g. via logo picker)
+  useEffect(() => {
+    if (currentLogoUrl) {
+      setPreviewUrl(`${currentLogoUrl}?t=${Date.now()}`);
+    }
+  }, [currentLogoUrl]);
 
   /** Validate file on the client side before uploading */
   function validateFile(file: File): string | null {

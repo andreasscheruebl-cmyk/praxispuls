@@ -2,8 +2,9 @@ import { NextResponse } from "next/server";
 import { getUserOptional } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { practices } from "@/lib/db/schema";
-import { eq } from "drizzle-orm";
+import { eq, and, isNull } from "drizzle-orm";
 import { createClient } from "@/lib/supabase/server";
+import { getPlacePhotoUrl } from "@/lib/google";
 
 /**
  * POST /api/practice/logo-from-url
@@ -22,15 +23,28 @@ export async function POST(request: Request) {
     }
 
     const practice = await db.query.practices.findFirst({
-      where: eq(practices.email, user.email),
+      where: and(eq(practices.email, user.email), isNull(practices.deletedAt)),
       columns: { id: true, logoUrl: true },
     });
     if (!practice) {
       return NextResponse.json({ error: "Praxis nicht gefunden" }, { status: 404 });
     }
 
+    // Resolve relative Google photo URLs to direct Google API URLs
+    let fetchUrl = url;
+    if (url.startsWith("/api/google/photo")) {
+      const refParam = new URL(url, "http://localhost").searchParams.get("ref");
+      if (refParam) {
+        const googleUrl = getPlacePhotoUrl(refParam, 400);
+        if (!googleUrl) {
+          return NextResponse.json({ error: "Google API nicht konfiguriert" }, { status: 500 });
+        }
+        fetchUrl = googleUrl;
+      }
+    }
+
     // Fetch image server-side (no CORS issues)
-    const imgRes = await fetch(url, { signal: AbortSignal.timeout(10000) });
+    const imgRes = await fetch(fetchUrl, { signal: AbortSignal.timeout(10000) });
     if (!imgRes.ok) {
       return NextResponse.json({ error: "Bild konnte nicht geladen werden" }, { status: 400 });
     }

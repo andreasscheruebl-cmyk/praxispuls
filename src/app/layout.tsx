@@ -44,8 +44,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="de" data-theme="vertrauen" className={`${inter.variable} ${playfair.variable}`}>
-      <body className={inter.className}>
+    <html lang="de" data-theme="vertrauen" className={`${inter.variable} ${playfair.variable}`} suppressHydrationWarning>
+      <body className={inter.className} suppressHydrationWarning>
+        {/* Blocking script: set theme + background before first paint */}
+        <script dangerouslySetInnerHTML={{ __html: `(function(){var d=document.documentElement;d.setAttribute("data-theme","vertrauen");document.body.style.backgroundColor="hsl(34,47%,97%)";})()` }} />
         {children}
         {process.env.NEXT_PUBLIC_PLAUSIBLE_DOMAIN && (
           <Script
