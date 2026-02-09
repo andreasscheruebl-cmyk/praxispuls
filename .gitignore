@@ -25,6 +25,14 @@ yarn-error.log*
 
 # local env files
 .env*.local
+.env.vercel-check
+.env.bak
+.env.backup
+
+# secrets / credentials
+*.pem
+*.key
+*.cert
 
 # vercel
 .vercel
@@ -39,5 +47,11 @@ drizzle/meta/
 # IDE
 .idea/
 .vscode/
+
+# Windows artifacts
+nul
+
+# Claude Code local settings (may contain permission-granted secrets)
+.claude/settings.local.json
 
 .vercel
