@@ -8,7 +8,7 @@ import { GooglePlacesSearch } from "@/components/dashboard/google-places-search"
 import { LogoUpload } from "@/components/dashboard/logo-upload";
 import { THEMES } from "@/lib/themes";
 
-type PlaceInfo = { name: string; address: string; rating?: number; totalRatings?: number } | null;
+type PlaceInfo = { name: string; address: string; rating?: number; totalRatings?: number; photoReference?: string; website?: string } | null;
 
 export default function SettingsPage() {
   const [practice, setPractice] = useState<Record<string, string | number> | null>(null);
@@ -50,11 +50,39 @@ export default function SettingsPage() {
       <form onSubmit={handleSave} className="space-y-6">
         <Card>
           <CardHeader><CardTitle className="text-lg">Logo</CardTitle></CardHeader>
-          <CardContent>
+          <CardContent className="space-y-4">
             <LogoUpload
               currentLogoUrl={practice.logoUrl ? String(practice.logoUrl) : null}
               onUpload={(url) => setPractice({ ...practice, logoUrl: url })}
             />
+            {!practice.logoUrl && currentPlaceInfo?.photoReference && (
+              <div className="rounded-lg border border-blue-200 bg-blue-50 p-3">
+                <p className="text-xs font-medium text-blue-800 mb-2">Logo-Vorschlag von Google:</p>
+                <div className="flex items-center gap-3">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={`/api/google/photo?ref=${encodeURIComponent(currentPlaceInfo.photoReference)}`}
+                    alt="Google-Foto"
+                    className="h-16 w-16 rounded-lg object-cover border"
+                  />
+                  <div className="flex-1">
+                    <p className="text-xs text-blue-700">
+                      Dieses Bild stammt aus Ihrem Google-Profil. Sie können es als Logo verwenden oder ein eigenes hochladen.
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const photoUrl = `/api/google/photo?ref=${encodeURIComponent(currentPlaceInfo.photoReference!)}`;
+                        setPractice({ ...practice, logoUrl: photoUrl });
+                      }}
+                      className="mt-1 text-xs font-medium text-blue-600 hover:underline"
+                    >
+                      Als Logo verwenden
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
           </CardContent>
         </Card>
         <Card>
@@ -138,7 +166,7 @@ export default function SettingsPage() {
         </Card>
         <Card><CardHeader><CardTitle className="text-lg">Umfrage</CardTitle></CardHeader>
           <CardContent className="space-y-4">
-            <div className="space-y-2"><Label>NPS-Schwellenwert (Google)</Label>
+            <div className="space-y-2"><Label>Schwellenwert für Google-Weiterleitung</Label>
               <select value={Number(practice.npsThreshold || 9)} onChange={e => setPractice({...practice, npsThreshold: parseInt(e.target.value)})} className="w-full rounded-md border bg-white px-3 py-2 text-sm">
                 <option value={8}>8+ (mehr Bewertungen)</option><option value={9}>9+ (Standard)</option><option value={10}>Nur 10</option>
               </select>

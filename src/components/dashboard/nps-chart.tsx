@@ -54,9 +54,9 @@ export const NpsChart = memo(function NpsChart({ data, color = "#2563eb" }: { da
             return (
               <div className="rounded-md border bg-white px-3 py-2 text-sm shadow-md">
                 <p className="font-medium">KW {point.week}</p>
-                <p style={{ color }}>NPS: {point.nps}</p>
+                <p style={{ color }}>Empfehlung: {point.nps}</p>
                 <p className="text-muted-foreground">
-                  {point.responses} Antworten ({point.promoters} Promoter, {point.detractors} Kritiker)
+                  {point.responses} Antworten ({point.promoters} Zufriedene, {point.detractors} Kritiker)
                 </p>
               </div>
             );

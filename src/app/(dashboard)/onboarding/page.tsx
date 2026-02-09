@@ -10,9 +10,9 @@ import { LogoUpload } from "@/components/dashboard/logo-upload";
 import { GooglePlacesSearch } from "@/components/dashboard/google-places-search";
 
 const TEMPLATES = [
-  { id: "zahnarzt_standard", name: "Standard", desc: "NPS + 4 Kategorien + Freitext (empfohlen)" },
-  { id: "zahnarzt_kurz", name: "Kurz", desc: "Nur NPS + Freitext (30 Sekunden)" },
-  { id: "zahnarzt_prophylaxe", name: "Prophylaxe", desc: "NPS + PZR-spezifische Fragen" },
+  { id: "zahnarzt_standard", name: "Standard", desc: "Empfehlung + 4 Kategorien + Freitext (empfohlen)" },
+  { id: "zahnarzt_kurz", name: "Kurz", desc: "Nur Empfehlung + Freitext (30 Sekunden)" },
+  { id: "zahnarzt_prophylaxe", name: "Prophylaxe", desc: "Empfehlung + PZR-spezifische Fragen" },
 ];
 
 export default function OnboardingPage() {

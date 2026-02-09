@@ -40,7 +40,7 @@ export default async function AlertsPage() {
       <div>
         <h1 className="text-2xl font-bold">Alerts</h1>
         <p className="text-muted-foreground">
-          Kritisches Patientenfeedback (NPS 0-6)
+          Kritisches Patientenfeedback (Empfehlungswert 0–6)
         </p>
       </div>
 

@@ -52,22 +52,3 @@ export function formatDateDE(date: Date | string): string {
   });
 }
 
-/**
- * Calculate NPS score from responses
- * NPS = %Promoters - %Detractors (range: -100 to +100)
- */
-export function calculateNps(
-  responses: { npsCategory: string }[]
-): number | null {
-  if (responses.length === 0) return null;
-
-  const promoters = responses.filter(
-    (r) => r.npsCategory === "promoter"
-  ).length;
-  const detractors = responses.filter(
-    (r) => r.npsCategory === "detractor"
-  ).length;
-  const total = responses.length;
-
-  return Math.round(((promoters - detractors) / total) * 100);
-}

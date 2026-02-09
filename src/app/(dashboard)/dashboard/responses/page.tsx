@@ -55,7 +55,7 @@ export default async function ResponsesPage() {
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex-1">
                     <div className="flex items-center gap-3">
-                      <span className="text-lg font-bold">NPS: {r.npsScore}</span>
+                      <span className="text-lg font-bold">Empfehlung: {r.npsScore}/10</span>
                       <NpsBadge category={r.npsCategory} />
                       <span className="text-xs text-muted-foreground">
                         {new Date(r.createdAt!).toLocaleDateString("de-DE", {

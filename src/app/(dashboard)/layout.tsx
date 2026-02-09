@@ -41,7 +41,7 @@ export default async function DashboardLayout({
     where: eq(practices.email, user.email!),
     columns: { theme: true },
   });
-  const themeId = (practice?.theme as ThemeId) || "standard";
+  const themeId = (practice?.theme as ThemeId) || "vertrauen";
 
   return (
     <ThemeProvider themeId={themeId}>
@@ -92,9 +92,15 @@ export default async function DashboardLayout({
           <Link href="/dashboard" className="text-lg font-bold text-primary">
             PraxisPuls
           </Link>
-          {themeId !== "vertrauen" && (
-            <MobileNav email={user.email || ""} navItems={navItems.map(i => ({ href: i.href, label: i.label }))} />
-          )}
+          <div className="flex items-center gap-2">
+            <Link href="/dashboard/profile" className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-xs font-medium text-primary">
+              {user.email?.charAt(0).toUpperCase()}
+            </Link>
+            <LogoutButton variant="icon" />
+            {themeId !== "vertrauen" && (
+              <MobileNav email={user.email || ""} navItems={navItems.map(i => ({ href: i.href, label: i.label }))} />
+            )}
+          </div>
         </header>
 
         {/* Page content */}

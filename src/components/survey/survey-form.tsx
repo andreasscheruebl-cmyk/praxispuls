@@ -14,7 +14,7 @@ type Props = {
   themeId?: ThemeId;
 };
 
-type Step = "nps" | "categories" | "freetext" | "submitting" | "done" | "duplicate";
+type Step = "nps" | "categories" | "freetext" | "submitting" | "done" | "duplicate" | "error";
 
 export function SurveyForm({ surveyId, practiceName, practiceColor, themeId = "standard" }: Props) {
   const themeConfig = getThemeConfig(themeId);
@@ -61,6 +61,10 @@ export function SurveyForm({ surveyId, practiceName, practiceColor, themeId = "s
         }),
       });
 
+      if (!res.ok) {
+        setStep("error");
+        return;
+      }
       const data = await res.json();
       if (data.code === "DUPLICATE_RESPONSE") {
         setStep("duplicate");
@@ -69,11 +73,10 @@ export function SurveyForm({ surveyId, practiceName, practiceColor, themeId = "s
       if (data.routing) {
         setRoutingResult(data.routing);
       }
+      setStep("done");
     } catch {
-      // Still show thank you even if tracking fails
+      setStep("error");
     }
-
-    setStep("done");
   }
 
   // ============ STEP: NPS ============
@@ -161,24 +164,35 @@ export function SurveyForm({ surveyId, practiceName, practiceColor, themeId = "s
                 />
               ) : (
                 <div className="flex gap-1">
-                  {[1, 2, 3, 4, 5].map((star) => (
-                    <button
-                      key={star}
-                      onClick={() =>
-                        setRatings((prev) => ({ ...prev, [cat.key]: star }))
-                      }
-                      className="p-1"
-                      aria-label={`${star} Sterne für ${cat.label}`}
-                    >
-                      <Star
-                        className={`h-8 w-8 ${
-                          star <= ratings[cat.key]
-                            ? "fill-yellow-400 text-yellow-400"
-                            : "text-gray-300"
-                        }`}
-                      />
-                    </button>
-                  ))}
+                  {[1, 2, 3, 4, 5].map((star) => {
+                    const isActive = star <= ratings[cat.key];
+                    const useThemeColor = themeId === "vertrauen";
+                    return (
+                      <button
+                        key={star}
+                        onClick={() =>
+                          setRatings((prev) => ({ ...prev, [cat.key]: star }))
+                        }
+                        className="p-1"
+                        aria-label={`${star} Sterne für ${cat.label}`}
+                      >
+                        <Star
+                          className={`h-8 w-8 ${
+                            isActive
+                              ? useThemeColor
+                                ? ""
+                                : "fill-yellow-400 text-yellow-400"
+                              : "text-gray-300"
+                          }`}
+                          style={
+                            isActive && useThemeColor
+                              ? { fill: practiceColor, color: practiceColor }
+                              : undefined
+                          }
+                        />
+                      </button>
+                    );
+                  })}
                 </div>
               )}
             </div>
@@ -304,6 +318,28 @@ export function SurveyForm({ surveyId, practiceName, practiceColor, themeId = "s
         <p className="text-muted-foreground">
           Ihre Rückmeldung hilft uns, unsere Praxis stetig zu verbessern.
         </p>
+      </div>
+    );
+  }
+
+  // ============ STEP: ERROR ============
+  if (step === "error") {
+    return (
+      <div className="space-y-6 text-center">
+        <div className="text-4xl">⚠️</div>
+        <h2 className="text-xl font-semibold">
+          Leider ist ein Fehler aufgetreten.
+        </h2>
+        <p className="text-muted-foreground">
+          Bitte versuchen Sie es in einigen Minuten erneut.
+        </p>
+        <Button
+          onClick={() => setStep("freetext")}
+          variant="outline"
+          size="lg"
+        >
+          Erneut versuchen
+        </Button>
       </div>
     );
   }

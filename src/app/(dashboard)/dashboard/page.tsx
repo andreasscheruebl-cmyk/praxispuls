@@ -35,7 +35,7 @@ export default async function DashboardPage() {
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">NPS Score</CardTitle>
+            <CardTitle className="text-sm font-medium">Empfehlungswert</CardTitle>
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -89,7 +89,7 @@ export default async function DashboardPage() {
       {hasData && (
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg">NPS-Trend</CardTitle>
+            <CardTitle className="text-lg">Empfehlungs-Trend</CardTitle>
           </CardHeader>
           <CardContent>
             <NpsChart data={npsTrend} color={themeConfig.chart.primaryColor} />

@@ -72,7 +72,7 @@ export function AlertItem({ alert }: { alert: AlertData }) {
               </span>
               <div className="flex-1">
                 <span className="font-medium">
-                  NPS {alert.npsScore}/10 – Kritisches Feedback
+                  Empfehlung: {alert.npsScore}/10 – Kritisches Feedback
                 </span>
                 {alert.createdAt && (
                   <span className="ml-2 text-sm text-muted-foreground">

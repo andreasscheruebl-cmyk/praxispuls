@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ThemeProvider } from "@/components/theme-provider";
 
 export default function MarketingLayout({
   children,
@@ -6,6 +7,7 @@ export default function MarketingLayout({
   children: React.ReactNode;
 }) {
   return (
+    <ThemeProvider themeId="vertrauen">
     <div className="min-h-screen flex flex-col">
       {/* Header */}
       <header className="border-b bg-white">
@@ -64,5 +66,6 @@ export default function MarketingLayout({
         </div>
       </footer>
     </div>
+    </ThemeProvider>
   );
 }

@@ -14,6 +14,8 @@ interface PlaceDetails {
   rating?: number;
   totalRatings?: number;
   googleMapsUrl?: string;
+  photoReference?: string;
+  website?: string;
 }
 
 /**
@@ -72,7 +74,7 @@ export async function getPlaceDetails(
     "https://maps.googleapis.com/maps/api/place/details/json"
   );
   url.searchParams.set("place_id", placeId);
-  url.searchParams.set("fields", "name,formatted_address,rating,user_ratings_total,url");
+  url.searchParams.set("fields", "name,formatted_address,rating,user_ratings_total,url,photos,website");
   url.searchParams.set("language", "de");
   url.searchParams.set("key", GOOGLE_API_KEY);
 
@@ -82,6 +84,7 @@ export async function getPlaceDetails(
   if (data.status !== "OK") return null;
 
   const result = data.result;
+  const photoRef = result.photos?.[0]?.photo_reference as string | undefined;
   return {
     placeId,
     name: result.name,
@@ -89,7 +92,18 @@ export async function getPlaceDetails(
     rating: result.rating,
     totalRatings: result.user_ratings_total,
     googleMapsUrl: result.url,
+    photoReference: photoRef,
+    website: result.website,
   };
+}
+
+/**
+ * Get a Google Places photo URL via photo reference.
+ * Returns null if no API key is set.
+ */
+export function getPlacePhotoUrl(photoReference: string, maxWidth = 400): string | null {
+  if (!GOOGLE_API_KEY) return null;
+  return `https://maps.googleapis.com/maps/api/place/photo?maxwidth=${maxWidth}&photo_reference=${photoReference}&key=${GOOGLE_API_KEY}`;
 }
 
 /**

@@ -23,7 +23,7 @@ export default async function SurveyPage({ params }: Props) {
     notFound();
   }
 
-  const themeId = (survey.practice.theme as ThemeId) || "standard";
+  const themeId = (survey.practice.theme as ThemeId) || "vertrauen";
   const themeConfig = getThemeConfig(themeId);
 
   return (

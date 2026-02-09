@@ -25,43 +25,6 @@ export async function generateQrCodeDataUrl(
   });
 }
 
-/**
- * Generate QR code as SVG string
- */
-export async function generateQrCodeSvg(
-  surveySlug: string,
-  options?: {
-    color?: string;
-  }
-): Promise<string> {
-  const url = `${APP_URL}/s/${surveySlug}`;
-
-  return QRCode.toString(url, {
-    type: "svg",
-    margin: 2,
-    color: {
-      dark: options?.color || "#000000",
-      light: "#FFFFFF",
-    },
-    errorCorrectionLevel: "M",
-  });
-}
-
-/**
- * Generate QR code as PNG buffer (for PDF generation)
- */
-export async function generateQrCodeBuffer(
-  surveySlug: string,
-  width: number = 512
-): Promise<Buffer> {
-  const url = `${APP_URL}/s/${surveySlug}`;
-
-  return QRCode.toBuffer(url, {
-    width,
-    margin: 2,
-    errorCorrectionLevel: "M",
-  });
-}
 
 /**
  * Get the survey URL for a given slug

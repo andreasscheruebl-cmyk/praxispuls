@@ -1,7 +1,6 @@
 // Theme system – types and configuration
 
-export const THEME_IDS = ["standard", "vertrauen"] as const;
-export type ThemeId = (typeof THEME_IDS)[number];
+export type ThemeId = "standard" | "vertrauen";
 
 export type ThemeConfig = {
   id: ThemeId;
@@ -60,7 +59,7 @@ export const THEMES: Record<ThemeId, ThemeConfig> = {
     description: "Warm & premium – Teal, Sage, Creme, Serif-Akzente.",
     survey: {
       npsStyle: "slider",
-      ratingStyle: "circles",
+      ratingStyle: "stars",
       paperTexture: true,
     },
     dashboard: {
