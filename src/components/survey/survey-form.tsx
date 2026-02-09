@@ -10,7 +10,7 @@ type Props = {
   practiceColor: string;
 };
 
-type Step = "nps" | "categories" | "freetext" | "submitting" | "done";
+type Step = "nps" | "categories" | "freetext" | "submitting" | "done" | "duplicate";
 
 export function SurveyForm({ surveyId, practiceName, practiceColor }: Props) {
   const [step, setStep] = useState<Step>("nps");
@@ -57,6 +57,10 @@ export function SurveyForm({ surveyId, practiceName, practiceColor }: Props) {
       });
 
       const data = await res.json();
+      if (data.code === "DUPLICATE_RESPONSE") {
+        setStep("duplicate");
+        return;
+      }
       if (data.routing) {
         setRoutingResult(data.routing);
       }
@@ -262,6 +266,21 @@ export function SurveyForm({ surveyId, practiceName, practiceColor }: Props) {
         </h2>
         <p className="text-muted-foreground">
           Ihre Rückmeldung hilft uns, unsere Praxis stetig zu verbessern.
+        </p>
+      </div>
+    );
+  }
+
+  // ============ STEP: DUPLICATE ============
+  if (step === "duplicate") {
+    return (
+      <div className="space-y-6 text-center">
+        <div className="text-4xl">✅</div>
+        <h2 className="text-xl font-semibold">
+          Vielen Dank — Sie haben bereits Feedback abgegeben.
+        </h2>
+        <p className="text-muted-foreground">
+          Wir haben Ihre Rückmeldung erhalten und wissen sie zu schätzen!
         </p>
       </div>
     );
