@@ -1019,3 +1019,459 @@ export async function generateBusinessCardDark(config: PdfConfig): Promise<Blob>
 
   return doc.output("blob");
 }
+
+// ===========================================================================
+// INFOGRAPHIC DESIGNS (fully configurable)
+// ===========================================================================
+
+/**
+ * 9. A4 Magazine Infographic – Full-page editorial style
+ */
+export async function generateA4MagazineInfographic(config: PdfConfig): Promise<Blob> {
+  const { qrDataUrl, practiceName, surveyUrl, brandColor, headline } = config;
+  const pw = 210;
+  const ph = 297;
+  const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+
+  // --- Full gradient background ---
+  drawGradientRect(doc, 0, 0, pw, ph, brandColor, tintColor(brandColor, 0.15));
+
+  // --- Top decorative circles ---
+  const circleOpacity = doc.GState({ opacity: 0.08 });
+  doc.saveGraphicsState();
+  doc.setGState(circleOpacity);
+  doc.setFillColor(255, 255, 255);
+  doc.circle(30, 30, 40, "F");
+  doc.circle(190, 60, 25, "F");
+  doc.circle(170, 280, 35, "F");
+  doc.restoreGraphicsState();
+
+  // --- Practice name ---
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(13);
+  doc.setTextColor(255, 255, 255);
+  const nameOpacity = doc.GState({ opacity: 0.85 });
+  doc.saveGraphicsState();
+  doc.setGState(nameOpacity);
+  doc.text(practiceName, getCenteredX(doc, practiceName, pw), 30);
+  doc.restoreGraphicsState();
+
+  // --- Large headline ---
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(38);
+  doc.setTextColor(255, 255, 255);
+  const h1 = headline || "Ihre Meinung\nist uns wichtig!";
+  const h1Lines = h1.split("\n");
+  let ly = 60;
+  for (const line of h1Lines) {
+    doc.text(line, getCenteredX(doc, line, pw), ly);
+    ly += 16;
+  }
+
+  // --- Subtitle ---
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(14);
+  const subOpacity = doc.GState({ opacity: 0.85 });
+  doc.saveGraphicsState();
+  doc.setGState(subOpacity);
+  doc.setTextColor(255, 255, 255);
+  const sub = "Scannen, bewerten, fertig \u2013 dauert nur 60 Sekunden";
+  doc.text(sub, getCenteredX(doc, sub, pw), ly + 8);
+  doc.restoreGraphicsState();
+
+  // --- Glass cards row ---
+  const cardsY = ly + 24;
+  const cardW = 52;
+  const cardH = 40;
+  const gap = 8;
+  const totalW = cardW * 3 + gap * 2;
+  const startX = (pw - totalW) / 2;
+
+  const steps = [
+    { icon: "1", title: "QR scannen", desc: "Kamera \u00f6ffnen\n& scannen" },
+    { icon: "2", title: "Bewerten", desc: "60 Sekunden\nFeedback" },
+    { icon: "3", title: "Fertig!", desc: "Vielen Dank\nf\u00fcr Ihre Hilfe" },
+  ];
+
+  steps.forEach((step, i) => {
+    const cx = startX + i * (cardW + gap);
+    drawGlassCard(doc, cx, cardsY, cardW, cardH, 4);
+
+    // Icon circle
+    doc.setFillColor(255, 255, 255);
+    const iconOp = doc.GState({ opacity: 0.25 });
+    doc.saveGraphicsState();
+    doc.setGState(iconOp);
+    doc.circle(cx + 12, cardsY + 12, 7, "F");
+    doc.restoreGraphicsState();
+
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(14);
+    doc.setTextColor(255, 255, 255);
+    doc.text(step.icon, cx + 12 - doc.getTextWidth(step.icon) / 2, cardsY + 14);
+
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(10);
+    doc.text(step.title, cx + 22, cardsY + 14);
+
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(8);
+    const descOp = doc.GState({ opacity: 0.8 });
+    doc.saveGraphicsState();
+    doc.setGState(descOp);
+    doc.setTextColor(255, 255, 255);
+    step.desc.split("\n").forEach((l, li) => {
+      doc.text(l, cx + 8, cardsY + 24 + li * 5);
+    });
+    doc.restoreGraphicsState();
+  });
+
+  // --- QR Code with white card ---
+  const qrSize = 100;
+  const qrCardPad = 10;
+  const qrCardY = cardsY + cardH + 16;
+  const qrCardW = qrSize + qrCardPad * 2;
+  const qrCardH = qrSize + qrCardPad * 2 + 12;
+  const qrCardX = (pw - qrCardW) / 2;
+
+  doc.setFillColor(255, 255, 255);
+  doc.roundedRect(qrCardX, qrCardY, qrCardW, qrCardH, 5, 5, "F");
+  doc.addImage(qrDataUrl, "PNG", qrCardX + qrCardPad, qrCardY + qrCardPad, qrSize, qrSize);
+
+  // "Jetzt scannen" text inside card
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(10);
+  doc.setTextColor(...brandColor);
+  const scanText = "Jetzt scannen!";
+  doc.text(scanText, qrCardX + qrCardW / 2 - doc.getTextWidth(scanText) / 2, qrCardY + qrCardPad + qrSize + 8);
+
+  // --- Stats bar ---
+  const statsY = qrCardY + qrCardH + 12;
+  const statItems = ["60 Sekunden", "100% anonym", "DSGVO-konform", "Kostenlos"];
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(8);
+  const pillTotalW = statItems.length * 36 + (statItems.length - 1) * 4;
+  let statCursor = (pw - pillTotalW) / 2;
+  statItems.forEach((s) => {
+    drawGlassCard(doc, statCursor, statsY, 36, 9, 4.5);
+    doc.setTextColor(255, 255, 255);
+    doc.text(s, statCursor + (36 - doc.getTextWidth(s)) / 2, statsY + 6);
+    statCursor += 40;
+  });
+
+  // --- URL ---
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(9);
+  const urlOp = doc.GState({ opacity: 0.7 });
+  doc.saveGraphicsState();
+  doc.setGState(urlOp);
+  doc.setTextColor(255, 255, 255);
+  doc.text(surveyUrl, getCenteredX(doc, surveyUrl, pw), statsY + 20);
+  doc.restoreGraphicsState();
+
+  // --- Bottom branding ---
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(7);
+  doc.setTextColor(255, 255, 255);
+  const brandOp = doc.GState({ opacity: 0.5 });
+  doc.saveGraphicsState();
+  doc.setGState(brandOp);
+  const branding = "Erstellt mit PraxisPuls \u2013 www.praxispuls.de";
+  doc.text(branding, getCenteredX(doc, branding, pw), ph - 8);
+  doc.restoreGraphicsState();
+
+  return doc.output("blob");
+}
+
+/**
+ * 10. A4 Bold Graphic – High contrast editorial with large typography
+ */
+export async function generateA4BoldGraphic(config: PdfConfig): Promise<Blob> {
+  const { qrDataUrl, practiceName, surveyUrl, brandColor, headline } = config;
+  const pw = 210;
+  const ph = 297;
+  const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+
+  // --- White background ---
+  doc.setFillColor(255, 255, 255);
+  doc.rect(0, 0, pw, ph, "F");
+
+  // --- Large brand color block (top 40%) ---
+  const blockH = 120;
+  doc.setFillColor(...brandColor);
+  doc.rect(0, 0, pw, blockH, "F");
+
+  // Diagonal cut at bottom of block
+  doc.setFillColor(255, 255, 255);
+  doc.triangle(0, blockH, pw, blockH - 20, pw, blockH, "F");
+
+  // --- Practice name top left ---
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(11);
+  doc.setTextColor(255, 255, 255);
+  const nameOp = doc.GState({ opacity: 0.8 });
+  doc.saveGraphicsState();
+  doc.setGState(nameOp);
+  doc.text(practiceName, 15, 18);
+  doc.restoreGraphicsState();
+
+  // --- Huge headline ---
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(44);
+  doc.setTextColor(255, 255, 255);
+  const h1 = headline || "Ihre Meinung\nz\u00e4hlt!";
+  const lines = h1.split("\n");
+  let headY = 50;
+  for (const line of lines) {
+    doc.text(line, 15, headY);
+    headY += 18;
+  }
+
+  // --- Subtext in block ---
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(13);
+  const subOp = doc.GState({ opacity: 0.85 });
+  doc.saveGraphicsState();
+  doc.setGState(subOp);
+  doc.setTextColor(255, 255, 255);
+  doc.text("Feedback in nur 60 Sekunden", 15, headY + 6);
+  doc.restoreGraphicsState();
+
+  // --- QR Code centered below block ---
+  const qrSize = 90;
+  const qrX = (pw - qrSize) / 2;
+  const qrY = blockH + 10;
+
+  // Tinted circle behind QR
+  doc.setFillColor(...tintColor(brandColor, 0.9));
+  doc.circle(pw / 2, qrY + qrSize / 2, qrSize / 2 + 8, "F");
+  doc.addImage(qrDataUrl, "PNG", qrX, qrY, qrSize, qrSize);
+
+  // --- 3 Steps horizontal ---
+  const stepsY = qrY + qrSize + 16;
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(11);
+  const stepTexts = ["1. Scannen", "2. Bewerten", "3. Fertig!"];
+  const stepW = 50;
+  const stepStart = (pw - stepW * 3) / 2;
+  stepTexts.forEach((s, i) => {
+    const sx = stepStart + i * stepW;
+    // Number circle
+    doc.setFillColor(...brandColor);
+    doc.circle(sx + 12, stepsY, 5, "F");
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(11);
+    doc.setTextColor(255, 255, 255);
+    const num = String(i + 1);
+    doc.text(num, sx + 12 - doc.getTextWidth(num) / 2, stepsY + 2.5);
+
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(11);
+    doc.setTextColor(...TEXT_DARK);
+    doc.text(s.substring(3), sx + 20, stepsY + 2);
+  });
+
+  // --- URL ---
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(9);
+  doc.setTextColor(...TEXT_MUTED);
+  doc.text(surveyUrl, getCenteredX(doc, surveyUrl, pw), stepsY + 18);
+
+  // --- Bottom brandColor bar ---
+  doc.setFillColor(...brandColor);
+  doc.rect(0, ph - 10, pw, 10, "F");
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(7);
+  doc.setTextColor(255, 255, 255);
+  const branding = "Erstellt mit PraxisPuls \u2013 www.praxispuls.de";
+  doc.text(branding, getCenteredX(doc, branding, pw), ph - 3.5);
+
+  return doc.output("blob");
+}
+
+/**
+ * 11. A5 Landscape Infographic – Horizontal split with timeline
+ */
+export async function generateA5LandscapeInfographic(config: PdfConfig): Promise<Blob> {
+  const { qrDataUrl, practiceName, surveyUrl, brandColor, headline } = config;
+  const pw = 210;
+  const ph = 148;
+  const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: "a5" });
+
+  // --- Gradient background ---
+  drawGradientRect(doc, 0, 0, pw, ph, DARK_BG, [20, 30, 50]);
+
+  // --- Accent line at top ---
+  doc.setFillColor(...brandColor);
+  doc.rect(0, 0, pw, 3, "F");
+
+  // --- Left side: headline + timeline ---
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(22);
+  doc.setTextColor(255, 255, 255);
+  const h1 = headline || "Ihre Meinung\nist uns wichtig!";
+  const h1Lines = h1.split("\n");
+  let ly = 24;
+  for (const line of h1Lines) {
+    doc.text(line, 14, ly);
+    ly += 11;
+  }
+
+  // Timeline
+  const timelineX = 22;
+  const timelineStartY = ly + 8;
+  const timelineSteps = [
+    { label: "QR-Code scannen", time: "5 Sek." },
+    { label: "Feedback geben", time: "50 Sek." },
+    { label: "Fertig!", time: "Danke!" },
+  ];
+
+  // Vertical line
+  doc.setDrawColor(...brandColor);
+  doc.setLineWidth(0.8);
+  doc.line(timelineX, timelineStartY, timelineX, timelineStartY + 50);
+
+  timelineSteps.forEach((step, i) => {
+    const sy = timelineStartY + i * 20;
+    // Dot on timeline
+    doc.setFillColor(...brandColor);
+    doc.circle(timelineX, sy, 3, "F");
+    doc.setFillColor(255, 255, 255);
+    doc.circle(timelineX, sy, 1.5, "F");
+
+    // Label
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(10);
+    doc.setTextColor(255, 255, 255);
+    doc.text(step.label, timelineX + 8, sy + 1);
+
+    // Time badge
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(7);
+    doc.setTextColor(...brandColor);
+    doc.text(step.time, timelineX + 8, sy + 7);
+  });
+
+  // Practice name bottom left
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(8);
+  const nameOp = doc.GState({ opacity: 0.5 });
+  doc.saveGraphicsState();
+  doc.setGState(nameOp);
+  doc.setTextColor(255, 255, 255);
+  doc.text(practiceName, 14, ph - 10);
+  doc.restoreGraphicsState();
+
+  // --- Right side: QR with glow ---
+  const rightCenter = pw * 0.72;
+  const qrSize = 65;
+
+  drawGlowEffect(doc, rightCenter, ph / 2, qrSize, brandColor, 4);
+
+  doc.setFillColor(255, 255, 255);
+  doc.roundedRect(rightCenter - qrSize / 2 - 3, ph / 2 - qrSize / 2 - 3, qrSize + 6, qrSize + 6, 3, 3, "F");
+  doc.addImage(qrDataUrl, "PNG", rightCenter - qrSize / 2, ph / 2 - qrSize / 2, qrSize, qrSize);
+
+  // URL below QR
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(7);
+  doc.setTextColor(150, 155, 170);
+  doc.text(surveyUrl, rightCenter - doc.getTextWidth(surveyUrl) / 2, ph / 2 + qrSize / 2 + 12);
+
+  // Branding bottom right
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(6);
+  const brandOp = doc.GState({ opacity: 0.4 });
+  doc.saveGraphicsState();
+  doc.setGState(brandOp);
+  doc.setTextColor(255, 255, 255);
+  const branding = "PraxisPuls";
+  doc.text(branding, pw - doc.getTextWidth(branding) - 10, ph - 8);
+  doc.restoreGraphicsState();
+
+  return doc.output("blob");
+}
+
+/**
+ * 12. A6 Minimal Infographic – Clean, icon-driven compact card
+ */
+export async function generateA6MinimalInfographic(config: PdfConfig): Promise<Blob> {
+  const { qrDataUrl, practiceName, surveyUrl, brandColor, headline } = config;
+  const pw = 105;
+  const ph = 148;
+  const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: [pw, ph] });
+
+  // --- White background ---
+  doc.setFillColor(252, 252, 252);
+  doc.rect(0, 0, pw, ph, "F");
+
+  // --- Left accent stripe ---
+  doc.setFillColor(...brandColor);
+  doc.rect(0, 0, 4, ph, "F");
+
+  // --- Practice name ---
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(9);
+  doc.setTextColor(...TEXT_DARK);
+  doc.text(practiceName, 12, 16);
+
+  // --- Headline ---
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(20);
+  doc.setTextColor(...brandColor);
+  const h1 = headline || "Ihre Meinung\nz\u00e4hlt!";
+  const h1Lines = h1.split("\n");
+  let ly = 32;
+  for (const line of h1Lines) {
+    doc.text(line, 12, ly);
+    ly += 9;
+  }
+
+  // --- Horizontal line ---
+  doc.setDrawColor(...tintColor(brandColor, 0.7));
+  doc.setLineWidth(0.5);
+  doc.line(12, ly + 2, pw - 12, ly + 2);
+
+  // --- 3 Steps with numbered circles ---
+  const stepsY = ly + 10;
+  const stepsData = [
+    { num: "1", label: "QR-Code scannen" },
+    { num: "2", label: "Feedback geben" },
+    { num: "3", label: "Fertig!" },
+  ];
+
+  stepsData.forEach((s, i) => {
+    const sy = stepsY + i * 10;
+    doc.setFillColor(...brandColor);
+    doc.circle(18, sy, 3, "F");
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(8);
+    doc.setTextColor(255, 255, 255);
+    doc.text(s.num, 18 - doc.getTextWidth(s.num) / 2, sy + 1.8);
+
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(9);
+    doc.setTextColor(...TEXT_DARK);
+    doc.text(s.label, 25, sy + 2);
+  });
+
+  // --- QR code ---
+  const qrSize = 45;
+  const qrX = (pw - qrSize) / 2;
+  const qrY = stepsY + 36;
+
+  doc.setFillColor(...tintColor(brandColor, 0.92));
+  doc.roundedRect(qrX - 4, qrY - 4, qrSize + 8, qrSize + 8, 3, 3, "F");
+  doc.addImage(qrDataUrl, "PNG", qrX, qrY, qrSize, qrSize);
+
+  // --- URL ---
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(7);
+  doc.setTextColor(...TEXT_MUTED);
+  doc.text(surveyUrl, getCenteredX(doc, surveyUrl, pw), qrY + qrSize + 8);
+
+  // --- Bottom branding ---
+  drawBrandingBar(doc, pw, ph, brandColor, 7);
+
+  return doc.output("blob");
+}

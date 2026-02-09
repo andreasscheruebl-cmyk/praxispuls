@@ -40,6 +40,13 @@ function LoginForm() {
       return;
     }
 
+    // Record login event (fire-and-forget)
+    fetch("/api/auth/login-event", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ method: "password" }),
+    }).catch(() => {});
+
     router.push("/dashboard");
     router.refresh();
   }

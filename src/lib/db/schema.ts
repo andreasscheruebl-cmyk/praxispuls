@@ -120,12 +120,36 @@ export const alerts = pgTable(
 );
 
 // ============================================================
+// LOGIN EVENTS (Audit Log)
+// ============================================================
+export const loginEvents = pgTable(
+  "login_events",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    practiceId: uuid("practice_id")
+      .notNull()
+      .references(() => practices.id, { onDelete: "cascade" }),
+    userAgent: text("user_agent"),
+    ipAddress: text("ip_address"),
+    method: text("method").default("password"), // password | magic_link | oauth
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
+  },
+  (table) => ({
+    practiceIdx: index("idx_login_events_practice").on(
+      table.practiceId,
+      table.createdAt
+    ),
+  })
+);
+
+// ============================================================
 // RELATIONS
 // ============================================================
 export const practicesRelations = relations(practices, ({ many }) => ({
   surveys: many(surveys),
   responses: many(responses),
   alerts: many(alerts),
+  loginEvents: many(loginEvents),
 }));
 
 export const surveysRelations = relations(surveys, ({ one, many }) => ({
@@ -158,6 +182,13 @@ export const alertsRelations = relations(alerts, ({ one }) => ({
   }),
 }));
 
+export const loginEventsRelations = relations(loginEvents, ({ one }) => ({
+  practice: one(practices, {
+    fields: [loginEvents.practiceId],
+    references: [practices.id],
+  }),
+}));
+
 // ============================================================
 // TYPES (inferred from schema)
 // ============================================================
@@ -169,3 +200,5 @@ export type Response = typeof responses.$inferSelect;
 export type NewResponse = typeof responses.$inferInsert;
 export type Alert = typeof alerts.$inferSelect;
 export type NewAlert = typeof alerts.$inferInsert;
+export type LoginEvent = typeof loginEvents.$inferSelect;
+export type NewLoginEvent = typeof loginEvents.$inferInsert;

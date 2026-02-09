@@ -10,7 +10,7 @@ export default function MarketingLayout({
     <ThemeProvider themeId="vertrauen">
     <div className="min-h-screen flex flex-col">
       {/* Header */}
-      <header className="border-b bg-white">
+      <header className="border-b bg-background">
         <div className="container mx-auto flex h-16 items-center justify-between px-4">
           <Link href="/" className="flex items-center space-x-2">
             <span className="text-xl font-bold text-primary">PraxisPuls</span>
@@ -36,7 +36,7 @@ export default function MarketingLayout({
       <main className="flex-1">{children}</main>
 
       {/* Footer */}
-      <footer className="border-t bg-gray-50 py-8">
+      <footer className="border-t bg-muted/50 py-8">
         <div className="container mx-auto px-4">
           <div className="flex flex-col items-center justify-between gap-4 md:flex-row">
             <p className="text-sm text-muted-foreground">

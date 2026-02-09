@@ -32,6 +32,44 @@ export default async function DashboardPage() {
         <p className="text-muted-foreground">{practice.name}</p>
       </div>
 
+      {/* 1. Category Scores */}
+      {hasData && (
+        <Card>
+          <CardHeader><CardTitle className="text-lg">Kategorie-Bewertungen (Ø)</CardTitle></CardHeader>
+          <CardContent>
+            {themeConfig.dashboard.categoryDisplay === "bars" ? (
+              <CategoryBars
+                categories={[
+                  { label: "Wartezeit", value: overview.categoryScores.waitTime },
+                  { label: "Freundlichkeit", value: overview.categoryScores.friendliness },
+                  { label: "Behandlung", value: overview.categoryScores.treatment },
+                  { label: "Ausstattung", value: overview.categoryScores.facility },
+                ]}
+                color={themeConfig.chart.primaryColor}
+              />
+            ) : (
+              <div className="grid gap-4 md:grid-cols-4">
+                {([
+                  { label: "Wartezeit", value: overview.categoryScores.waitTime },
+                  { label: "Freundlichkeit", value: overview.categoryScores.friendliness },
+                  { label: "Behandlung", value: overview.categoryScores.treatment },
+                  { label: "Ausstattung", value: overview.categoryScores.facility },
+                ] as const).map((cat) => (
+                  <div key={cat.label} className="text-center">
+                    <p className="text-sm text-muted-foreground">{cat.label}</p>
+                    <p className="mt-1 text-2xl font-bold">{cat.value !== null ? cat.value.toFixed(1) : "–"}</p>
+                    <div className="mt-1 text-yellow-400">
+                      {"★".repeat(Math.round(cat.value || 0))}{"☆".repeat(5 - Math.round(cat.value || 0))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* 2. Key Numbers */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -85,7 +123,7 @@ export default async function DashboardPage() {
         </Card>
       </div>
 
-      {/* NPS Trend Chart */}
+      {/* 3. NPS Trend Chart */}
       {hasData && (
         <Card>
           <CardHeader>
@@ -97,51 +135,14 @@ export default async function DashboardPage() {
         </Card>
       )}
 
-      {/* Google Review Funnel */}
+      {/* 4. Google Review Pipeline */}
       {hasData && (
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg">Google-Review-Funnel (30 Tage)</CardTitle>
+            <CardTitle className="text-lg">Von der Umfrage zur Google-Bewertung (30 Tage)</CardTitle>
           </CardHeader>
           <CardContent>
             <ReviewFunnel data={reviewFunnel} />
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Category Scores */}
-      {hasData && (
-        <Card>
-          <CardHeader><CardTitle className="text-lg">Kategorie-Bewertungen (Ø)</CardTitle></CardHeader>
-          <CardContent>
-            {themeConfig.dashboard.categoryDisplay === "bars" ? (
-              <CategoryBars
-                categories={[
-                  { label: "Wartezeit", value: overview.categoryScores.waitTime },
-                  { label: "Freundlichkeit", value: overview.categoryScores.friendliness },
-                  { label: "Behandlung", value: overview.categoryScores.treatment },
-                  { label: "Ausstattung", value: overview.categoryScores.facility },
-                ]}
-                color={themeConfig.chart.primaryColor}
-              />
-            ) : (
-              <div className="grid gap-4 md:grid-cols-4">
-                {([
-                  { label: "Wartezeit", value: overview.categoryScores.waitTime },
-                  { label: "Freundlichkeit", value: overview.categoryScores.friendliness },
-                  { label: "Behandlung", value: overview.categoryScores.treatment },
-                  { label: "Ausstattung", value: overview.categoryScores.facility },
-                ] as const).map((cat) => (
-                  <div key={cat.label} className="text-center">
-                    <p className="text-sm text-muted-foreground">{cat.label}</p>
-                    <p className="mt-1 text-2xl font-bold">{cat.value !== null ? cat.value.toFixed(1) : "–"}</p>
-                    <div className="mt-1 text-yellow-400">
-                      {"★".repeat(Math.round(cat.value || 0))}{"☆".repeat(5 - Math.round(cat.value || 0))}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
           </CardContent>
         </Card>
       )}

@@ -1,17 +1,92 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { LogOut, Trash2, AlertTriangle } from "lucide-react";
+import { LogOut, Trash2, AlertTriangle, Monitor, Smartphone, Globe } from "lucide-react";
+
+type LoginEvent = {
+  id: string;
+  userAgent: string | null;
+  ipAddress: string | null;
+  method: string | null;
+  createdAt: string;
+};
+
+function parseDevice(ua: string | null): { label: string; icon: "desktop" | "mobile" | "unknown" } {
+  if (!ua) return { label: "Unbekanntes Gerät", icon: "unknown" };
+  const lower = ua.toLowerCase();
+  const isPhone = /mobile|iphone|android(?!.*tablet)|ipod/.test(lower);
+  const isTablet = /tablet|ipad/.test(lower);
+
+  let browser = "Browser";
+  if (lower.includes("chrome") && !lower.includes("edg")) browser = "Chrome";
+  else if (lower.includes("firefox")) browser = "Firefox";
+  else if (lower.includes("safari") && !lower.includes("chrome")) browser = "Safari";
+  else if (lower.includes("edg")) browser = "Edge";
+
+  let os = "";
+  if (lower.includes("windows")) os = "Windows";
+  else if (lower.includes("mac os")) os = "macOS";
+  else if (lower.includes("linux")) os = "Linux";
+  else if (lower.includes("android")) os = "Android";
+  else if (lower.includes("iphone") || lower.includes("ipad")) os = "iOS";
+
+  const device = isTablet ? "Tablet" : isPhone ? "Smartphone" : "Desktop";
+  return {
+    label: `${browser} · ${os || device}`,
+    icon: isPhone || isTablet ? "mobile" : "desktop",
+  };
+}
+
+function formatDate(dateStr: string): string {
+  const d = new Date(dateStr);
+  return d.toLocaleDateString("de-DE", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
+function timeAgo(dateStr: string): string {
+  const diff = Date.now() - new Date(dateStr).getTime();
+  const minutes = Math.floor(diff / 60000);
+  if (minutes < 1) return "Gerade eben";
+  if (minutes < 60) return `vor ${minutes} Min.`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `vor ${hours} Std.`;
+  const days = Math.floor(hours / 24);
+  if (days < 7) return `vor ${days} Tagen`;
+  return formatDate(dateStr);
+}
 
 export default function ProfilePage() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [loginHistory, setLoginHistory] = useState<LoginEvent[]>([]);
+  const [historyLoading, setHistoryLoading] = useState(true);
+  const [userEmail, setUserEmail] = useState<string | null>(null);
   const router = useRouter();
+
+  useEffect(() => {
+    // Fetch login history
+    fetch("/api/auth/login-event")
+      .then((r) => r.ok ? r.json() : { events: [] })
+      .then((data) => setLoginHistory(data.events || []))
+      .catch(() => {})
+      .finally(() => setHistoryLoading(false));
+
+    // Get user email
+    const supabase = createClient();
+    supabase.auth.getUser().then(({ data }) => {
+      if (data.user?.email) setUserEmail(data.user.email);
+    });
+  }, []);
 
   async function handleLogout() {
     const supabase = createClient();
@@ -55,6 +130,77 @@ export default function ProfilePage() {
           {error}
         </div>
       )}
+
+      {/* Account Info */}
+      {userEmail && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Konto</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-sm font-bold text-primary">
+                {userEmail[0]?.toUpperCase()}
+              </div>
+              <div>
+                <p className="text-sm font-medium">{userEmail}</p>
+                <p className="text-xs text-muted-foreground">E-Mail-Anmeldung</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Login History */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg">Anmelde-Verlauf</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {historyLoading ? (
+            <div className="flex justify-center py-6">
+              <div className="h-6 w-6 animate-spin rounded-full border-2 border-gray-200 border-t-primary" />
+            </div>
+          ) : loginHistory.length === 0 ? (
+            <p className="py-4 text-center text-sm text-muted-foreground">
+              Noch keine Anmeldungen aufgezeichnet.
+            </p>
+          ) : (
+            <div className="space-y-3">
+              {loginHistory.map((event, i) => {
+                const device = parseDevice(event.userAgent);
+                const isFirst = i === 0;
+                const DeviceIcon = device.icon === "mobile" ? Smartphone : device.icon === "desktop" ? Monitor : Globe;
+                return (
+                  <div
+                    key={event.id}
+                    className={`flex items-start gap-3 rounded-lg border p-3 ${isFirst ? "border-primary/30 bg-primary/5" : ""}`}
+                  >
+                    <DeviceIcon className={`mt-0.5 h-4 w-4 shrink-0 ${isFirst ? "text-primary" : "text-muted-foreground"}`} />
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2">
+                        <p className="text-sm font-medium">{device.label}</p>
+                        {isFirst && (
+                          <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-semibold text-primary">
+                            Aktuelle Sitzung
+                          </span>
+                        )}
+                      </div>
+                      <div className="mt-0.5 flex flex-wrap gap-x-3 text-xs text-muted-foreground">
+                        <span>{timeAgo(event.createdAt)}</span>
+                        {event.ipAddress && <span>{event.ipAddress}</span>}
+                        {event.method && event.method !== "password" && (
+                          <span className="capitalize">{event.method.replace("_", " ")}</span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       {/* Logout */}
       <Card>

@@ -4,11 +4,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Loader2, Check } from "lucide-react";
 import { GooglePlacesSearch } from "@/components/dashboard/google-places-search";
 import { LogoUpload } from "@/components/dashboard/logo-upload";
-import { THEMES } from "@/lib/themes";
 
-type PlaceInfo = { name: string; address: string; rating?: number; totalRatings?: number; photoReference?: string; website?: string } | null;
+type PlaceInfo = { name: string; address: string; rating?: number; totalRatings?: number; photoReference?: string; photoReferences?: string[]; website?: string } | null;
 
 export default function SettingsPage() {
   const [practice, setPractice] = useState<Record<string, string | number> | null>(null);
@@ -16,16 +16,55 @@ export default function SettingsPage() {
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [currentPlaceInfo, setCurrentPlaceInfo] = useState<PlaceInfo>(null);
+  const [logoUploading, setLogoUploading] = useState<string | null>(null);
+  const [websiteLogos, setWebsiteLogos] = useState<string[]>([]);
+
+  /** Fetch a remote image, upload it via the logo API, and update practice state */
+  async function applyImageAsLogo(imageUrl: string, sourceKey: string) {
+    setLogoUploading(sourceKey);
+    try {
+      const imgRes = await fetch(imageUrl);
+      if (!imgRes.ok) throw new Error("Fetch failed");
+      const blob = await imgRes.blob();
+      const ext = blob.type.includes("png") ? "png" : blob.type.includes("svg") ? "svg" : blob.type.includes("webp") ? "webp" : "jpg";
+      const file = new File([blob], `logo.${ext}`, { type: blob.type || "image/png" });
+      const formData = new FormData();
+      formData.append("file", file);
+      const uploadRes = await fetch("/api/practice/logo", { method: "POST", body: formData });
+      if (!uploadRes.ok) throw new Error("Upload failed");
+      const data = await uploadRes.json();
+      setPractice((prev) => prev ? { ...prev, logoUrl: data.logoUrl } : prev);
+    } catch {
+      // Silently fail — user can retry or upload manually
+    } finally {
+      setLogoUploading(null);
+    }
+  }
+
+  /** Try to find logos from the practice website */
+  async function findWebsiteLogos(websiteUrl: string) {
+    try {
+      const res = await fetch(`/api/practice/website-logos?url=${encodeURIComponent(websiteUrl)}`);
+      if (res.ok) {
+        const data = await res.json();
+        setWebsiteLogos(data.logos || []);
+      }
+    } catch { /* ignore */ }
+  }
 
   useEffect(() => {
     fetch("/api/practice").then(r => r.ok ? r.json() : null).then(d => {
       if (d) {
         setPractice(d);
-        // Load details for existing Place ID
         if (d.googlePlaceId) {
           fetch(`/api/google/places?placeId=${encodeURIComponent(d.googlePlaceId)}`)
             .then(r => r.ok ? r.json() : null)
-            .then(info => { if (info) setCurrentPlaceInfo(info); })
+            .then(info => {
+              if (info) {
+                setCurrentPlaceInfo(info);
+                if (info.website) findWebsiteLogos(info.website);
+              }
+            })
             .catch(() => {});
         }
       }
@@ -55,70 +94,71 @@ export default function SettingsPage() {
               currentLogoUrl={practice.logoUrl ? String(practice.logoUrl) : null}
               onUpload={(url) => setPractice({ ...practice, logoUrl: url })}
             />
-            {!practice.logoUrl && currentPlaceInfo?.photoReference && (
-              <div className="rounded-lg border border-blue-200 bg-blue-50 p-3">
-                <p className="text-xs font-medium text-blue-800 mb-2">Logo-Vorschlag von Google:</p>
-                <div className="flex items-center gap-3">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={`/api/google/photo?ref=${encodeURIComponent(currentPlaceInfo.photoReference)}`}
-                    alt="Google-Foto"
-                    className="h-16 w-16 rounded-lg object-cover border"
-                  />
-                  <div className="flex-1">
-                    <p className="text-xs text-blue-700">
-                      Dieses Bild stammt aus Ihrem Google-Profil. Sie können es als Logo verwenden oder ein eigenes hochladen.
-                    </p>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const photoUrl = `/api/google/photo?ref=${encodeURIComponent(currentPlaceInfo.photoReference!)}`;
-                        setPractice({ ...practice, logoUrl: photoUrl });
-                      }}
-                      className="mt-1 text-xs font-medium text-blue-600 hover:underline"
-                    >
-                      Als Logo verwenden
-                    </button>
+            {/* Logo suggestions from website + Google Photos */}
+            {!practice.logoUrl && (websiteLogos.length > 0 || (currentPlaceInfo?.photoReferences && currentPlaceInfo.photoReferences.length > 0)) && (
+              <div className="rounded-lg border border-blue-200 bg-blue-50 p-4">
+                <p className="text-xs font-medium text-blue-800 mb-3">Logo-Vorschläge — Bild auswählen oder eigenes hochladen:</p>
+
+                {/* Website logos (favicon, og:image, etc.) */}
+                {websiteLogos.length > 0 && (
+                  <div className="mb-3">
+                    <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-blue-600">Von der Website</p>
+                    <div className="flex flex-wrap gap-2">
+                      {websiteLogos.map((logoUrl, i) => {
+                        const key = `web-${i}`;
+                        return (
+                          <button
+                            key={key}
+                            type="button"
+                            disabled={logoUploading !== null}
+                            onClick={() => applyImageAsLogo(logoUrl, key)}
+                            className="group relative h-16 w-16 overflow-hidden rounded-lg border-2 border-transparent bg-white transition-all hover:border-blue-400 disabled:opacity-50"
+                          >
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img src={logoUrl} alt={`Website Logo ${i + 1}`} className="h-full w-full object-contain p-1" />
+                            {logoUploading === key ? (
+                              <span className="absolute inset-0 flex items-center justify-center bg-black/40"><Loader2 className="h-4 w-4 animate-spin text-white" /></span>
+                            ) : (
+                              <span className="absolute inset-0 flex items-center justify-center bg-blue-500/80 opacity-0 transition-opacity group-hover:opacity-100"><Check className="h-4 w-4 text-white" /></span>
+                            )}
+                          </button>
+                        );
+                      })}
+                    </div>
                   </div>
-                </div>
+                )}
+
+                {/* Google Photos */}
+                {currentPlaceInfo?.photoReferences && currentPlaceInfo.photoReferences.length > 0 && (
+                  <div>
+                    <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-blue-600">Von Google</p>
+                    <div className="flex flex-wrap gap-2">
+                      {currentPlaceInfo.photoReferences.map((ref, i) => {
+                        const key = `google-${i}`;
+                        const photoUrl = `/api/google/photo?ref=${encodeURIComponent(ref)}`;
+                        return (
+                          <button
+                            key={key}
+                            type="button"
+                            disabled={logoUploading !== null}
+                            onClick={() => applyImageAsLogo(photoUrl, key)}
+                            className="group relative h-16 w-16 overflow-hidden rounded-lg border-2 border-transparent bg-white transition-all hover:border-blue-400 disabled:opacity-50"
+                          >
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img src={photoUrl} alt={`Google Foto ${i + 1}`} className="h-full w-full object-cover" />
+                            {logoUploading === key ? (
+                              <span className="absolute inset-0 flex items-center justify-center bg-black/40"><Loader2 className="h-4 w-4 animate-spin text-white" /></span>
+                            ) : (
+                              <span className="absolute inset-0 flex items-center justify-center bg-blue-500/80 opacity-0 transition-opacity group-hover:opacity-100"><Check className="h-4 w-4 text-white" /></span>
+                            )}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
               </div>
             )}
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader><CardTitle className="text-lg">Design-Theme</CardTitle></CardHeader>
-          <CardContent>
-            <p className="mb-4 text-sm text-muted-foreground">Wählen Sie das Erscheinungsbild Ihrer Umfrage und Ihres Dashboards.</p>
-            <div className="grid gap-4 sm:grid-cols-2">
-              {Object.values(THEMES).map((theme) => {
-                const isSelected = (practice.theme || "standard") === theme.id;
-                return (
-                  <button
-                    key={theme.id}
-                    type="button"
-                    onClick={() => setPractice({ ...practice, theme: theme.id })}
-                    className={`rounded-lg border-2 p-4 text-left transition-all ${
-                      isSelected
-                        ? "border-primary bg-primary/5 ring-2 ring-primary/20"
-                        : "border-border hover:border-primary/40"
-                    }`}
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className={`h-8 w-8 rounded-full ${
-                        theme.id === "standard" ? "bg-blue-500" : "bg-teal-500"
-                      }`} />
-                      <div>
-                        <p className="font-semibold">{theme.name}</p>
-                        <p className="text-xs text-muted-foreground">{theme.description}</p>
-                      </div>
-                    </div>
-                    {isSelected && (
-                      <p className="mt-2 text-xs font-medium text-primary">Aktiv</p>
-                    )}
-                  </button>
-                );
-              })}
-            </div>
           </CardContent>
         </Card>
         <Card><CardHeader><CardTitle className="text-lg">Praxisdaten</CardTitle></CardHeader>

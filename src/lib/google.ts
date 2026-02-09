@@ -15,6 +15,7 @@ interface PlaceDetails {
   totalRatings?: number;
   googleMapsUrl?: string;
   photoReference?: string;
+  photoReferences?: string[];
   website?: string;
 }
 
@@ -84,7 +85,9 @@ export async function getPlaceDetails(
   if (data.status !== "OK") return null;
 
   const result = data.result;
-  const photoRef = result.photos?.[0]?.photo_reference as string | undefined;
+  const allPhotoRefs = (result.photos ?? [])
+    .map((p: { photo_reference: string }) => p.photo_reference)
+    .slice(0, 6) as string[];
   return {
     placeId,
     name: result.name,
@@ -92,7 +95,8 @@ export async function getPlaceDetails(
     rating: result.rating,
     totalRatings: result.user_ratings_total,
     googleMapsUrl: result.url,
-    photoReference: photoRef,
+    photoReference: allPhotoRefs[0],
+    photoReferences: allPhotoRefs,
     website: result.website,
   };
 }

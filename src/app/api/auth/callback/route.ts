@@ -1,6 +1,9 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 import { sendWelcomeEmail } from "@/lib/email";
+import { db } from "@/lib/db";
+import { practices, loginEvents } from "@/lib/db/schema";
+import { eq } from "drizzle-orm";
 
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url);
@@ -20,6 +23,24 @@ export async function GET(request: Request) {
         }).catch((err) => {
           console.error("Failed to send welcome email:", err);
         });
+      }
+
+      // Record login event
+      if (user?.email) {
+        const practice = await db.query.practices.findFirst({
+          where: eq(practices.email, user.email),
+          columns: { id: true },
+        });
+        if (practice) {
+          const forwarded = request.headers.get("x-forwarded-for");
+          const ipAddress = forwarded ? forwarded.split(",")[0]?.trim() : null;
+          await db.insert(loginEvents).values({
+            practiceId: practice.id,
+            userAgent: request.headers.get("user-agent"),
+            ipAddress,
+            method: "magic_link",
+          }).catch(() => {});
+        }
       }
 
       return NextResponse.redirect(`${origin}${next}`);

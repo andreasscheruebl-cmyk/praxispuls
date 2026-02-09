@@ -17,7 +17,7 @@ const PLANS = [
       "1 Umfrage-Template",
       "Google Review Routing",
       "QR-Code Download",
-      "Basis-Dashboard",
+      "Dashboard (30-Tage-Ansicht)",
     ],
     missingFeatures: [
       "E-Mail-Alerts",
@@ -36,7 +36,7 @@ const PLANS = [
       "Alle 3 Templates",
       "Google Review Routing",
       "QR-Code Download",
-      "Vollständiges Dashboard",
+      "Dashboard mit Trends & Kategorien",
       "E-Mail-Alerts",
       "Praxis-Branding (Logo & Farben)",
       "Freier Zeitraum-Filter",
@@ -53,7 +53,7 @@ const PLANS = [
       "Alle 3 Templates",
       "Google Review Routing",
       "QR-Code Download",
-      "Vollständiges Dashboard",
+      "Dashboard mit Trends & Kategorien",
       "E-Mail-Alerts",
       "Praxis-Branding (Logo & Farben)",
       "Freier Zeitraum-Filter",
@@ -325,7 +325,7 @@ export default function BillingPage() {
               disabled={loading !== null}
               className="rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
             >
-              {loading === "portal" ? "Wird geladen…" : "Stripe-Portal öffnen"}
+              {loading === "portal" ? "Wird geladen…" : "Abo & Zahlung verwalten"}
             </button>
           </CardContent>
         </Card>

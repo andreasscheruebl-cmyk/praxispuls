@@ -30,7 +30,7 @@ export default function HomePage() {
       </section>
 
       {/* How it works */}
-      <section id="so-funktionierts" className="border-t bg-gray-50 py-20">
+      <section id="so-funktionierts" className="border-t bg-muted/50 py-20">
         <div className="container mx-auto px-4">
           <h2 className="text-center text-3xl font-bold">
             So funktioniert PraxisPuls
@@ -113,7 +113,7 @@ export default function HomePage() {
                   "Vollständige Dokumentation aller Datenverarbeitungen. Unterauftragsverarbeiter (Supabase, Vercel, Stripe) sind in den AGB offengelegt.",
               },
             ].map((item) => (
-              <div key={item.title} className="rounded-xl border bg-white p-6 text-center">
+              <div key={item.title} className="rounded-xl border bg-card p-6 text-center">
                 <h3 className="font-semibold">{item.title}</h3>
                 <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{item.description}</p>
               </div>
@@ -165,7 +165,7 @@ export default function HomePage() {
                   "Patienten antworten anonym per Smartphone. Keine App, kein Login – das senkt die Hemmschwelle und erhöht die Rücklaufquote.",
               },
             ].map((item) => (
-              <div key={item.title} className="rounded-xl border bg-white p-5">
+              <div key={item.title} className="rounded-xl border bg-card p-5">
                 <h3 className="font-semibold">{item.title}</h3>
                 <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{item.description}</p>
               </div>
@@ -193,15 +193,15 @@ export default function HomePage() {
                 <li>✓ 30 Antworten/Monat</li>
                 <li>✓ Google Review-Routing</li>
                 <li>✓ QR-Code Download</li>
-                <li>✓ Basis-Dashboard</li>
+                <li>✓ Dashboard (30-Tage-Ansicht)</li>
               </ul>
               <Button asChild variant="outline" className="mt-6 w-full">
                 <Link href="/register">Kostenlos starten</Link>
               </Button>
             </div>
             {/* Starter */}
-            <div className="flex flex-col rounded-lg border-2 border-primary p-6 shadow-lg">
-              <div className="mb-2 w-fit rounded-full bg-primary px-3 py-0.5 text-xs font-semibold text-white">Beliebt</div>
+            <div className="relative flex flex-col rounded-lg border-2 border-primary p-6 shadow-lg">
+              <div className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-primary px-3 py-0.5 text-xs font-semibold text-white">Beliebt</div>
               <h3 className="text-lg font-semibold">Starter</h3>
               <p className="mt-2 text-3xl font-bold">49 €<span className="text-base font-normal text-muted-foreground">/Monat</span></p>
               <p className="text-sm text-muted-foreground">Für Einzelpraxen</p>
@@ -280,7 +280,7 @@ export default function HomePage() {
             ].map((item) => (
               <div
                 key={item.question}
-                className="rounded-xl border bg-white p-6"
+                className="rounded-xl border bg-card p-6"
               >
                 <p className="font-semibold text-foreground">
                   {item.question}
@@ -305,7 +305,7 @@ export default function HomePage() {
           </p>
           <div className="mx-auto mt-12 max-w-3xl">
             {/* ROI Example */}
-            <div className="rounded-xl border bg-white p-6 md:p-8">
+            <div className="rounded-xl border bg-card p-6 md:p-8">
               <h3 className="text-lg font-semibold">Rechenbeispiel: Einzelpraxis</h3>
               <div className="mt-6 space-y-6">
                 {/* Before/After */}
@@ -353,7 +353,7 @@ export default function HomePage() {
             </div>
 
             {/* QM Comparison */}
-            <div className="mt-8 rounded-xl border bg-white p-6 md:p-8">
+            <div className="mt-8 rounded-xl border bg-card p-6 md:p-8">
               <h3 className="text-lg font-semibold">QM-Vergleich: Papier vs. PraxisPuls</h3>
               <div className="mt-6 grid gap-4 md:grid-cols-2">
                 <div className="rounded-lg bg-muted/50 p-4">
@@ -422,7 +422,7 @@ export default function HomePage() {
           <Button
             asChild
             size="lg"
-            className="mt-8 bg-white text-primary shadow-lg hover:bg-gray-100"
+            className="mt-8 bg-white text-primary shadow-lg hover:bg-white/90"
           >
             <Link href="/register">Kostenlos starten</Link>
           </Button>
