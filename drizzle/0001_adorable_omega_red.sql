@@ -1,0 +1,1 @@
+ALTER TABLE "practices" ADD COLUMN "theme" text DEFAULT 'standard';
