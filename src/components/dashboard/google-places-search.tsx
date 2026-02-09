@@ -3,7 +3,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 
-// Shape of each result returned by /api/google/places?q=...
 type PlaceResult = {
   placeId: string;
   description: string;
@@ -11,21 +10,33 @@ type PlaceResult = {
   secondaryText: string;
 };
 
+type PlaceDetails = {
+  placeId: string;
+  name: string;
+  address: string;
+  rating?: number;
+  totalRatings?: number;
+  googleMapsUrl?: string;
+};
+
 type GooglePlacesSearchProps = {
   value: string;
   onChange: (placeId: string) => void;
   selectedName?: string;
+  /** Auto-search this query on mount (e.g. practice name) */
+  initialQuery?: string;
 };
 
 /**
- * Autocomplete search component for Google Places.
- * Debounces user input and queries the internal API endpoint,
- * then displays a dropdown of matching places.
+ * Autocomplete search for Google Places with verification step.
+ * After selection, fetches and displays place details so the user
+ * can confirm this is the correct practice before saving.
  */
 export function GooglePlacesSearch({
   value,
   onChange,
   selectedName,
+  initialQuery,
 }: GooglePlacesSearchProps) {
   const [results, setResults] = useState<PlaceResult[]>([]);
   const [isOpen, setIsOpen] = useState(false);
@@ -34,6 +45,12 @@ export function GooglePlacesSearch({
     selectedName ?? (value || "")
   );
 
+  // Verification state
+  const [pendingPlace, setPendingPlace] = useState<PlaceResult | null>(null);
+  const [placeDetails, setPlaceDetails] = useState<PlaceDetails | null>(null);
+  const [verifying, setVerifying] = useState(false);
+  const [confirmed, setConfirmed] = useState(!!value);
+
   const containerRef = useRef<HTMLDivElement>(null);
   const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -41,12 +58,12 @@ export function GooglePlacesSearch({
   useEffect(() => {
     if (selectedName) {
       setDisplayValue(selectedName);
-    } else if (value) {
+    } else if (value && !pendingPlace) {
       setDisplayValue(value);
-    } else {
+    } else if (!value && !pendingPlace) {
       setDisplayValue("");
     }
-  }, [selectedName, value]);
+  }, [selectedName, value, pendingPlace]);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -58,19 +75,16 @@ export function GooglePlacesSearch({
         setIsOpen(false);
       }
     }
-
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // Fetch places from the internal API
   const fetchPlaces = useCallback(async (searchQuery: string) => {
     if (searchQuery.trim().length < 2) {
       setResults([]);
       setIsOpen(false);
       return;
     }
-
     setIsLoading(true);
     try {
       const response = await fetch(
@@ -90,44 +104,91 @@ export function GooglePlacesSearch({
     }
   }, []);
 
-  // Handle input changes with 300ms debounce
+  // Fetch place details for verification
+  async function verifyPlace(place: PlaceResult) {
+    setVerifying(true);
+    setPendingPlace(place);
+    setPlaceDetails(null);
+    setIsOpen(false);
+    setResults([]);
+    setDisplayValue(place.mainText);
+
+    try {
+      const res = await fetch(
+        `/api/google/places?placeId=${encodeURIComponent(place.placeId)}`
+      );
+      if (res.ok) {
+        const details: PlaceDetails = await res.json();
+        setPlaceDetails(details);
+      }
+    } catch {
+      // Details couldn't be loaded – still show basic info
+    } finally {
+      setVerifying(false);
+    }
+  }
+
+  // User confirms this is the correct place
+  function handleConfirm() {
+    if (pendingPlace) {
+      onChange(pendingPlace.placeId);
+      setConfirmed(true);
+      setDisplayValue(placeDetails?.name || pendingPlace.mainText);
+    }
+  }
+
+  // User rejects – go back to search
+  function handleReject() {
+    setPendingPlace(null);
+    setPlaceDetails(null);
+    setConfirmed(false);
+    setDisplayValue("");
+    onChange("");
+  }
+
   function handleInputChange(e: React.ChangeEvent<HTMLInputElement>) {
     const newQuery = e.target.value;
     setDisplayValue(newQuery);
-
-    // Clear any existing selection when user starts typing
     if (value) {
       onChange("");
+      setConfirmed(false);
     }
+    setPendingPlace(null);
+    setPlaceDetails(null);
 
-    // Clear previous debounce timer
     if (debounceTimerRef.current) {
       clearTimeout(debounceTimerRef.current);
     }
-
-    // Set new debounce timer
     debounceTimerRef.current = setTimeout(() => {
       fetchPlaces(newQuery);
     }, 300);
   }
 
-  // Handle selection of a place from the dropdown
   function handleSelect(result: PlaceResult) {
-    onChange(result.placeId);
-    setDisplayValue(result.mainText);
-    setResults([]);
-    setIsOpen(false);
+    // Don't save immediately – verify first
+    verifyPlace(result);
   }
 
-  // Clear the current selection
   function handleClear() {
     onChange("");
     setDisplayValue("");
     setResults([]);
     setIsOpen(false);
+    setPendingPlace(null);
+    setPlaceDetails(null);
+    setConfirmed(false);
   }
 
-  // Cleanup debounce timer on unmount
+  // Auto-search with initialQuery on mount
+  const initialSearchDone = useRef(false);
+  useEffect(() => {
+    if (initialQuery && !value && !initialSearchDone.current) {
+      initialSearchDone.current = true;
+      setDisplayValue(initialQuery);
+      fetchPlaces(initialQuery);
+    }
+  }, [initialQuery, value, fetchPlaces]);
+
   useEffect(() => {
     return () => {
       if (debounceTimerRef.current) {
@@ -136,11 +197,12 @@ export function GooglePlacesSearch({
     };
   }, []);
 
-  const hasSelection = value.length > 0;
+  const hasSelection = confirmed && value.length > 0;
+  const showVerification = pendingPlace && !confirmed;
 
   return (
-    <div ref={containerRef} className="relative w-full">
-      {/* Search input with optional clear button */}
+    <div ref={containerRef} className="relative w-full space-y-2">
+      {/* Search input */}
       <div className="relative">
         <input
           type="text"
@@ -152,9 +214,9 @@ export function GooglePlacesSearch({
             "placeholder:text-muted-foreground",
             "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
             "disabled:cursor-not-allowed disabled:opacity-50",
-            hasSelection && "pr-8"
+            hasSelection && "border-green-500 pr-8"
           )}
-          readOnly={hasSelection}
+          readOnly={hasSelection || !!showVerification}
           aria-label="Google Place suchen"
           aria-expanded={isOpen}
           aria-controls="google-places-listbox"
@@ -162,9 +224,7 @@ export function GooglePlacesSearch({
           role="combobox"
           autoComplete="off"
         />
-
-        {/* Clear button */}
-        {hasSelection && (
+        {(hasSelection || showVerification) && (
           <button
             type="button"
             onClick={handleClear}
@@ -176,17 +236,7 @@ export function GooglePlacesSearch({
             )}
             aria-label="Auswahl aufheben"
           >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="14"
-              height="14"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <line x1="18" y1="6" x2="6" y2="18" />
               <line x1="6" y1="6" x2="18" y2="18" />
             </svg>
@@ -194,11 +244,8 @@ export function GooglePlacesSearch({
         )}
       </div>
 
-      {/* Loading indicator */}
       {isLoading && (
-        <p className="mt-1 text-xs text-muted-foreground">
-          Suche wird durchgeführt...
-        </p>
+        <p className="text-xs text-muted-foreground">Suche wird durchgeführt...</p>
       )}
 
       {/* Dropdown results */}
@@ -215,7 +262,7 @@ export function GooglePlacesSearch({
             <li
               key={result.placeId}
               role="option"
-              aria-selected={result.placeId === value}
+              aria-selected={false}
               className={cn(
                 "cursor-pointer px-3 py-2 text-sm",
                 "hover:bg-accent hover:text-accent-foreground",
@@ -223,19 +270,87 @@ export function GooglePlacesSearch({
               )}
               onClick={() => handleSelect(result)}
               onKeyDown={(e) => {
-                if (e.key === "Enter" || e.key === " ") {
-                  handleSelect(result);
-                }
+                if (e.key === "Enter" || e.key === " ") handleSelect(result);
               }}
               tabIndex={0}
             >
               <span className="font-medium">{result.mainText}</span>
-              <span className="ml-1 text-muted-foreground">
-                {result.secondaryText}
-              </span>
+              <span className="ml-1 text-muted-foreground">{result.secondaryText}</span>
             </li>
           ))}
         </ul>
+      )}
+
+      {/* Verification card: "Ist das Ihre Praxis?" */}
+      {showVerification && (
+        <div className="rounded-lg border-2 border-amber-300 bg-amber-50 p-4">
+          <p className="mb-2 text-sm font-semibold text-amber-800">
+            Ist das Ihre Praxis?
+          </p>
+          {verifying ? (
+            <p className="text-sm text-muted-foreground">Wird überprüft...</p>
+          ) : placeDetails ? (
+            <div className="space-y-1">
+              <p className="text-sm font-medium">{placeDetails.name}</p>
+              <p className="text-xs text-muted-foreground">{placeDetails.address}</p>
+              {placeDetails.rating && (
+                <p className="text-xs text-muted-foreground">
+                  {"★".repeat(Math.round(placeDetails.rating))}{"☆".repeat(5 - Math.round(placeDetails.rating))}{" "}
+                  {placeDetails.rating}/5
+                  {placeDetails.totalRatings ? ` (${placeDetails.totalRatings} Bewertungen)` : ""}
+                </p>
+              )}
+              {placeDetails.googleMapsUrl && (
+                <a
+                  href={placeDetails.googleMapsUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-block text-xs text-blue-600 underline"
+                >
+                  Auf Google Maps ansehen
+                </a>
+              )}
+            </div>
+          ) : (
+            <div className="space-y-1">
+              <p className="text-sm font-medium">{pendingPlace.mainText}</p>
+              <p className="text-xs text-muted-foreground">{pendingPlace.secondaryText}</p>
+            </div>
+          )}
+          <div className="mt-3 flex gap-2">
+            <button
+              type="button"
+              onClick={handleConfirm}
+              disabled={verifying}
+              className="rounded-md bg-green-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-green-700 disabled:opacity-50"
+            >
+              Ja, das ist meine Praxis
+            </button>
+            <button
+              type="button"
+              onClick={handleReject}
+              className="rounded-md border px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50"
+            >
+              Nein, andere suchen
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Confirmed indicator */}
+      {hasSelection && placeDetails && (
+        <div className="rounded-lg border border-green-200 bg-green-50 p-3">
+          <div className="flex items-start gap-2">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mt-0.5 text-green-600">
+              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+              <polyline points="22 4 12 14.01 9 11.01" />
+            </svg>
+            <div>
+              <p className="text-sm font-medium text-green-800">{placeDetails.name}</p>
+              <p className="text-xs text-green-700">{placeDetails.address}</p>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

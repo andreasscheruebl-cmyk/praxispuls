@@ -7,14 +7,28 @@ import { Label } from "@/components/ui/label";
 import { GooglePlacesSearch } from "@/components/dashboard/google-places-search";
 import { LogoUpload } from "@/components/dashboard/logo-upload";
 
+type PlaceInfo = { name: string; address: string; rating?: number; totalRatings?: number } | null;
+
 export default function SettingsPage() {
   const [practice, setPractice] = useState<Record<string, string | number> | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
+  const [currentPlaceInfo, setCurrentPlaceInfo] = useState<PlaceInfo>(null);
 
   useEffect(() => {
-    fetch("/api/practice").then(r => r.ok ? r.json() : null).then(d => { if (d) setPractice(d); }).finally(() => setLoading(false));
+    fetch("/api/practice").then(r => r.ok ? r.json() : null).then(d => {
+      if (d) {
+        setPractice(d);
+        // Load details for existing Place ID
+        if (d.googlePlaceId) {
+          fetch(`/api/google/places?placeId=${encodeURIComponent(d.googlePlaceId)}`)
+            .then(r => r.ok ? r.json() : null)
+            .then(info => { if (info) setCurrentPlaceInfo(info); })
+            .catch(() => {});
+        }
+      }
+    }).finally(() => setLoading(false));
   }, []);
 
   async function handleSave(e: React.FormEvent) {
@@ -51,15 +65,37 @@ export default function SettingsPage() {
             </div>
           </CardContent>
         </Card>
-        <Card><CardHeader><CardTitle className="text-lg">Google-Verkn&uuml;pfung</CardTitle></CardHeader>
-          <CardContent><div className="space-y-2"><Label>Google-Standort suchen</Label>
+        <Card><CardHeader><CardTitle className="text-lg">Google-Verknüpfung</CardTitle></CardHeader>
+          <CardContent><div className="space-y-3">
+            {/* Show current linked place info */}
+            {practice.googlePlaceId && currentPlaceInfo && (
+              <div className="rounded-lg border border-green-200 bg-green-50 p-3">
+                <p className="text-xs font-medium text-green-800">Aktuell verknüpft:</p>
+                <p className="text-sm font-medium text-green-900">{currentPlaceInfo.name}</p>
+                <p className="text-xs text-green-700">{currentPlaceInfo.address}</p>
+                {currentPlaceInfo.rating && (
+                  <p className="text-xs text-green-700">
+                    {"★".repeat(Math.round(currentPlaceInfo.rating))}{"☆".repeat(5 - Math.round(currentPlaceInfo.rating))}{" "}
+                    {currentPlaceInfo.rating}/5
+                    {currentPlaceInfo.totalRatings ? ` (${currentPlaceInfo.totalRatings} Bewertungen)` : ""}
+                  </p>
+                )}
+              </div>
+            )}
+            <Label>Google-Standort {practice.googlePlaceId ? "ändern" : "suchen"}</Label>
             <GooglePlacesSearch
               value={String(practice.googlePlaceId || "")}
-              onChange={(placeId) => setPractice({...practice, googlePlaceId: placeId})}
-              selectedName={String(practice.googlePlaceName || "")}
+              onChange={(placeId) => {
+                setPractice({...practice, googlePlaceId: placeId});
+                if (!placeId) setCurrentPlaceInfo(null);
+              }}
+              selectedName={currentPlaceInfo?.name || ""}
             />
-            <p className="text-xs text-muted-foreground">Suchen Sie Ihre Praxis, um die Weiterleitung zum Google-Bewertungsformular zu aktivieren.</p>
-            {practice.googlePlaceId && <p className="text-xs text-muted-foreground">Place ID: {String(practice.googlePlaceId)}</p>}
+            <p className="text-xs text-muted-foreground">
+              {practice.googlePlaceId
+                ? "Zufriedene Patienten werden automatisch zum Google-Bewertungsformular weitergeleitet."
+                : "Suchen Sie Ihre Praxis, um die Weiterleitung zum Google-Bewertungsformular zu aktivieren."}
+            </p>
           </div></CardContent>
         </Card>
         <Card><CardHeader><CardTitle className="text-lg">Umfrage</CardTitle></CardHeader>

@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { LogoUpload } from "@/components/dashboard/logo-upload";
+import { GooglePlacesSearch } from "@/components/dashboard/google-places-search";
 
 const TEMPLATES = [
   { id: "zahnarzt_standard", name: "Standard", desc: "NPS + 4 Kategorien + Freitext (empfohlen)" },
@@ -86,16 +87,32 @@ export default function OnboardingPage() {
           {step === 2 && (
             <>
               <div className="space-y-2">
-                <Label htmlFor="gpi">Google Place ID (optional)</Label>
-                <Input id="gpi" placeholder="ChIJ..." value={data.googlePlaceId}
-                  onChange={e => setData({...data, googlePlaceId: e.target.value})} />
-                <p className="text-xs text-muted-foreground">
-                  Nötig für die Google-Bewertungs-Weiterleitung. Sie können das auch später ergänzen.
+                <Label>Google-Eintrag Ihrer Praxis</Label>
+                <p className="text-sm text-muted-foreground">
+                  Damit zufriedene Patienten direkt zu Ihrer Google-Bewertungsseite weitergeleitet werden.
                 </p>
+                <GooglePlacesSearch
+                  value={data.googlePlaceId}
+                  onChange={(placeId) => setData({...data, googlePlaceId: placeId})}
+                  selectedName=""
+                  initialQuery={data.name ? `${data.name} Zahnarzt ${data.postalCode}`.trim() : undefined}
+                />
+                {data.googlePlaceId && (
+                  <p className="text-xs text-green-600">
+                    Google-Eintrag verknüpft (Place ID: {data.googlePlaceId})
+                  </p>
+                )}
+                {!data.googlePlaceId && (
+                  <p className="text-xs text-muted-foreground">
+                    Suchen Sie nach Ihrem Praxisnamen. Sie können das auch später unter Einstellungen ergänzen.
+                  </p>
+                )}
               </div>
               <div className="flex gap-3">
                 <Button variant="outline" onClick={() => setStep(1)} className="flex-1">Zurück</Button>
-                <Button onClick={() => setStep(3)} className="flex-1">Weiter</Button>
+                <Button onClick={() => setStep(3)} className="flex-1">
+                  {data.googlePlaceId ? "Weiter" : "Überspringen"}
+                </Button>
               </div>
             </>
           )}

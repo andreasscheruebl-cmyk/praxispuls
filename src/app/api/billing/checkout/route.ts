@@ -37,6 +37,10 @@ export async function POST(request: Request) {
     return NextResponse.json({ url: session.url });
   } catch (err) {
     console.error("Checkout error:", err);
-    return NextResponse.json({ error: "Fehler beim Erstellen der Checkout-Session" }, { status: 500 });
+    const message = err instanceof Error ? err.message : "Unbekannter Fehler";
+    return NextResponse.json(
+      { error: `Fehler beim Erstellen der Checkout-Session: ${message}` },
+      { status: 500 }
+    );
   }
 }

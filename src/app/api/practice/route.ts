@@ -4,7 +4,7 @@ import { db } from "@/lib/db";
 import { practices, surveys } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { practiceUpdateSchema } from "@/lib/validations";
-import { getGoogleReviewLink } from "@/lib/google";
+import { getGoogleReviewLink, getPlaceDetails } from "@/lib/google";
 import { slugify } from "@/lib/utils";
 import { SURVEY_TEMPLATES } from "@/lib/survey-templates";
 
@@ -38,7 +38,19 @@ export async function POST(request: Request) {
     }
 
     const slug = slugify(name);
-    const googleReviewUrl = googlePlaceId ? getGoogleReviewLink(googlePlaceId) : null;
+
+    // Verify Google Place ID is real before saving
+    let googleReviewUrl: string | null = null;
+    if (googlePlaceId) {
+      const placeDetails = await getPlaceDetails(googlePlaceId);
+      if (!placeDetails) {
+        return NextResponse.json(
+          { error: "Ungültige Google Place ID. Bitte wählen Sie Ihre Praxis erneut aus." },
+          { status: 400 }
+        );
+      }
+      googleReviewUrl = getGoogleReviewLink(googlePlaceId);
+    }
     const templateId = surveyTemplate || "zahnarzt_standard";
     const template = SURVEY_TEMPLATES.find(t => t.id === templateId) || SURVEY_TEMPLATES[0]!;
 
@@ -83,9 +95,20 @@ export async function PUT(request: Request) {
     });
     if (!practice) return NextResponse.json({ error: "Praxis nicht gefunden" }, { status: 404 });
 
-    const googleReviewUrl = parsed.googlePlaceId
-      ? getGoogleReviewLink(parsed.googlePlaceId)
-      : practice.googleReviewUrl;
+    // Verify Google Place ID if changed
+    let googleReviewUrl = practice.googleReviewUrl;
+    if (parsed.googlePlaceId && parsed.googlePlaceId !== practice.googlePlaceId) {
+      const placeDetails = await getPlaceDetails(parsed.googlePlaceId);
+      if (!placeDetails) {
+        return NextResponse.json(
+          { error: "Ungültige Google Place ID. Bitte wählen Sie Ihre Praxis erneut aus." },
+          { status: 400 }
+        );
+      }
+      googleReviewUrl = getGoogleReviewLink(parsed.googlePlaceId);
+    } else if (parsed.googlePlaceId) {
+      googleReviewUrl = getGoogleReviewLink(parsed.googlePlaceId);
+    }
 
     await db.update(practices)
       .set({ ...parsed, googleReviewUrl, updatedAt: new Date() })

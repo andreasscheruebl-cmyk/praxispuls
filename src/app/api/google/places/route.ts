@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getUserOptional } from "@/lib/auth";
-import { searchPlaces } from "@/lib/google";
+import { searchPlaces, getPlaceDetails } from "@/lib/google";
 
 export async function GET(request: Request) {
   try {
@@ -11,7 +11,21 @@ export async function GET(request: Request) {
 
     const { searchParams } = new URL(request.url);
     const query = searchParams.get("q");
+    const placeId = searchParams.get("placeId");
 
+    // Verify a specific Place ID → return full details
+    if (placeId) {
+      const details = await getPlaceDetails(placeId);
+      if (!details) {
+        return NextResponse.json(
+          { error: "Google Place ID nicht gefunden" },
+          { status: 404 }
+        );
+      }
+      return NextResponse.json(details);
+    }
+
+    // Search by query
     if (!query || query.length < 3) {
       return NextResponse.json([]);
     }
