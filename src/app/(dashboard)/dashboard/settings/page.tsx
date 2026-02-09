@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { GooglePlacesSearch } from "@/components/dashboard/google-places-search";
 
 export default function SettingsPage() {
   const [practice, setPractice] = useState<Record<string, string | number> | null>(null);
@@ -40,8 +41,16 @@ export default function SettingsPage() {
             </div>
           </CardContent>
         </Card>
-        <Card><CardHeader><CardTitle className="text-lg">Google-Verknüpfung</CardTitle></CardHeader>
-          <CardContent><div className="space-y-2"><Label htmlFor="gpi">Google Place ID</Label><Input id="gpi" value={String(practice.googlePlaceId || "")} onChange={e => setPractice({...practice, googlePlaceId: e.target.value})} placeholder="ChIJ..." /><p className="text-xs text-muted-foreground">Für die Weiterleitung zum Google-Bewertungsformular.</p></div></CardContent>
+        <Card><CardHeader><CardTitle className="text-lg">Google-Verkn&uuml;pfung</CardTitle></CardHeader>
+          <CardContent><div className="space-y-2"><Label>Google-Standort suchen</Label>
+            <GooglePlacesSearch
+              value={String(practice.googlePlaceId || "")}
+              onChange={(placeId) => setPractice({...practice, googlePlaceId: placeId})}
+              selectedName={String(practice.googlePlaceName || "")}
+            />
+            <p className="text-xs text-muted-foreground">Suchen Sie Ihre Praxis, um die Weiterleitung zum Google-Bewertungsformular zu aktivieren.</p>
+            {practice.googlePlaceId && <p className="text-xs text-muted-foreground">Place ID: {String(practice.googlePlaceId)}</p>}
+          </div></CardContent>
         </Card>
         <Card><CardHeader><CardTitle className="text-lg">Umfrage</CardTitle></CardHeader>
           <CardContent className="space-y-4">
