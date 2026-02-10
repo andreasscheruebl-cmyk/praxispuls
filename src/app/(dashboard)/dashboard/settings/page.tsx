@@ -29,12 +29,13 @@ export default function SettingsPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ url: imageUrl }),
       });
-      if (!res.ok) throw new Error("Upload failed");
       const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Upload failed");
       setPractice((prev) => prev ? { ...prev, logoUrl: data.logoUrl } : prev);
       setMessage("Logo übernommen!");
-    } catch {
-      setMessage("Logo konnte nicht übernommen werden. Bitte manuell hochladen.");
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Unbekannter Fehler";
+      setMessage(`Logo konnte nicht übernommen werden: ${msg}`);
     } finally {
       setLogoUploading(null);
     }

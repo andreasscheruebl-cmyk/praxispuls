@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { createServiceClient } from "@/lib/supabase/server";
 import { getUserOptional } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { practices } from "@/lib/db/schema";
@@ -101,7 +101,7 @@ export async function POST(request: Request) {
     const storagePath = `${practice.id}/logo.${ext}`;
     const buffer = Buffer.from(await file.arrayBuffer());
 
-    const supabase = await createClient();
+    const supabase = createServiceClient();
 
     // 7. Delete old logo if it exists and has a different path
     if (practice.logoUrl) {

@@ -3,7 +3,7 @@ import { getUserOptional } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { practices } from "@/lib/db/schema";
 import { eq, and, isNull } from "drizzle-orm";
-import { createClient } from "@/lib/supabase/server";
+import { createServiceClient } from "@/lib/supabase/server";
 import { getPlacePhotoUrl } from "@/lib/google";
 
 /**
@@ -59,7 +59,7 @@ export async function POST(request: Request) {
     const ext = contentType.includes("svg") ? "svg" : contentType.includes("webp") ? "webp" : contentType.includes("png") ? "png" : "jpg";
     const storagePath = `${practice.id}/logo.${ext}`;
 
-    const supabase = await createClient();
+    const supabase = createServiceClient();
 
     const { error: uploadError } = await supabase.storage
       .from("logos")
