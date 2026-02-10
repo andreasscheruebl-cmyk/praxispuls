@@ -2,7 +2,7 @@
 id: PP-001
 type: feature
 title: "Umfrage-Weiterleitung: Konfiguration zum Deaktivieren"
-status: active
+status: done
 priority: medium
 sprint: survey-engine
 parent: ""
