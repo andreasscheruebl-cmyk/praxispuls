@@ -32,6 +32,11 @@ function getCenteredX(doc: jsPDF, text: string, pageWidth: number): number {
   return (pageWidth - doc.getTextWidth(text)) / 2;
 }
 
+/** Vertical baseline offset to visually center text in a shape */
+function getBaselineOffset(doc: jsPDF): number {
+  return doc.getFontSize() / doc.internal.scaleFactor * 0.35;
+}
+
 function renderCenteredWrappedText(
   doc: jsPDF,
   text: string,
@@ -182,7 +187,7 @@ function drawPill(
   }
   doc.setTextColor(...textColor);
   const textW = doc.getTextWidth(text);
-  doc.text(text, x + (w - textW) / 2, y + h / 2 + 1);
+  doc.text(text, x + (w - textW) / 2, y + h / 2 + getBaselineOffset(doc));
 }
 
 function drawDashedLine(
@@ -261,7 +266,7 @@ function drawPrivacyBadge(
   y: number,
   variant: "light" | "dark" = "light"
 ) {
-  const text = "\u{1F512} 100\u00a0% anonym \u00B7 DSGVO-konform";
+  const text = "100 % anonym \u00B7 DSGVO-konform";
   doc.setFont("helvetica", "normal");
   doc.setFontSize(7);
   const tw = doc.getTextWidth(text);
@@ -286,7 +291,7 @@ function drawPrivacyBadge(
     doc.roundedRect(bx, y, bw, bh, bh / 2, bh / 2, "F");
     doc.setTextColor(100, 116, 139); // slate-500
   }
-  doc.text(text, centerX - tw / 2, y + bh / 2 + 1.5);
+  doc.text(text, centerX - tw / 2, y + bh / 2 + getBaselineOffset(doc));
 }
 
 // ---------------------------------------------------------------------------
@@ -305,8 +310,8 @@ function drawBrandingBar(
   doc.setFont("helvetica", "normal");
   doc.setFontSize(7);
   doc.setTextColor(255, 255, 255);
-  const branding = "Erstellt mit PraxisPuls \u2013 www.praxispuls.de";
-  doc.text(branding, getCenteredX(doc, branding, pageWidth), pageHeight - barHeight / 2 + 1);
+  const branding = "Erstellt mit PraxisPuls - www.praxispuls.de";
+  doc.text(branding, getCenteredX(doc, branding, pageWidth), pageHeight - barHeight / 2 + getBaselineOffset(doc));
 }
 
 function drawBrandingBarDark(
@@ -322,8 +327,8 @@ function drawBrandingBarDark(
   doc.setFont("helvetica", "normal");
   doc.setFontSize(7);
   doc.setTextColor(...brandColor);
-  const branding = "Erstellt mit PraxisPuls \u2013 www.praxispuls.de";
-  doc.text(branding, getCenteredX(doc, branding, pageWidth), pageHeight - barHeight / 2 + 1);
+  const branding = "Erstellt mit PraxisPuls - www.praxispuls.de";
+  doc.text(branding, getCenteredX(doc, branding, pageWidth), pageHeight - barHeight / 2 + getBaselineOffset(doc));
 }
 
 // ===========================================================================
@@ -408,11 +413,11 @@ export async function generateA4Poster(config: PdfConfig): Promise<Blob> {
     doc.setFont("helvetica", "bold");
     doc.setFontSize(10);
     doc.setTextColor(...brandColor);
-    doc.text(String(i + 1), sx + 10 - doc.getTextWidth(String(i + 1)) / 2, stepsY + 2.5);
+    doc.text(String(i + 1), sx + 10 - doc.getTextWidth(String(i + 1)) / 2, stepsY + 1 + getBaselineOffset(doc));
     doc.setFont("helvetica", "normal");
     doc.setFontSize(11);
     doc.setTextColor(...TEXT_DARK);
-    doc.text(step.substring(3), sx + 18, stepsY + 2);
+    doc.text(step.substring(3), sx + 18, stepsY + 1 + getBaselineOffset(doc));
   });
 
   // --- Privacy badge ---
@@ -463,7 +468,7 @@ export async function generateA6Card(config: PdfConfig): Promise<Blob> {
   doc.setFont("helvetica", "normal");
   doc.setFontSize(8);
   doc.setTextColor(...TEXT_MUTED);
-  const hint = "Scannen \u2192 Bewerten \u2192 Fertig!";
+  const hint = "Scannen > Bewerten > Fertig!";
   doc.text(hint, getCenteredX(doc, hint, pw), nameY + 10);
 
   // --- Privacy badge ---
@@ -523,7 +528,7 @@ export async function generateA5TableTentLight(config: PdfConfig): Promise<Blob>
     doc.setFont("helvetica", "bold");
     doc.setFontSize(8);
     doc.setTextColor(255, 255, 255);
-    doc.text(b, cx - doc.getTextWidth(b) / 2, circleY + 2);
+    doc.text(b, cx - doc.getTextWidth(b) / 2, circleY + getBaselineOffset(doc));
   });
 
   // "60 Sekunden" pill
@@ -560,13 +565,13 @@ export async function generateA5TableTentLight(config: PdfConfig): Promise<Blob>
     doc.setFontSize(10);
     doc.setTextColor(255, 255, 255);
     const num = String(i + 1);
-    doc.text(num, half + 16 - doc.getTextWidth(num) / 2, sy + 2);
+    doc.text(num, half + 16 - doc.getTextWidth(num) / 2, sy + getBaselineOffset(doc));
 
     // Step label
     doc.setFont("helvetica", "normal");
     doc.setFontSize(12);
     doc.setTextColor(...TEXT_DARK);
-    doc.text(s, half + 24, sy + 2);
+    doc.text(s, half + 24, sy + getBaselineOffset(doc));
 
     // Connecting dashed line
     if (i < stepLabels.length - 1) {
@@ -693,7 +698,7 @@ export async function generateA4InfographicDark(config: PdfConfig): Promise<Blob
   doc.setFont("helvetica", "normal");
   doc.setFontSize(13);
   doc.setTextColor(200, 200, 210);
-  const sub = "Scannen, bewerten, fertig \u2013 in nur 60 Sekunden";
+  const sub = "Scannen, bewerten, fertig - in nur 60 Sekunden";
   doc.text(sub, getCenteredX(doc, sub, pw), 65);
 
   // --- 3 Glass step cards ---
@@ -763,7 +768,7 @@ export async function generateA4InfographicDark(config: PdfConfig): Promise<Blob
     const px = pillStartX + i * (pillW + pillGap);
     drawGlassCard(doc, px, pillY, pillW, pillH, 4);
     doc.setTextColor(220, 225, 235);
-    doc.text(p, px + (pillW - doc.getTextWidth(p)) / 2, pillY + pillH / 2 + 1);
+    doc.text(p, px + (pillW - doc.getTextWidth(p)) / 2, pillY + pillH / 2 + getBaselineOffset(doc));
   });
 
   // --- Privacy badge ---
@@ -803,12 +808,12 @@ export async function generateA6BoldDark(config: PdfConfig): Promise<Blob> {
 
   // --- Step pills horizontal ---
   const pillY = 36;
-  const stepPills = ["Scannen", "\u2192", "Bewerten", "\u2192", "Fertig!"];
+  const stepPills = ["Scannen", ">", "Bewerten", ">", "Fertig!"];
   doc.setFont("helvetica", "bold");
   doc.setFontSize(7);
   let pillCursorX = 12;
   stepPills.forEach((p) => {
-    if (p === "\u2192") {
+    if (p === ">") {
       doc.setTextColor(...brandColor);
       doc.text(p, pillCursorX, pillY + 4);
       pillCursorX += 6;
@@ -892,13 +897,13 @@ export async function generateA5TableTentDark(config: PdfConfig): Promise<Blob> 
     doc.setFont("helvetica", "bold");
     doc.setFontSize(11);
     doc.setTextColor(255, 255, 255);
-    doc.text(s.num, 24 - doc.getTextWidth(s.num) / 2, sy + 2.5);
+    doc.text(s.num, 24 - doc.getTextWidth(s.num) / 2, sy + getBaselineOffset(doc));
 
     // Label
     doc.setFont("helvetica", "normal");
     doc.setFontSize(12);
     doc.setTextColor(220, 225, 235);
-    doc.text(s.label, 34, sy + 2.5);
+    doc.text(s.label, 34, sy + getBaselineOffset(doc));
 
     // Dashed line connecting steps
     if (i < stepsLeft.length - 1) {
@@ -916,7 +921,7 @@ export async function generateA5TableTentDark(config: PdfConfig): Promise<Blob> 
     const tw = doc.getTextWidth(st) + 10;
     drawGlassCard(doc, statX, statsY, tw, 8, 4);
     doc.setTextColor(200, 205, 220);
-    doc.text(st, statX + (tw - doc.getTextWidth(st)) / 2, statsY + 5.5);
+    doc.text(st, statX + (tw - doc.getTextWidth(st)) / 2, statsY + 8 / 2 + getBaselineOffset(doc));
     statX += tw + 5;
   });
 
@@ -1096,7 +1101,7 @@ export async function generateA4MagazineInfographic(config: PdfConfig): Promise<
   doc.saveGraphicsState();
   doc.setGState(subOpacity);
   doc.setTextColor(255, 255, 255);
-  const sub = "Scannen, bewerten, fertig \u2013 dauert nur 60 Sekunden";
+  const sub = "Scannen, bewerten, fertig - dauert nur 60 Sekunden";
   doc.text(sub, getCenteredX(doc, sub, pw), ly + 8);
   doc.restoreGraphicsState();
 
@@ -1129,11 +1134,11 @@ export async function generateA4MagazineInfographic(config: PdfConfig): Promise<
     doc.setFont("helvetica", "bold");
     doc.setFontSize(14);
     doc.setTextColor(255, 255, 255);
-    doc.text(step.icon, cx + 12 - doc.getTextWidth(step.icon) / 2, cardsY + 14);
+    doc.text(step.icon, cx + 12 - doc.getTextWidth(step.icon) / 2, cardsY + 12 + getBaselineOffset(doc));
 
     doc.setFont("helvetica", "bold");
     doc.setFontSize(10);
-    doc.text(step.title, cx + 22, cardsY + 14);
+    doc.text(step.title, cx + 22, cardsY + 12 + getBaselineOffset(doc));
 
     doc.setFont("helvetica", "normal");
     doc.setFontSize(8);
@@ -1176,7 +1181,7 @@ export async function generateA4MagazineInfographic(config: PdfConfig): Promise<
   statItems.forEach((s) => {
     drawGlassCard(doc, statCursor, statsY, 36, 9, 4.5);
     doc.setTextColor(255, 255, 255);
-    doc.text(s, statCursor + (36 - doc.getTextWidth(s)) / 2, statsY + 6);
+    doc.text(s, statCursor + (36 - doc.getTextWidth(s)) / 2, statsY + 9 / 2 + getBaselineOffset(doc));
     statCursor += 40;
   });
 
@@ -1190,7 +1195,7 @@ export async function generateA4MagazineInfographic(config: PdfConfig): Promise<
   const brandOp = doc.GState({ opacity: 0.5 });
   doc.saveGraphicsState();
   doc.setGState(brandOp);
-  const branding = "Erstellt mit PraxisPuls \u2013 www.praxispuls.de";
+  const branding = "Erstellt mit PraxisPuls - www.praxispuls.de";
   doc.text(branding, getCenteredX(doc, branding, pw), ph - 8);
   doc.restoreGraphicsState();
 
@@ -1277,12 +1282,12 @@ export async function generateA4BoldGraphic(config: PdfConfig): Promise<Blob> {
     doc.setFontSize(11);
     doc.setTextColor(255, 255, 255);
     const num = String(i + 1);
-    doc.text(num, sx + 12 - doc.getTextWidth(num) / 2, stepsY + 2.5);
+    doc.text(num, sx + 12 - doc.getTextWidth(num) / 2, stepsY + getBaselineOffset(doc));
 
     doc.setFont("helvetica", "normal");
     doc.setFontSize(11);
     doc.setTextColor(...TEXT_DARK);
-    doc.text(s.substring(3), sx + 20, stepsY + 2);
+    doc.text(s.substring(3), sx + 20, stepsY + getBaselineOffset(doc));
   });
 
   // --- Privacy badge ---
@@ -1294,7 +1299,7 @@ export async function generateA4BoldGraphic(config: PdfConfig): Promise<Blob> {
   doc.setFont("helvetica", "normal");
   doc.setFontSize(7);
   doc.setTextColor(255, 255, 255);
-  const branding = "Erstellt mit PraxisPuls \u2013 www.praxispuls.de";
+  const branding = "Erstellt mit PraxisPuls - www.praxispuls.de";
   doc.text(branding, getCenteredX(doc, branding, pw), ph - 3.5);
 
   return doc.output("blob");
@@ -1455,12 +1460,12 @@ export async function generateA6MinimalInfographic(config: PdfConfig): Promise<B
     doc.setFont("helvetica", "bold");
     doc.setFontSize(8);
     doc.setTextColor(255, 255, 255);
-    doc.text(s.num, 18 - doc.getTextWidth(s.num) / 2, sy + 1.8);
+    doc.text(s.num, 18 - doc.getTextWidth(s.num) / 2, sy + getBaselineOffset(doc));
 
     doc.setFont("helvetica", "normal");
     doc.setFontSize(9);
     doc.setTextColor(...TEXT_DARK);
-    doc.text(s.label, 25, sy + 2);
+    doc.text(s.label, 25, sy + getBaselineOffset(doc));
   });
 
   // --- QR code ---

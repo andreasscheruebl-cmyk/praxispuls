@@ -54,4 +54,7 @@ nul
 # Claude Code local settings (may contain permission-granted secrets)
 .claude/settings.local.json
 
+# Personal notes
+todo.txt
+
 .vercel
