@@ -2,7 +2,7 @@
 id: PP-005
 type: bug
 title: "QR-Codes: Hover-Previews zu klein und zeigen nicht das richtige PDF"
-status: review
+status: done
 priority: medium
 sprint: foundation
 branch: ticket/PP-005-qr-hover-previews
@@ -84,3 +84,5 @@ Auf der QR-Codes Seite im Dashboard sind die Hover-Previews der PDF-Designs winz
 | 2026-02-10 | Implementiert | `generatePdfBlob` Helper extrahiert, Blob-URL-Caching mit State + Ref, iframe-Preview (240x340px), Cache-Invalidation, Unmount-Cleanup |
 | 2026-02-10 | Refactored | `downloadPdf()` nutzt neuen Helper, 3 alte Mini-Preview-Komponenten gelöscht |
 | 2026-02-10 | Build | `npx next build` sauber ✅ |
+| 2026-02-10 | Review | Commit `0df7086`, gepusht auf `origin/main` |
+| 2026-02-10 | Done | Andi bestätigt ✅ |

@@ -3,6 +3,7 @@ import { getUser } from "@/lib/auth";
 import { LogoutButton } from "@/components/dashboard/logout-button";
 import { MobileNav } from "@/components/dashboard/mobile-nav";
 import { MobileBottomTabs } from "@/components/dashboard/mobile-bottom-tabs";
+import { BuildBadge } from "@/components/shared/build-badge";
 import { ThemeProvider } from "@/components/theme-provider";
 import { db } from "@/lib/db";
 import { practices } from "@/lib/db/schema";
@@ -81,6 +82,9 @@ export default async function DashboardLayout({
               <p className="flex-1 truncate text-xs text-muted-foreground">{user.email}</p>
             </div>
             <LogoutButton />
+            <div className="px-1 pt-1">
+              <BuildBadge />
+            </div>
           </div>
         </div>
       </aside>

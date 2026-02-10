@@ -1,12 +1,12 @@
 {
-  "current_sprint": "foundation",
+  "current_sprint": "survey-engine",
   "sprints": {
     "foundation": {
       "name": "Foundation",
       "weeks": "1-2",
-      "status": "planned",
-      "start_date": null,
-      "end_date": null,
+      "status": "done",
+      "start_date": "2026-02-10",
+      "end_date": "2026-02-10",
       "goal": "Projekt-Setup: Next.js 16, Supabase (DB + Auth + RLS), Layout-Shell, Landing Page Grundgerüst",
       "deliverables": [
         "Next.js 16 Projekt mit Turbopack lauffähig",
@@ -20,14 +20,14 @@
         "Env Vars konfiguriert (.env.local + Vercel)"
       ],
       "done_criteria": "App deployed auf Vercel, Login funktioniert, Dashboard-Shell sichtbar",
-      "tickets_planned": 0,
-      "tickets_done": 0
+      "tickets_planned": 5,
+      "tickets_done": 5
     },
     "survey-engine": {
       "name": "Survey Engine",
       "weeks": "3-4",
-      "status": "planned",
-      "start_date": null,
+      "status": "active",
+      "start_date": "2026-02-10",
       "end_date": null,
       "goal": "Kern-Feature: Patient kann Umfrage via QR-Code ausfüllen, Smart Review Routing funktioniert",
       "deliverables": [
