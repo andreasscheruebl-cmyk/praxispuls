@@ -50,13 +50,22 @@ type(scope): beschreibung [TICKET-ID]
 
 Types: `feat`, `fix`, `chore`, `docs`, `refactor`, `test`, `perf`, `ci`, `style`
 
+### Ticket in Review geben
+
+Ein Ticket geht in REVIEW wenn:
+- Alle Code-Änderungen implementiert
+- Build sauber (`next build` ✅)
+- Ticket-Dokumentation vollständig (Analyse, Änderungen, Verifikation, betroffene Dateien)
+- Ticket-Log aktualisiert
+- Ticket-Datei nach `.tickets/review/` verschoben, `status: review`
+
 ### Ticket abschließen
 
 Ein Ticket ist erst DONE wenn:
+- Andi hat Review/Test bestätigt
 - Alle Akzeptanzkriterien abgehakt
 - Tests geschrieben UND grün
-- Ticket-Log aktualisiert
-- Ticket nach `.tickets/done/` verschoben
+- Ticket nach `.tickets/done/` verschoben, `status: done`
 
 ### Bei Prompt ohne Ticket-Kontext
 Wenn der User einen Prompt gibt ohne Ticket-Bezug:
@@ -64,12 +73,47 @@ Wenn der User einen Prompt gibt ohne Ticket-Bezug:
 2. Schlage Typ, Titel und Akzeptanzkriterien vor
 3. Warte auf Bestätigung BEVOR du Code schreibst
 
+### Ticket-Status
+
+Gültige Status-Werte (entsprechen den Ordnern in `.tickets/`):
+
+| Status | Ordner | Bedeutung |
+|--------|--------|-----------|
+| `backlog` | `.tickets/backlog/` | Geplant, noch nicht begonnen |
+| `active` | `.tickets/active/` | In Arbeit |
+| `review` | `.tickets/review/` | Implementierung fertig, wartet auf Review/Test durch Andi |
+| `done` | `.tickets/done/` | Abgeschlossen und bestätigt |
+
+**Workflow:** `backlog` → `active` → `review` → `done`
+
+Ein Ticket geht in `review` wenn:
+- Alle Code-Änderungen gemacht sind
+- Build sauber ist
+- Ticket-Dokumentation vollständig (Analyse, Änderungen, Verifikation)
+- Bereit für manuellen Test / Review durch Andi
+
+Erst nach Andis Bestätigung → `done`.
+
 ### Automatisches Logging
-Jede Aktion wird im Ticket-Log dokumentiert:
-- Dateien erstellt/geändert
-- Tests ausgeführt (Ergebnis)
-- Entscheidungen getroffen
+
+Jede Ticket-Bearbeitung wird **vollständig** im Ticket dokumentiert — im Log-Bereich UND in den passenden Beschreibungs-Sektionen.
+
+#### Was ins Ticket-Log gehört (Tabelle am Ende)
+- **Jeder Arbeitsschritt** als eigene Zeile mit Datum
+- Dateien erstellt/geändert (mit Pfad)
+- Tests ausgeführt (Ergebnis: grün/rot + Output-Zusammenfassung)
+- Entscheidungen getroffen (was und warum)
 - Probleme/Blocker
+
+#### Was in die Ticket-Beschreibung gehört
+- **Analyse:** Was wurde untersucht? Welche Dateien gelesen? Was war der Ist-Zustand?
+- **Lösungsansatz:** Welcher Ansatz wurde gewählt und warum?
+- **Änderungen:** Konkrete Beschreibung aller Code-Änderungen (welche Datei, was geändert)
+- **Verifikation:** Build-Ergebnis, Test-Ergebnis, manuelle Prüfschritte
+- **Betroffene Dateien:** Vollständige Liste aller geänderten/erstellten/gelöschten Dateien
+
+#### Ziel
+Jedes Ticket soll **nach Abschluss als vollständige Dokumentation** dienen — jemand der das Ticket liest, muss nachvollziehen können was gemacht wurde, warum, und wie es verifiziert wurde.
 
 ---
 
@@ -83,7 +127,8 @@ Jede Aktion wird im Ticket-Log dokumentiert:
 | `ticket:list all` | Alle Tickets |
 | `ticket:board` | Kanban-Übersicht |
 | `ticket:pick PP-XXX` | Ticket aktivieren, Branch nennen |
-| `ticket:done PP-XXX` | Ticket abschließen |
+| `ticket:review PP-XXX` | Ticket in Review geben (→ `.tickets/review/`) |
+| `ticket:done PP-XXX` | Ticket abschließen (nach Andis Bestätigung) |
 | `ticket:log PP-XXX "text"` | Log-Eintrag hinzufügen |
 | `ticket:stats` | Statistik |
 | `sprint:status` | Aktuellen Sprint-Fortschritt anzeigen |
@@ -101,7 +146,7 @@ Nutze Templates aus `.tickets/templates/`. Nächste Nummer aus `.tickets/COUNTER
 id: PP-XXX
 type: feature|bug|task|research|requirement|test|refactor|docs|chore|release
 title: "Titel"
-status: backlog
+status: backlog|active|review|done
 priority: critical|high|medium|low
 sprint: foundation|survey-engine|dashboard|qr-onboarding|payments-polish|launch-prep
 branch: ticket/PP-XXX-slug
@@ -118,7 +163,10 @@ Du machst:
   1. .tickets/active/ prüfen → kein Ticket
   2. Vorschlag: "Soll ich PP-XXX erstellen? Akzeptanzkriterien: ..."
   3. Ich bestätige
-  4. Ticket erstellen → active/ → Branch → Code → Tests → Log → Done
+  4. Ticket erstellen in backlog/ → nach active/ verschieben
+  5. Branch → Analyse → Code → Tests → Ticket-Doku aktualisieren
+  6. Build prüfen → Ticket nach review/ verschieben (status: review)
+  7. Andi testet/bestätigt → Ticket nach done/ (status: done)
 ```
 
 ---

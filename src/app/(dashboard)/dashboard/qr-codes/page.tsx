@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -64,61 +64,21 @@ const INFOGRAPHIC_DESIGNS: DesignInfo[] = [
   { type: "a6-minimal", label: "A6 Minimal", format: "A6", description: "Clean mit Accent-Stripe, icon-driven", filename: "praxispuls-minimal-a6.pdf" },
 ];
 
-function LightMiniPreview({ color, headline }: { color: string; headline?: string }) {
-  return (
-    <div className="flex h-64 w-44 flex-col items-center justify-between rounded-lg border bg-white p-3 shadow-md">
-      <div className="h-4 w-full rounded-sm" style={{ backgroundColor: color }} />
-      <p className="text-xs font-bold" style={{ color }}>{headline || "Ihre Meinung zählt!"}</p>
-      <div className="flex h-20 w-20 items-center justify-center rounded-lg bg-gray-100">
-        <QrCode className="h-14 w-14 text-gray-300" />
-      </div>
-      <div className="rounded-full px-3 py-1 text-[8px] font-bold text-white" style={{ backgroundColor: "#22c55e" }}>Nur 60 Sekunden!</div>
-      <div className="h-3 w-full rounded-sm" style={{ backgroundColor: color }} />
-    </div>
-  );
-}
-
-function DarkMiniPreview({ color, headline }: { color: string; headline?: string }) {
-  return (
-    <div className="flex h-64 w-44 flex-col items-center justify-between rounded-lg border bg-slate-900 p-3 shadow-md">
-      <p className="text-xs font-bold text-white">Praxis</p>
-      <p className="text-[10px] font-bold" style={{ color }}>{headline || "Ihre Meinung zählt!"}</p>
-      <div className="relative flex h-20 w-20 items-center justify-center">
-        <div className="absolute inset-0 rounded-lg opacity-20" style={{ backgroundColor: color }} />
-        <div className="flex h-16 w-16 items-center justify-center rounded-lg bg-white">
-          <QrCode className="h-12 w-12 text-gray-400" />
-        </div>
-      </div>
-      <div className="flex gap-1.5">
-        {["60s", "Anonym", "DSGVO"].map((s) => (
-          <span key={s} className="rounded-full border border-slate-600 px-2 py-0.5 text-[7px] text-slate-300">{s}</span>
-        ))}
-      </div>
-      <div className="h-2 w-full rounded-sm bg-slate-800" />
-    </div>
-  );
-}
-
-function InfographicMiniPreview({ color, headline }: { color: string; headline?: string }) {
-  return (
-    <div className="flex h-64 w-44 flex-col items-center justify-between rounded-lg border p-3 shadow-md" style={{ background: `linear-gradient(135deg, ${color}, ${color}cc)` }}>
-      <p className="text-[10px] font-bold text-white/70">Praxis</p>
-      <p className="line-clamp-2 text-center text-xs font-bold text-white">{headline || "Ihre Meinung zählt!"}</p>
-      <div className="flex gap-1.5">
-        {["1", "2", "3"].map((n) => (
-          <div key={n} className="flex h-6 w-6 items-center justify-center rounded-md bg-white/15 text-[9px] font-bold text-white">{n}</div>
-        ))}
-      </div>
-      <div className="flex h-16 w-16 items-center justify-center rounded-lg bg-white shadow-lg">
-        <QrCode className="h-10 w-10 text-gray-400" />
-      </div>
-      <div className="flex gap-1">
-        {["60s", "Anonym"].map((s) => (
-          <span key={s} className="rounded-full bg-white/15 px-2 py-0.5 text-[7px] text-white">{s}</span>
-        ))}
-      </div>
-    </div>
-  );
+async function generatePdfBlob(type: PdfDesignType, config: PdfConfig): Promise<Blob> {
+  switch (type) {
+    case "a4-light": return generateA4Poster(config);
+    case "a6-light": return generateA6Card(config);
+    case "a5-light": return generateA5TableTentLight(config);
+    case "card-light": return generateBusinessCardLight(config);
+    case "a4-dark": return generateA4InfographicDark(config);
+    case "a6-dark": return generateA6BoldDark(config);
+    case "a5-dark": return generateA5TableTentDark(config);
+    case "card-dark": return generateBusinessCardDark(config);
+    case "a4-magazine": return generateA4MagazineInfographic(config);
+    case "a4-bold": return generateA4BoldGraphic(config);
+    case "a5-landscape": return generateA5LandscapeInfographic(config);
+    case "a6-minimal": return generateA6MinimalInfographic(config);
+  }
 }
 
 export default function QrCodesPage() {
@@ -134,6 +94,10 @@ export default function QrCodesPage() {
   const [customHeadline, setCustomHeadline] = useState("");
   const [customColor, setCustomColor] = useState("#0D9488");
   const [logoDataUrl, setLogoDataUrl] = useState<string | null>(null);
+
+  // PDF preview cache: design type -> blob URL
+  const [pdfPreviews, setPdfPreviews] = useState<Record<string, string>>({});
+  const previewCacheRef = useRef<Record<string, string>>({});
 
   useEffect(() => {
     Promise.all([
@@ -162,6 +126,42 @@ export default function QrCodesPage() {
     }).catch(() => {}).finally(() => setLoading(false));
   }, []);
 
+  // Invalidate preview cache when config changes
+  useEffect(() => {
+    Object.values(previewCacheRef.current).forEach(URL.revokeObjectURL);
+    previewCacheRef.current = {};
+    setPdfPreviews({});
+  }, [customColor, customHeadline, logoDataUrl, designMode]);
+
+  // Cleanup blob URLs on unmount
+  useEffect(() => {
+    return () => {
+      Object.values(previewCacheRef.current).forEach(URL.revokeObjectURL);
+    };
+  }, []);
+
+  const handlePreviewHover = useCallback(async (designType: PdfDesignType) => {
+    setHoveredItem(designType);
+    if (previewCacheRef.current[designType] || !qrDataUrl) return;
+
+    try {
+      const config: PdfConfig = {
+        qrDataUrl,
+        practiceName,
+        surveyUrl,
+        brandColor: hexToRgb(customColor),
+        headline: customHeadline || undefined,
+        logoDataUrl: logoDataUrl || undefined,
+      };
+      const blob = await generatePdfBlob(designType, config);
+      const url = URL.createObjectURL(blob);
+      previewCacheRef.current[designType] = url;
+      setPdfPreviews((prev) => ({ ...prev, [designType]: url }));
+    } catch (err) {
+      console.error("Preview generation failed:", err);
+    }
+  }, [qrDataUrl, practiceName, surveyUrl, customColor, customHeadline, logoDataUrl]);
+
   function downloadQr() {
     if (!qrDataUrl) return;
     const link = document.createElement("a");
@@ -181,34 +181,16 @@ export default function QrCodesPage() {
     if (!qrDataUrl) return;
     setPdfLoading(design.type);
 
-    // All designs use the customColor + customHeadline
-    const brandColor = hexToRgb(customColor);
-
-    const config: PdfConfig = {
-      qrDataUrl,
-      practiceName,
-      surveyUrl,
-      brandColor,
-      headline: customHeadline || undefined,
-      logoDataUrl: logoDataUrl || undefined,
-    };
-
     try {
-      let blob: Blob;
-      switch (design.type) {
-        case "a4-light": blob = await generateA4Poster(config); break;
-        case "a6-light": blob = await generateA6Card(config); break;
-        case "a5-light": blob = await generateA5TableTentLight(config); break;
-        case "card-light": blob = await generateBusinessCardLight(config); break;
-        case "a4-dark": blob = await generateA4InfographicDark(config); break;
-        case "a6-dark": blob = await generateA6BoldDark(config); break;
-        case "a5-dark": blob = await generateA5TableTentDark(config); break;
-        case "card-dark": blob = await generateBusinessCardDark(config); break;
-        case "a4-magazine": blob = await generateA4MagazineInfographic(config); break;
-        case "a4-bold": blob = await generateA4BoldGraphic(config); break;
-        case "a5-landscape": blob = await generateA5LandscapeInfographic(config); break;
-        case "a6-minimal": blob = await generateA6MinimalInfographic(config); break;
-      }
+      const config: PdfConfig = {
+        qrDataUrl,
+        practiceName,
+        surveyUrl,
+        brandColor: hexToRgb(customColor),
+        headline: customHeadline || undefined,
+        logoDataUrl: logoDataUrl || undefined,
+      };
+      const blob = await generatePdfBlob(design.type, config);
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.download = design.filename;
@@ -328,7 +310,7 @@ export default function QrCodesPage() {
                     <button
                       onClick={() => downloadPdf(design)}
                       disabled={pdfLoading === design.type}
-                      onMouseEnter={() => setHoveredItem(design.type)}
+                      onMouseEnter={() => handlePreviewHover(design.type)}
                       onMouseLeave={() => setHoveredItem(null)}
                       className="flex w-full items-center gap-4 rounded-lg border p-4 text-left transition-colors hover:bg-gray-50 disabled:opacity-50 dark:hover:bg-gray-800"
                     >
@@ -340,12 +322,16 @@ export default function QrCodesPage() {
                     </button>
                     {hoveredItem === design.type && (
                       <div className="pointer-events-none absolute left-1/2 top-full z-10 mt-2 -translate-x-1/2">
-                        {designMode === "light" ? (
-                          <LightMiniPreview color={customColor} headline={customHeadline || undefined} />
-                        ) : designMode === "dark" ? (
-                          <DarkMiniPreview color={customColor} headline={customHeadline || undefined} />
+                        {pdfPreviews[design.type] ? (
+                          <iframe
+                            src={`${pdfPreviews[design.type]}#toolbar=0&navpanes=0&view=FitH`}
+                            className="h-[340px] w-[240px] rounded-lg border bg-white shadow-lg"
+                            title={`${design.label} Vorschau`}
+                          />
                         ) : (
-                          <InfographicMiniPreview color={customColor} headline={customHeadline || undefined} />
+                          <div className="flex h-[340px] w-[240px] items-center justify-center rounded-lg border bg-white shadow-lg">
+                            <div className="h-6 w-6 animate-spin rounded-full border-2 border-gray-200 border-t-primary" />
+                          </div>
                         )}
                       </div>
                     )}
