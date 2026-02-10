@@ -5,7 +5,7 @@ export default function HomePage() {
   return (
     <>
       {/* Hero */}
-      <section className="py-20 md:py-32">
+      <section className="flex min-h-[60vh] items-center py-20 md:min-h-[80vh] md:py-32">
         <div className="container mx-auto px-4 text-center">
           <h1 className="mx-auto max-w-3xl text-4xl font-bold tracking-tight md:text-6xl">
             Patientenfeedback sammeln.{" "}

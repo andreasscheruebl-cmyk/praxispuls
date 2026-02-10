@@ -1,22 +1,19 @@
-﻿# 📋 Ticket Board
-> Auto-generiert. Nicht manuell editieren.
-> Aktualisieren: `.\scripts\ticket-board.ps1`
+﻿# Ticket Board
+> Auto-generiert am 2026-02-10 11:43
 
-## 📥 Backlog
-
-_(keine)_
-
-## 🔄 Active
+## BACKLOG
 
 _(keine)_
 
-## 👀 Review
+## ACTIVE
 
 _(keine)_
 
-## ✅ Done
+## REVIEW
 
 _(keine)_
 
----
-_Aktualisiert: 2026-02-10 11:15_
+## DONE
+
+- **PP-001** [feature] Umfrage-Weiterleitung: Konfiguration zum Deaktivieren" _(medium)_
+

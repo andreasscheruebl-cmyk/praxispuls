@@ -1,0 +1,16 @@
+﻿{
+  "projects": [
+    {
+      "id": "PP",
+      "name": "PraxisPlus",
+      "path": ".",
+      "created": "2026-02-10"
+    }
+  ],
+  "settings": {
+    "default_project": "PP",
+    "auto_branch": true,
+    "require_tests": true,
+    "require_ticket_in_commit": true
+  }
+}

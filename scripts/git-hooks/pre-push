@@ -1,0 +1,40 @@
+﻿#!/bin/bash
+# TicketOps – Pre-Push Hook
+
+BRANCH=$(git symbolic-ref --short HEAD 2>/dev/null)
+if [[ ! "$BRANCH" =~ ^ticket/ ]]; then exit 0; fi
+
+echo "🧪 TicketOps Pre-Push Check..."
+
+if [ -f "tsconfig.json" ]; then
+    echo "▸ TypeScript Check..."
+    npx tsc --noEmit 2>&1
+    if [ $? -ne 0 ]; then
+        echo "❌ TypeScript Fehler. Push abgebrochen."
+        echo "   Bypass: git push --no-verify"
+        exit 1
+    fi
+    echo "  ✅ TypeScript OK"
+fi
+
+if [ -f "vitest.config.ts" ] || [ -f "vitest.config.js" ]; then
+    echo "▸ Vitest..."
+    npx vitest run --reporter=verbose 2>&1
+    TEST_EXIT=$?
+elif [ -f "jest.config.ts" ] || [ -f "jest.config.js" ]; then
+    echo "▸ Jest..."
+    npx jest --passWithNoTests 2>&1
+    TEST_EXIT=$?
+else
+    echo "⚠️  Kein Test-Runner erkannt. Überspringe Tests."
+    TEST_EXIT=0
+fi
+
+if [ $TEST_EXIT -ne 0 ]; then
+    echo "❌ Tests fehlgeschlagen. Push abgebrochen."
+    echo "   Bypass: git push --no-verify"
+    exit 1
+fi
+
+echo "✅ Alle Checks bestanden"
+exit 0

@@ -11,6 +11,176 @@ Andi – Solo-Dev, Bayern. Arbeitet Abende/Wochenenden. Pragmatische Lösungen b
 - **Code + Kommentare:** Englisch
 - **UI-Texte:** Deutsch, Siezen ("Sie")
 
+---
+
+## 🚨 TICKET-PFLICHT (NICHT VERHANDELBAR)
+
+Dieses Projekt nutzt TicketOps. Tickets liegen in `.tickets/` als Markdown-Dateien.
+**Ohne Ticket wird KEIN Code angefasst. Keine Ausnahme.**
+
+### Vor JEDER Code-Änderung
+
+1. Prüfe `.tickets/active/` – gibt es ein passendes Ticket?
+2. **JA** → Arbeite im zugehörigen Branch (`ticket/{ID}-{slug}`)
+3. **NEIN** → Erstelle zuerst ein Ticket ODER frage mich:
+   - „Dafür existiert kein Ticket. Soll ich PP-XXX erstellen?"
+   - Schlage Typ, Titel und 3-5 Akzeptanzkriterien vor
+   - Warte auf meine Bestätigung BEVOR du Code schreibst
+
+### Was OHNE Ticket erlaubt ist
+
+- Dateien lesen und analysieren
+- `.tickets/` Dateien erstellen und bearbeiten
+- Tests ausführen (explorativ)
+- Recherche und Analyse
+
+### Was OHNE Ticket VERBOTEN ist
+
+- Code-Dateien erstellen, ändern oder löschen
+- Dependencies hinzufügen (`npm install`)
+- Datenbank-Migrationen erstellen
+- Environment Variables ändern
+- Git Commits
+
+### Commit-Format
+
+```
+type(scope): beschreibung [TICKET-ID]
+```
+
+Types: `feat`, `fix`, `chore`, `docs`, `refactor`, `test`, `perf`, `ci`, `style`
+
+### Ticket abschließen
+
+Ein Ticket ist erst DONE wenn:
+- Alle Akzeptanzkriterien abgehakt
+- Tests geschrieben UND grün
+- Ticket-Log aktualisiert
+- Ticket nach `.tickets/done/` verschoben
+
+### Bei Prompt ohne Ticket-Kontext
+Wenn der User einen Prompt gibt ohne Ticket-Bezug:
+1. Frage: "Soll ich dafür ein Ticket erstellen?"
+2. Schlage Typ, Titel und Akzeptanzkriterien vor
+3. Warte auf Bestätigung BEVOR du Code schreibst
+
+### Automatisches Logging
+Jede Aktion wird im Ticket-Log dokumentiert:
+- Dateien erstellt/geändert
+- Tests ausgeführt (Ergebnis)
+- Entscheidungen getroffen
+- Probleme/Blocker
+
+---
+
+## Ticket-Befehle
+
+| Befehl | Aktion |
+|--------|--------|
+| `ticket:new feature "Titel"` | Ticket in `.tickets/backlog/` erstellen |
+| `ticket:new bug "Titel"` | Bug-Ticket erstellen (Priority: high) |
+| `ticket:list` | Aktive Tickets auflisten |
+| `ticket:list all` | Alle Tickets |
+| `ticket:board` | Kanban-Übersicht |
+| `ticket:pick PP-XXX` | Ticket aktivieren, Branch nennen |
+| `ticket:done PP-XXX` | Ticket abschließen |
+| `ticket:log PP-XXX "text"` | Log-Eintrag hinzufügen |
+| `ticket:stats` | Statistik |
+| `sprint:status` | Aktuellen Sprint-Fortschritt anzeigen |
+| `sprint:plan <name>` | Sprint planen, Tickets vorschlagen |
+| `sprint:start <name>` | Sprint aktivieren |
+| `sprint:end` | Sprint abschließen, offene Tickets besprechen |
+| `sprint:tickets` | Alle Tickets im aktuellen Sprint |
+
+### Ticket erstellen
+
+Nutze Templates aus `.tickets/templates/`. Nächste Nummer aus `.tickets/COUNTER.txt`, Counter inkrementieren.
+
+```yaml
+---
+id: PP-XXX
+type: feature|bug|task|research|requirement|test|refactor|docs|chore|release
+title: "Titel"
+status: backlog
+priority: critical|high|medium|low
+sprint: foundation|survey-engine|dashboard|qr-onboarding|payments-polish|launch-prep
+branch: ticket/PP-XXX-slug
+created: YYYY-MM-DD
+updated: YYYY-MM-DD
+---
+```
+
+### Workflow
+
+```
+Ich sage: "Implementiere Feature X"
+Du machst:
+  1. .tickets/active/ prüfen → kein Ticket
+  2. Vorschlag: "Soll ich PP-XXX erstellen? Akzeptanzkriterien: ..."
+  3. Ich bestätige
+  4. Ticket erstellen → active/ → Branch → Code → Tests → Log → Done
+```
+
+---
+
+## Sprint-Management
+
+### Sprint-Kontext
+
+**IMMER** zu Beginn einer Session `.tickets/sprints.json` lesen, um den aktuellen Sprint zu kennen.
+
+```
+Aktueller Sprint:     .tickets/sprints.json → "current_sprint"
+Sprint-Details:       .tickets/sprints.json → sprints.<name>
+Sprint-Übersicht:     .tickets/SPRINT.md (auto-generiert)
+```
+
+### Sprint-Regeln
+
+1. **Neue Tickets** bekommen automatisch den aktuellen Sprint zugewiesen
+2. **Scope-Schutz**: Wenn eine Aufgabe nicht zum aktuellen Sprint passt:
+   - "⚠️ Das gehört nicht zu Sprint X. Soll ich es für Sprint Y planen oder ins Backlog legen?"
+3. **Sprint-Wechsel**: Nur Andi kann Sprints starten/beenden
+4. **Sprint-Fokus**: Priorisiere immer Tickets des aktuellen Sprints
+
+### Sprint-Planung
+
+```
+User: "Plane Sprint foundation"
+
+Claude Code:
+  1. Liest sprints.json → foundation.deliverables
+  2. Schlägt Tickets vor (eins pro Deliverable)
+  3. User bestätigt
+  4. Erstellt Tickets in .tickets/backlog/ mit sprint: foundation
+```
+
+### Sprint-Ende
+
+```
+User: "Sprint foundation abschließen"
+
+Claude Code:
+  1. Prüft alle Tickets mit sprint: foundation
+  2. Zählt: X done, Y noch offen
+  3. Listet offene Tickets auf
+  4. User entscheidet: verschieben oder abbrechen
+  5. sprints.json aktualisieren
+```
+
+### Sprint-Übersicht
+
+| Sprint | Wochen | Fokus |
+|--------|--------|-------|
+| foundation | 1-2 | Setup, DB, Auth, Layout |
+| survey-engine | 3-4 | Umfrage, Review-Routing, Templates |
+| dashboard | 5-6 | NPS-Charts, Responses, Alerts |
+| qr-onboarding | 7-8 | QR-Generator, Wizard, Branding |
+| payments-polish | 9-10 | Stripe, Limits, Performance |
+| launch-prep | 11-12 | Landing Page, DSGVO, Beta-Test |
+
+---
+
 ## Tech Stack
 - Next.js 15 (App Router, RSC, Server Actions, Turbopack)
 - TypeScript strict mode
@@ -53,6 +223,17 @@ Andi – Solo-Dev, Bayern. Arbeitet Abende/Wochenenden. Pragmatische Lösungen b
 ### Git
 - Conventional Commits: `feat:`, `fix:`, `chore:`, `docs:`, `refactor:`
 
+---
+
+## DSGVO
+- Keine PII in responses-Tabelle
+- Kein Cookie außer Auth
+- Server in EU/DE (Supabase Frankfurt)
+- Anonyme Umfragen
+- Session-Hash nur für Deduplizierung (kein PII)
+
+---
+
 ## MVP Scope – Was NICHT gebaut wird
 - ❌ PVS-Integration
 - ❌ SMS/WhatsApp
@@ -73,20 +254,13 @@ Wenn Andi eines davon anfragt: "⚠️ Das ist v2. Soll ich es trotzdem machen?"
 - **Performance:** Survey muss < 2s laden (mobil)
 - **Kosten:** API-Kosten abschätzen bei externen Services
 
+---
+
 ## Aktuelle Prioritäten
-1. ~~Build-Fehler fixen~~ ✅ Build sauber
-2. ~~Git initialisieren~~ ✅ Repo + 3 Commits
-3. Supabase DB aufsetzen (Migration) – `npm run db:push` gegen Supabase
-4. ~~Fehlende Features~~ ✅ Alle implementiert:
-   - ✅ Stripe Webhook (`/api/webhooks/stripe`)
-   - ✅ Billing-Seite (3 Pläne, Checkout, Portal)
-   - ✅ Plan-Limits enforcing (Free=30, Starter=200)
-   - ✅ Alert-E-Mails + Alerts-UI (`/dashboard/alerts`)
-   - ✅ NPS-Trend-Chart (Recharts, `/dashboard`)
-   - ✅ E-Mail-Integration (Welcome, Detractor-Alert, Upgrade-Reminder)
-5. Alle Features E2E testen
-6. Legal Pages finalisieren (Impressum, Datenschutz, AGB)
-7. SEO + Monitoring (Meta Tags, Sentry, Plausible)
+1. Supabase DB aufsetzen (Migration) – `npm run db:push` gegen Supabase
+2. Alle Features E2E testen
+3. Legal Pages finalisieren (Impressum, Datenschutz, AGB)
+4. SEO + Monitoring (Meta Tags, Sentry, Plausible)
 
 ## Projektstruktur
 Siehe README.md für die vollständige Struktur.
@@ -97,6 +271,47 @@ Siehe `src/lib/db/schema.ts` – 4 Tabellen:
 - surveys (Umfragen)
 - responses (Antworten, kein PII!)
 - alerts (Detractor-Notifications)
+
+## Projektstruktur
+
+```
+praxispuls/
+├── CLAUDE.md                       ← DU BIST HIER
+├── .tickets/
+│   ├── COUNTER.txt
+│   ├── BOARD.md
+│   ├── SPRINT.md                   ← Auto-generiert: aktueller Sprint
+│   ├── sprints.json                ← Sprint-Definitionen + aktueller Sprint
+│   ├── templates/
+│   ├── backlog/
+│   ├── active/
+│   ├── review/
+│   ├── done/
+│   └── archive/
+├── src/
+│   ├── app/                        ← Next.js App Router
+│   │   ├── (auth)/
+│   │   ├── (dashboard)/
+│   │   ├── (marketing)/
+│   │   ├── s/[slug]/               ← Public Survey (SSR)
+│   │   └── api/
+│   ├── components/
+│   │   ├── ui/                     ← shadcn/ui
+│   │   ├── dashboard/
+│   │   ├── survey/
+│   │   └── marketing/
+│   ├── lib/
+│   │   ├── db/schema.ts            ← Drizzle Schema
+│   │   ├── supabase/
+│   │   ├── stripe.ts
+│   │   ├── email.ts
+│   │   ├── review-router.ts
+│   │   └── validations.ts          ← Zod Schemas
+│   └── proxy.ts                    ← Auth + Rate Limiting
+├── drizzle/                        ← Migrations
+├── scripts/                        ← TicketOps Scripts
+└── package.json
+```
 
 ## Environment Variables
 Siehe `.env.example` für alle benötigten Variablen.

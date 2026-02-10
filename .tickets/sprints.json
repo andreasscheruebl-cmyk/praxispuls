@@ -1,0 +1,132 @@
+{
+  "current_sprint": "foundation",
+  "sprints": {
+    "foundation": {
+      "name": "Foundation",
+      "weeks": "1-2",
+      "status": "planned",
+      "start_date": null,
+      "end_date": null,
+      "goal": "Projekt-Setup: Next.js 16, Supabase (DB + Auth + RLS), Layout-Shell, Landing Page Grundgerüst",
+      "deliverables": [
+        "Next.js 16 Projekt mit Turbopack lauffähig",
+        "Supabase: DB-Schema deployed + RLS Policies aktiv",
+        "Supabase Auth: E-Mail + Google SSO funktioniert",
+        "Drizzle ORM: Schema + erste Migration",
+        "Tailwind + shadcn/ui: Basis-Komponenten installiert",
+        "Dashboard Layout-Shell mit Sidebar",
+        "Landing Page (einfach, Hero + Platzhalter)",
+        "CI/CD: Vercel Deployment funktioniert",
+        "Env Vars konfiguriert (.env.local + Vercel)"
+      ],
+      "done_criteria": "App deployed auf Vercel, Login funktioniert, Dashboard-Shell sichtbar",
+      "tickets_planned": 0,
+      "tickets_done": 0
+    },
+    "survey-engine": {
+      "name": "Survey Engine",
+      "weeks": "3-4",
+      "status": "planned",
+      "start_date": null,
+      "end_date": null,
+      "goal": "Kern-Feature: Patient kann Umfrage via QR-Code ausfüllen, Smart Review Routing funktioniert",
+      "deliverables": [
+        "Survey-Schema + 3 Templates (JSONB)",
+        "Patienten-Umfrage Seite (SSR, mobile-first, < 2s)",
+        "NPS-Skala Komponente (0-10, Touch-optimiert)",
+        "Sterne-Bewertung Komponente (1-5)",
+        "Freitext-Eingabe (optional)",
+        "Submit-Endpoint + Response-Speicherung",
+        "Smart Review Routing (NPS → Google / Danke / Empathie)",
+        "Danke-Screens (3 Varianten: Promoter, Passive, Detractor)",
+        "Google Places API: Place ID Lookup",
+        "Session-Hash Deduplizierung (24h Cookie)"
+      ],
+      "done_criteria": "Umfrage unter /s/test-praxis ausfüllbar, Routing funktioniert, Response in DB",
+      "tickets_planned": 0,
+      "tickets_done": 0
+    },
+    "dashboard": {
+      "name": "Dashboard",
+      "weeks": "5-6",
+      "status": "planned",
+      "start_date": null,
+      "end_date": null,
+      "goal": "Praxis sieht Auswertungen: NPS-Trend, Kategorie-Scores, Responses, Detractor-Alerts",
+      "deliverables": [
+        "NPS-Übersicht + Trend-Chart (Recharts)",
+        "Kategorie-Scores (Ø Sterne pro Kategorie)",
+        "Response-Liste (paginiert, filterbar nach Zeit + NPS)",
+        "Review-Funnel Metriken (Survey → Promoter → Klick)",
+        "Detractor-Alert-System (E-Mail via Resend)",
+        "Alert-Liste im Dashboard (ungelesen/gelesen, Notiz)",
+        "Dashboard API Endpoints (overview, responses, categories, funnel)"
+      ],
+      "done_criteria": "Dashboard zeigt Live-Daten, Alerts kommen per E-Mail, Filter funktionieren",
+      "tickets_planned": 0,
+      "tickets_done": 0
+    },
+    "qr-onboarding": {
+      "name": "QR & Onboarding",
+      "weeks": "7-8",
+      "status": "planned",
+      "start_date": null,
+      "end_date": null,
+      "goal": "Praxis kann sich registrieren und hat in 5 Minuten eine Umfrage live",
+      "deliverables": [
+        "QR-Code Generator (4 Formate: A4, A6, Visitenkarte, PNG/SVG)",
+        "Druckvorlagen (PDF mit Praxis-Logo)",
+        "Google Place ID Lookup + Autocomplete im Setup",
+        "Onboarding-Wizard (8 Schritte, < 5 Minuten)",
+        "Praxis-Branding (Logo-Upload, Farben)",
+        "Survey-Vorschau im Onboarding"
+      ],
+      "done_criteria": "Neuer Account → Wizard → QR-Code drucken → Umfrage live, alles in < 5 Min",
+      "tickets_planned": 0,
+      "tickets_done": 0
+    },
+    "payments-polish": {
+      "name": "Payments & Polish",
+      "weeks": "9-10",
+      "status": "planned",
+      "start_date": null,
+      "end_date": null,
+      "goal": "Stripe-Zahlung funktioniert, Plan-Limits greifen, Performance optimiert",
+      "deliverables": [
+        "Stripe Checkout Session erstellen",
+        "Stripe Customer Portal einbinden",
+        "Stripe Webhooks (subscription.created/updated/deleted)",
+        "Plan-Logik: Free (30), Starter (200), Pro (unbegrenzt)",
+        "Upgrade-Flow + Banner bei Limit-Erreichen",
+        "Error Handling (alle Edge Cases)",
+        "Performance: Survey < 2s (mobile, 3G)",
+        "Loading States, Skeleton Screens"
+      ],
+      "done_criteria": "Testzahlung mit Stripe Test-Mode erfolgreich, Limits greifen, Survey < 2s",
+      "tickets_planned": 0,
+      "tickets_done": 0
+    },
+    "launch-prep": {
+      "name": "Launch Prep",
+      "weeks": "11-12",
+      "status": "planned",
+      "start_date": null,
+      "end_date": null,
+      "goal": "Produktionsreif: Landing Page, DSGVO-Dokumente, Beta-Test mit echten Praxen",
+      "deliverables": [
+        "Landing Page finalisieren (Hero, Features, Pricing, FAQ, Trust-Signale)",
+        "SEO-Basics (Meta, OG Tags, Sitemap, robots.txt)",
+        "Impressum, Datenschutzerklärung, AGB",
+        "AV-Vertrag (Muster bereitstellen)",
+        "E2E Tests (Playwright: Onboarding, Survey, Dashboard)",
+        "Monitoring: Sentry + Plausible + BetterStack",
+        "3-5 Beta-Praxen onboarden",
+        "Bug-Fixes aus Beta-Feedback",
+        "Soft Launch"
+      ],
+      "done_criteria": "3+ Praxen nutzen aktiv, keine kritischen Bugs, DSGVO-Docs komplett",
+      "tickets_planned": 0,
+      "tickets_done": 0
+    }
+  }
+}

@@ -1,0 +1,36 @@
+﻿#!/bin/bash
+# TicketOps – Pre-Commit Hook
+
+if git rev-parse -q --verify MERGE_HEAD > /dev/null 2>&1; then exit 0; fi
+
+CODE_CHANGES=$(git diff --cached --name-only | grep -v "^\.tickets/" | grep -v "^CLAUDE\.md" | grep -v "^scripts/git-hooks/" | wc -l)
+if [ "$CODE_CHANGES" -eq 0 ]; then exit 0; fi
+
+BRANCH=$(git symbolic-ref --short HEAD 2>/dev/null)
+
+case "$BRANCH" in
+    main|develop|release/*)
+        echo "❌ Direkte Commits auf '$BRANCH' sind nicht erlaubt."
+        echo "   Erstelle einen Ticket-Branch: ticket/{ID}-{slug}"
+        echo "   Bypass (nur Notfall): git commit --no-verify"
+        exit 1 ;;
+esac
+
+if [[ ! "$BRANCH" =~ ^ticket/[A-Z]+-[0-9]+ ]]; then
+    echo "❌ Branch '$BRANCH' folgt nicht dem Ticket-Pattern."
+    echo "   Erwartet: ticket/{ID}-{slug}"
+    echo "   Bypass (nur Notfall): git commit --no-verify"
+    exit 1
+fi
+
+TICKET_ID=$(echo "$BRANCH" | grep -oP '[A-Z]+-[0-9]+')
+FOUND=$(find .tickets/active .tickets/review -name "${TICKET_ID}-*" 2>/dev/null | head -1)
+
+if [ -z "$FOUND" ]; then
+    echo "❌ Kein aktives Ticket '${TICKET_ID}' gefunden."
+    echo "   Bypass (nur Notfall): git commit --no-verify"
+    exit 1
+fi
+
+echo "✅ Ticket ${TICKET_ID} aktiv → Commit erlaubt"
+exit 0

@@ -1,0 +1,150 @@
+﻿<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TicketOps Board</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;background:#0f172a;color:#e2e8f0;min-height:100vh}
+.header{background:#1e293b;border-bottom:1px solid #334155;padding:16px 24px;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.header h1{font-size:20px;font-weight:700;color:#f1f5f9;display:flex;align-items:center;gap:8px}
+.header h1 .accent{color:#3b82f6}
+.controls{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.controls select,.controls input{background:#0f172a;border:1px solid #334155;color:#e2e8f0;padding:6px 10px;border-radius:6px;font-size:13px;outline:none}
+.controls select:focus,.controls input:focus{border-color:#3b82f6}
+.stats{display:flex;gap:16px;padding:12px 24px;background:#1e293b;border-bottom:1px solid #334155;font-size:13px;color:#94a3b8;flex-wrap:wrap}
+.stat{display:flex;align-items:center;gap:4px}
+.stat b{color:#e2e8f0;font-size:16px}
+.board{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;padding:16px;min-height:calc(100vh - 120px);align-items:start}
+.column{background:#1e293b;border-radius:12px;border:1px solid #334155;display:flex;flex-direction:column;max-height:calc(100vh - 140px)}
+.col-head{padding:12px 16px;font-weight:600;font-size:14px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #334155;position:sticky;top:0;background:#1e293b;border-radius:12px 12px 0 0;z-index:1}
+.col-head .cnt{background:#334155;color:#94a3b8;font-size:12px;font-weight:500;padding:2px 8px;border-radius:10px}
+.col-body{padding:8px;overflow-y:auto;flex:1;display:flex;flex-direction:column;gap:8px}
+.card{background:#0f172a;border:1px solid #334155;border-radius:8px;padding:12px;cursor:pointer;transition:all .15s;border-left:3px solid transparent}
+.card:hover{border-color:#475569;transform:translateY(-1px);box-shadow:0 4px 12px rgba(0,0,0,.3)}
+.card.p-critical{border-left-color:#ef4444}
+.card.p-high{border-left-color:#f59e0b}
+.card.p-medium{border-left-color:#3b82f6}
+.card.p-low{border-left-color:#64748b}
+.card-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+.card-id{font-size:12px;font-weight:600;color:#94a3b8;font-family:'SF Mono',Consolas,monospace}
+.badge{font-size:10px;padding:2px 6px;border-radius:4px;font-weight:600;text-transform:uppercase;letter-spacing:.5px}
+.t-feature{background:#1e3a5f;color:#60a5fa}
+.t-bug{background:#5f1e1e;color:#f87171}
+.t-task{background:#1e4d3a;color:#4ade80}
+.t-research{background:#4a1e5f;color:#c084fc}
+.t-requirement{background:#5f4a1e;color:#fbbf24}
+.t-test{background:#1e5f5f;color:#2dd4bf}
+.t-refactor{background:#3a3a1e;color:#a3e635}
+.t-docs,.t-chore{background:#2e2e2e;color:#a1a1aa}
+.t-release{background:#1e3a5f;color:#38bdf8}
+.card-title{font-size:14px;font-weight:500;color:#f1f5f9;line-height:1.3;margin-bottom:6px}
+.card-desc{font-size:12px;color:#64748b;line-height:1.4;margin-bottom:8px}
+.card-meta{display:flex;gap:6px;flex-wrap:wrap}
+.tag{font-size:10px;padding:2px 6px;border-radius:4px;background:#334155;color:#94a3b8;font-family:'SF Mono',Consolas,monospace}
+.tag.sprint{background:#1e293b;border:1px solid #475569}
+.empty{text-align:center;padding:32px 16px;color:#475569;font-size:13px}
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:100;justify-content:center;align-items:center;padding:24px}
+.overlay.open{display:flex}
+.modal{background:#1e293b;border:1px solid #334155;border-radius:12px;width:100%;max-width:520px;max-height:80vh;overflow-y:auto;padding:24px}
+.modal h2{font-size:18px;margin-bottom:16px;color:#f1f5f9}
+.modal-row{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #334155;font-size:13px}
+.modal-row .lbl{color:#94a3b8}
+.modal-row .val{color:#e2e8f0;font-family:'SF Mono',Consolas,monospace;font-size:12px;max-width:320px;word-break:break-word}
+.modal-close{float:right;background:none;border:none;color:#94a3b8;font-size:20px;cursor:pointer;padding:0 4px}
+.modal-close:hover{color:#f1f5f9}
+@media(max-width:900px){.board{grid-template-columns:1fr 1fr}}
+@media(max-width:500px){.board{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="header">
+  <h1><span class="accent">&#9635;</span> TicketOps Board</h1>
+  <div class="controls">
+    <input type="text" id="search" placeholder="Suchen..." oninput="render()">
+    <select id="fType" onchange="render()"><option value="">Alle Typen</option><option value="feature">Feature</option><option value="bug">Bug</option><option value="task">Task</option><option value="research">Research</option><option value="requirement">Requirement</option><option value="test">Test</option><option value="refactor">Refactor</option><option value="docs">Docs</option><option value="chore">Chore</option><option value="release">Release</option></select>
+    <select id="fSprint" onchange="render()"><option value="">Alle Sprints</option></select>
+    <select id="fPrio" onchange="render()"><option value="">Alle Prios</option><option value="critical">Critical</option><option value="high">High</option><option value="medium">Medium</option><option value="low">Low</option></select>
+  </div>
+</div>
+<div class="stats" id="stats"></div>
+<div class="board" id="board"></div>
+<div class="overlay" id="overlay" onclick="if(event.target===this)closeModal()">
+  <div class="modal" id="modal"></div>
+</div>
+<script>
+const boardData = {
+  backlog: [
+  ],
+  active: [
+  ],
+  review: [
+  ],
+  done: [
+    {id:'PP-001',title:'Umfrage-Weiterleitung: Konfiguration zum Deaktivieren',type:'feature',priority:'medium',sprint:'survey-engine',branch:'ticket/PP-001-redirect-toggle',created:'2026-02-10',updated:'2026-02-10',estimate:'1h',desc:'Praxen sollen die Google-Review-Weiterleitung nach der Umfrage deaktivieren kÃ¶nnen, ohne die Place ID entfernen zu mÃ¼s...',file:'PP-001-redirect-toggle.md'},
+    {id:'PP-002',title:'Landingpage Flicker: Funktionsweise-Abschnitt kurz sichtbar',type:'bug',priority:'high',sprint:'launch-prep',branch:'ticket/PP-002-landingpage-flicker',created:'2026-02-10',updated:'2026-02-10',estimate:'0.5h',desc:'',file:'PP-002-landingpage-flicker.md'},
+  ],
+};
+const sprints = ['launch-prep','survey-engine'];
+const cols={backlog:{label:'Backlog',color:'#64748b'},active:{label:'Active',color:'#3b82f6'},review:{label:'Review',color:'#f59e0b'},done:{label:'Done',color:'#22c55e'}};
+sprints.forEach(function(s){var o=document.createElement('option');o.value=s;o.textContent=s;document.getElementById('fSprint').appendChild(o)});
+function render(){
+  var q=document.getElementById('search').value.toLowerCase(),ft=document.getElementById('fType').value,fs=document.getElementById('fSprint').value,fp=document.getElementById('fPrio').value;
+  var filtered={},total=0;
+  for(var st in boardData){
+    filtered[st]=boardData[st].filter(function(t){
+      if(q&&t.id.toLowerCase().indexOf(q)<0&&t.title.toLowerCase().indexOf(q)<0&&t.desc.toLowerCase().indexOf(q)<0)return false;
+      if(ft&&t.type!==ft)return false;
+      if(fs&&t.sprint!==fs)return false;
+      if(fp&&t.priority!==fp)return false;
+      return true;
+    });
+    total+=filtered[st].length;
+  }
+  var sh='<div class="stat"><b>'+total+'</b> Tickets</div>';
+  for(var s in cols)sh+='<div class="stat" style="color:'+cols[s].color+'"><b>'+(filtered[s]||[]).length+'</b> '+cols[s].label+'</div>';
+  document.getElementById('stats').innerHTML=sh;
+  var bh='';
+  for(var s in cols){
+    var tk=filtered[s]||[];
+    bh+='<div class="column"><div class="col-head" style="color:'+cols[s].color+'">'+cols[s].label+' <span class="cnt">'+tk.length+'</span></div><div class="col-body">';
+    if(!tk.length){bh+='<div class="empty">Keine Tickets</div>'}
+    else{tk.forEach(function(t,i){
+      var mt='';
+      if(t.sprint)mt+='<span class="tag sprint">'+t.sprint+'</span>';
+      if(t.estimate)mt+='<span class="tag">'+t.estimate+'</span>';
+      if(t.created)mt+='<span class="tag">'+t.created+'</span>';
+      bh+='<div class="card p-'+t.priority+'" onclick="detail(\''+s+'\','+i+')">'
+        +'<div class="card-top"><span class="card-id">'+t.id+'</span><span class="badge t-'+t.type+'">'+t.type+'</span></div>'
+        +'<div class="card-title">'+t.title+'</div>'
+        +(t.desc?'<div class="card-desc">'+t.desc+'</div>':'')
+        +'<div class="card-meta">'+mt+'</div></div>';
+    })}
+    bh+='</div></div>';
+  }
+  document.getElementById('board').innerHTML=bh;
+}
+function detail(st,idx){
+  var t=boardData[st][idx],sl=cols[st].label;
+  var h='<button class="modal-close" onclick="closeModal()">&times;</button>'
+    +'<h2>'+t.id+': '+t.title+'</h2>'
+    +'<div class="modal-row"><span class="lbl">Status</span><span class="val">'+sl+'</span></div>'
+    +'<div class="modal-row"><span class="lbl">Typ</span><span class="badge t-'+t.type+'">'+t.type+'</span></div>'
+    +'<div class="modal-row"><span class="lbl">Prioritaet</span><span class="val">'+t.priority+'</span></div>';
+  if(t.sprint)h+='<div class="modal-row"><span class="lbl">Sprint</span><span class="val">'+t.sprint+'</span></div>';
+  if(t.branch)h+='<div class="modal-row"><span class="lbl">Branch</span><span class="val">'+t.branch+'</span></div>';
+  if(t.estimate)h+='<div class="modal-row"><span class="lbl">Aufwand</span><span class="val">'+t.estimate+'</span></div>';
+  h+='<div class="modal-row"><span class="lbl">Erstellt</span><span class="val">'+t.created+'</span></div>'
+    +'<div class="modal-row"><span class="lbl">Aktualisiert</span><span class="val">'+t.updated+'</span></div>';
+  if(t.desc)h+='<div class="modal-row"><span class="lbl">Beschreibung</span><span class="val" style="white-space:pre-wrap">'+t.desc+'</span></div>';
+  h+='<div class="modal-row"><span class="lbl">Datei</span><span class="val">'+t.file+'</span></div>';
+  document.getElementById('modal').innerHTML=h;
+  document.getElementById('overlay').classList.add('open');
+}
+function closeModal(){document.getElementById('overlay').classList.remove('open')}
+document.addEventListener('keydown',function(e){if(e.key==='Escape')closeModal()});
+render();
+</script>
+</body>
+</html>
