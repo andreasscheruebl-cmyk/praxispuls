@@ -270,6 +270,9 @@ Claude Code:
 
 ### Git
 - Conventional Commits: `feat:`, `fix:`, `chore:`, `docs:`, `refactor:`
+- **Branching:** Code-Änderungen IMMER auf Ticket-Branch (`ticket/PP-XXX-slug`), NIE direkt auf `main`
+- **Merge:** Nach Review direkt auf `main` mergen (kein PR nötig)
+- **Ablauf:** `git checkout -b ticket/PP-XXX-slug` → arbeiten → committen → review → `git checkout main && git merge ticket/PP-XXX-slug`
 
 ---
 
