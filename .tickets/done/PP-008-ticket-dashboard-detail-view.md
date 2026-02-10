@@ -2,7 +2,7 @@
 id: PP-008
 type: bug
 title: "Ticket-Dashboard: Beschreibung und Sektionen nicht sichtbar"
-status: review
+status: done
 priority: high
 sprint: survey-engine
 parent: ""
@@ -124,3 +124,5 @@ Das Edit-Modal hat nur ein `<textarea>` für `desc`. Es gibt keinen Read-Only-Be
 | 2026-02-11 | Bug 2 gefixt | Body-Extraktion nach Frontmatter, `body` Feld in Return |
 | 2026-02-11 | Bug 3 gefixt | renderMarkdown(), getDetailSections(), Detail-View im Modal |
 | 2026-02-11 | Verifiziert | Syntax OK, Regex-Test bestanden, Next.js Build sauber |
+| 2026-02-11 | API-Test | Server neu gestartet, alle 8 Tickets mit body+desc korrekt |
+| 2026-02-11 | Done | Andi bestätigt, Ticket abgeschlossen |
