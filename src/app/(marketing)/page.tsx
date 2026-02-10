@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { ScrollLink } from "@/components/marketing/scroll-link";
 
 export default function HomePage() {
   return (
@@ -19,9 +20,9 @@ export default function HomePage() {
             <Button asChild size="lg">
               <Link href="/register">Kostenlos starten</Link>
             </Button>
-            <Button asChild variant="outline" size="lg">
-              <Link href="#so-funktionierts">So funktioniert&apos;s</Link>
-            </Button>
+            <ScrollLink targetId="so-funktionierts">
+              So funktioniert&apos;s
+            </ScrollLink>
           </div>
           <p className="mt-4 text-sm text-muted-foreground">
             Keine Kreditkarte nötig · DSGVO-konform · Server in Deutschland
