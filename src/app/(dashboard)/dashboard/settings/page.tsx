@@ -11,7 +11,7 @@ import { LogoUpload } from "@/components/dashboard/logo-upload";
 type PlaceInfo = { name: string; address: string; rating?: number; totalRatings?: number; photoReference?: string; photoReferences?: string[]; website?: string } | null;
 
 export default function SettingsPage() {
-  const [practice, setPractice] = useState<Record<string, string | number> | null>(null);
+  const [practice, setPractice] = useState<Record<string, string | number | boolean> | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
@@ -204,6 +204,17 @@ export default function SettingsPage() {
                 ? "Zufriedene Patienten werden automatisch zum Google-Bewertungsformular weitergeleitet."
                 : "Suchen Sie Ihre Praxis, um die Weiterleitung zum Google-Bewertungsformular zu aktivieren."}
             </p>
+            {practice.googlePlaceId && (
+              <label className="flex items-center gap-3 pt-2">
+                <input
+                  type="checkbox"
+                  checked={practice.googleRedirectEnabled !== false}
+                  onChange={e => setPractice({...practice, googleRedirectEnabled: e.target.checked})}
+                  className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+                />
+                <span className="text-sm">Google-Bewertung nach Umfrage anzeigen</span>
+              </label>
+            )}
           </div></CardContent>
         </Card>
         <Card><CardHeader><CardTitle className="text-lg">Umfrage</CardTitle></CardHeader>

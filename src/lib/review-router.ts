@@ -18,11 +18,12 @@ export type RouteResult = {
 export function routeByNps(
   npsScore: number,
   googlePlaceId: string | null,
-  npsThreshold: number = 9
+  npsThreshold: number = 9,
+  googleRedirectEnabled: boolean = true
 ): RouteResult {
   const category = getNpsCategory(npsScore);
 
-  if (npsScore >= npsThreshold && googlePlaceId) {
+  if (npsScore >= npsThreshold && googlePlaceId && googleRedirectEnabled) {
     return {
       category,
       routedTo: "google",

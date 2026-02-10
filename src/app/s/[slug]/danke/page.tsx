@@ -27,12 +27,15 @@ export default async function DankePage({ params, searchParams }: Props) {
 
   const isPromoter = npsScore !== null && npsScore >= threshold;
   const isDetractor = npsScore !== null && npsScore <= 6;
+  const redirectEnabled = practice.googleRedirectEnabled ?? true;
 
-  const googleReviewUrl = practice.googleReviewUrl || (
-    practice.googlePlaceId
-      ? `https://search.google.com/local/writereview?placeid=${practice.googlePlaceId}`
-      : null
-  );
+  const googleReviewUrl = redirectEnabled
+    ? practice.googleReviewUrl || (
+        practice.googlePlaceId
+          ? `https://search.google.com/local/writereview?placeid=${practice.googlePlaceId}`
+          : null
+      )
+    : null;
 
   return (
     <div className="flex min-h-screen flex-col bg-gray-50">

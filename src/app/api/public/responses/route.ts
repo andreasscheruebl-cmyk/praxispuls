@@ -77,7 +77,8 @@ export async function POST(request: Request) {
     const routeResult = routeByNps(
       data.npsScore,
       practice.googlePlaceId,
-      practice.npsThreshold ?? 9
+      practice.npsThreshold ?? 9,
+      practice.googleRedirectEnabled ?? true
     );
 
     // Insert response

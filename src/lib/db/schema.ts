@@ -30,6 +30,7 @@ export const practices = pgTable("practices", {
   surveyTemplate: text("survey_template").default("zahnarzt_standard"),
   theme: text("theme").default("standard"), // standard | vertrauen
   npsThreshold: smallint("nps_threshold").default(9),
+  googleRedirectEnabled: boolean("google_redirect_enabled").default(true),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow(),
   deletedAt: timestamp("deleted_at", { withTimezone: true }), // Soft delete
