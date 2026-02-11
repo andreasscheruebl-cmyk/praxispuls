@@ -21,7 +21,7 @@
     "release:major": "npm version major -m \"chore(release): v%s\""
   },
   "simple-git-hooks": {
-    "pre-commit": "npx lint-staged"
+    "pre-commit": "gitleaks protect --staged && npx lint-staged"
   },
   "lint-staged": {
     "*.{ts,tsx}": ["eslint --fix"]
