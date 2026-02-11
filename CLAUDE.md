@@ -6,6 +6,12 @@ SaaS für Zahnarztpraxen: Patientenumfrage + Google-Review-Routing + QM-Dashboar
 ## Entwickler
 Andi – Solo-Dev, Bayern. Arbeitet Abende/Wochenenden. Pragmatische Lösungen bevorzugt.
 
+## Umgebung
+- **OS:** Windows 11 Pro
+- **Shell:** Bash-Befehle werden über Git Bash / MSYS2 ausgeführt – **keine** Windows-nativen Pfade mit Backslashes in Shell-Kommandos verwenden
+- **Pfade:** In Bash immer POSIX-Pfade (`/c/Users/...`) oder relative Pfade nutzen, NIE `C:\...`
+- **Scripts:** `node`, `npm`, `npx`, `git` funktionieren direkt – für Datei-Operationen die dedizierten Tools (Read, Write, Edit, Glob, Grep) verwenden statt Shell-Kommandos
+
 ## Kommunikation
 - **Mit Andi:** Deutsch
 - **Code + Kommentare:** Englisch
