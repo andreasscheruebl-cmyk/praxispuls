@@ -10,6 +10,7 @@
   "ignoreDependencies": [
     "eslint-config-next",
     "simple-git-hooks",
-    "lint-staged"
+    "lint-staged",
+    "@vitest/coverage-v8"
   ]
 }

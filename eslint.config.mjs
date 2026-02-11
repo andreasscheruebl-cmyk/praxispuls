@@ -49,6 +49,14 @@ const eslintConfig = [
       "sonarjs/no-selector-parameter": "warn",
     },
   },
+  {
+    files: ["**/*.test.ts", "**/*.test.tsx", "**/__tests__/**"],
+    rules: {
+      "sonarjs/no-hardcoded-passwords": "off",
+      "sonarjs/no-hardcoded-secrets": "off",
+      "max-lines-per-function": "off",
+    },
+  },
 ];
 
 export default eslintConfig;
