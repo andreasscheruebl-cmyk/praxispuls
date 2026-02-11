@@ -28,7 +28,7 @@ Zusätzlich: Feedback-Loop etablieren, damit CI-Ergebnisse automatisch sichtbar 
 ### Fixes (MUST)
 - [x] `knip` in CI läuft informativ (kein Gate) – `continue-on-error: true`
 - [x] E2E-Job nur `public-pages.spec.ts` ausführen (braucht keine DB) – Playwright `webServer` startet `npm start`
-- [ ] Alle 4 CI-Jobs grün auf main (nach Push) — **pending: merge + push**
+- [x] Alle 4 CI-Jobs grün auf main (Run 21901684628) ✅
 
 ### Job Summaries (MUST)
 - [x] Lint & Types: Anzahl Warnings + Errors in `$GITHUB_STEP_SUMMARY`
@@ -156,3 +156,5 @@ Realistischer Ansatz für MVP:
 | 2026-02-11 | Playwright Config | webServer command `npm start` in CI |
 | 2026-02-11 | README Badge | CI-Status-Badge hinzugefügt |
 | 2026-02-11 | Verifikation | Build ✅, Tests 79/79 ✅ |
+| 2026-02-11 | CI-Run grün | Run 21901684628: 4/4 Jobs success ✅ |
+| 2026-02-11 | Review | Ticket nach `.tickets/review/` verschoben |
