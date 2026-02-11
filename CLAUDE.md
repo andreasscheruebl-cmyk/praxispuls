@@ -55,17 +55,28 @@ Types: `feat`, `fix`, `chore`, `docs`, `refactor`, `test`, `perf`, `ci`, `style`
 Ein Ticket geht in REVIEW wenn:
 - Alle Code-Änderungen implementiert
 - Build sauber (`next build` ✅)
+- **Alle Tests grün:**
+  - `npm run test` (Unit Tests) ✅
+  - `npm run typecheck` (TypeScript) ✅
+  - `npx next lint` (ESLint, keine Errors) ✅
+  - E2E Tests wenn betroffen (`npx playwright test`) ✅
+- **Test-Ergebnisse im Ticket-Log dokumentiert** (Anzahl Tests, Pass/Fail, Coverage wenn relevant)
 - Ticket-Dokumentation vollständig (Analyse, Änderungen, Verifikation, betroffene Dateien)
 - Ticket-Log aktualisiert
 - Ticket-Datei nach `.tickets/review/` verschoben, `status: review`
 
+**⚠️ Kein Review ohne grüne Tests!** Wenn Tests fehlschlagen, bleibt das Ticket auf `active` bis die Tests gefixt sind.
+
 ### Ticket abschließen
+
+**⚠️ Claude darf Tickets NIEMALS auf `done` setzen oder nach `.tickets/done/` verschieben!**
+Maximal erlaubt: nach `.tickets/review/` verschieben. Nur Andi entscheidet wann ein Ticket done ist.
 
 Ein Ticket ist erst DONE wenn:
 - Andi hat Review/Test bestätigt
 - Alle Akzeptanzkriterien abgehakt
 - Tests geschrieben UND grün
-- Ticket nach `.tickets/done/` verschoben, `status: done`
+- **Andi** verschiebt Ticket nach `.tickets/done/`, `status: done`
 
 ### Bei Prompt ohne Ticket-Kontext
 Wenn der User einen Prompt gibt ohne Ticket-Bezug:
@@ -89,6 +100,8 @@ Gültige Status-Werte (entsprechen den Ordnern in `.tickets/`):
 Ein Ticket geht in `review` wenn:
 - Alle Code-Änderungen gemacht sind
 - Build sauber ist
+- **Alle Tests grün** (Unit, TypeScript, Lint, E2E wenn betroffen)
+- **Test-Ergebnisse im Ticket-Log** (Anzahl, Pass/Fail, Coverage)
 - Ticket-Dokumentation vollständig (Analyse, Änderungen, Verifikation)
 - Bereit für manuellen Test / Review durch Andi
 
@@ -101,7 +114,12 @@ Jede Ticket-Bearbeitung wird **vollständig** im Ticket dokumentiert — im Log-
 #### Was ins Ticket-Log gehört (Tabelle am Ende)
 - **Jeder Arbeitsschritt** als eigene Zeile mit Datum
 - Dateien erstellt/geändert (mit Pfad)
-- Tests ausgeführt (Ergebnis: grün/rot + Output-Zusammenfassung)
+- **Test-Ergebnisse (PFLICHT vor Review):**
+  - `npm run test` → z.B. "79/79 passed, 93% coverage"
+  - `npm run typecheck` → "passed" oder Fehler
+  - `npx next lint` → "0 errors, X warnings"
+  - `npx playwright test` → "6/6 passed" (wenn E2E betroffen)
+  - CI-Run-Ergebnis wenn gepusht → Run-ID + Job-Status
 - Entscheidungen getroffen (was und warum)
 - Probleme/Blocker
 
@@ -114,6 +132,18 @@ Jede Ticket-Bearbeitung wird **vollständig** im Ticket dokumentiert — im Log-
 
 #### Ziel
 Jedes Ticket soll **nach Abschluss als vollständige Dokumentation** dienen — jemand der das Ticket liest, muss nachvollziehen können was gemacht wurde, warum, und wie es verifiziert wurde.
+
+### Dashboard aktualisieren
+
+**Nach jedem Ticket-Statuswechsel** (backlog→active, active→review, etc.) MUSS das Dashboard aktualisiert werden:
+```bash
+npm run status
+```
+Das generiert `DASHBOARD.md` automatisch aus `.tickets/`, `sprints.json`, `package.json`.
+
+- `DASHBOARD.md` ist die **Single Source of Truth** für den Projektstatus
+- Nicht manuell editieren — wird überschrieben
+- `STATUS.md` und `.tickets/BOARD.md` existieren nicht mehr (ersetzt durch Dashboard)
 
 ---
 

@@ -2,7 +2,7 @@
 id: PP-019
 type: bug
 title: "CI Pipeline Fixes + Test-Ergebnis-Feedback"
-status: review
+status: done
 priority: high
 sprint: launch-prep
 parent: PP-015
@@ -38,11 +38,10 @@ Zusätzlich: Feedback-Loop etablieren, damit CI-Ergebnisse automatisch sichtbar 
 
 ### Status Badges (SHOULD)
 - [x] CI-Status-Badge in README.md
-- [ ] Optional: Coverage-Badge (wenn Codecov integriert wird) — deferred to PP-018
+- [x] ~~Coverage-Badge~~ → ausgelagert nach **PP-018**
 
 ### Lokaler Check (SHOULD)
-- [ ] `gh` CLI installierbar dokumentiert — deferred
-- [ ] Script oder npm-Script für `gh run list` / `gh run view` — deferred
+- [x] ~~`gh` CLI + npm Script~~ → ausgelagert nach **PP-024**
 
 ## Technische Details
 
@@ -99,12 +98,12 @@ Realistischer Ansatz für MVP:
 | CI Status Badge im README | 5 Min | Sofort sichtbar ob CI grün |
 | Failing Jobs fixen | 30 Min | Baseline: alle Jobs grün |
 
-### Mittelfristig (separate Tickets)
-| Maßnahme | Aufwand | Nutzen |
-|----------|---------|--------|
-| `gh` CLI installieren + npm Script | 15 Min | `npm run ci:status` für lokalen Check |
-| Codecov Integration (PP-018) | 30 Min | Coverage-Trend, PR-Kommentare, Badge |
-| Playwright HTML Report als GitHub Pages | 1h | E2E-Report online einsehbar |
+### Mittelfristig (ausgelagert in eigene Tickets)
+| Maßnahme | Ticket |
+|----------|--------|
+| `gh` CLI installieren + npm Script | **PP-024** |
+| Codecov Integration | **PP-018** |
+| Playwright HTML Report als GitHub Pages | **PP-025** |
 
 ### Nicht empfohlen (MVP)
 | Maßnahme | Grund |
