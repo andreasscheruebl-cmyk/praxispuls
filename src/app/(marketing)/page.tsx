@@ -2,9 +2,37 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { ScrollLink } from "@/components/marketing/scroll-link";
 
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  name: "PraxisPuls",
+  applicationCategory: "BusinessApplication",
+  operatingSystem: "Web",
+  description:
+    "SaaS für Zahnarztpraxen: Patientenumfragen, automatisches Google-Review-Routing und QM-Dashboard.",
+  offers: {
+    "@type": "AggregateOffer",
+    priceCurrency: "EUR",
+    lowPrice: "0",
+    highPrice: "99",
+    offerCount: "3",
+  },
+  featureList: [
+    "QM-konforme Patientenbefragung",
+    "Automatisches Google-Review-Routing",
+    "NPS-Dashboard mit Echtzeit-Auswertung",
+    "QR-Code-Generator",
+    "DSGVO-konform, Server in Deutschland",
+  ],
+};
+
 export default function HomePage() {
   return (
     <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       {/* Hero */}
       <section className="flex min-h-[60vh] items-center py-20 md:min-h-[80vh] md:py-32">
         <div className="container mx-auto px-4 text-center">

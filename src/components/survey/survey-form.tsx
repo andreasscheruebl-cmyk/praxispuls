@@ -6,6 +6,7 @@ import { Star } from "lucide-react";
 import { NpsSlider } from "@/components/survey/nps-slider";
 import { RatingCircles } from "@/components/survey/rating-circles";
 import { type ThemeId, getThemeConfig } from "@/lib/themes";
+import { trackEvent } from "@/lib/plausible";
 
 type Props = {
   surveyId: string;
@@ -73,6 +74,7 @@ export function SurveyForm({ surveyId, practiceName, practiceColor, themeId = "s
       if (data.routing) {
         setRoutingResult(data.routing);
       }
+      trackEvent("Survey Completed", { category: data.routing?.category || "unknown" });
       setStep("done");
     } catch {
       setStep("error");
@@ -277,6 +279,7 @@ export function SurveyForm({ surveyId, practiceName, practiceColor, themeId = "s
             href={routingResult.googleReviewUrl}
             target="_blank"
             rel="noopener noreferrer"
+            onClick={() => trackEvent("Google Review Click")}
             className="inline-flex h-12 items-center justify-center gap-2 rounded-lg px-8 text-base font-semibold text-white"
             style={{ backgroundColor: practiceColor }}
           >

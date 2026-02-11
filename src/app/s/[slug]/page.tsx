@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Image from "next/image";
 import { db } from "@/lib/db";
@@ -10,6 +11,24 @@ import { type ThemeId, getThemeConfig } from "@/lib/themes";
 type Props = {
   params: Promise<{ slug: string }>;
 };
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { slug } = await params;
+  const survey = await db.query.surveys.findFirst({
+    where: and(eq(surveys.slug, slug), isNull(surveys.deletedAt)),
+    with: { practice: true },
+  });
+
+  if (!survey) {
+    return { title: "Umfrage nicht gefunden" };
+  }
+
+  return {
+    title: `Patientenbefragung – ${survey.practice.name}`,
+    description: `Ihre Meinung ist uns wichtig! Nehmen Sie an der anonymen Patientenbefragung von ${survey.practice.name} teil.`,
+    robots: { index: false, follow: false },
+  };
+}
 
 export default async function SurveyPage({ params }: Props) {
   const { slug } = await params;
