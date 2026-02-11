@@ -1,5 +1,5 @@
 # PraxisPuls – Dashboard
-> Generiert: 2026-02-11 12:29 | Version: 0.1.0 | Branch: `ticket/PP-026-workflow-dashboard`
+> Generiert: 2026-02-11 12:31 | Version: 0.1.0 | Branch: `ticket/PP-026-workflow-dashboard`
 
 ## Sprint: survey-engine – Survey Engine
 > Wochen 3-4 | Kern-Feature: Patient kann Umfrage via QR-Code ausfüllen, Smart Review Routing funktioniert
@@ -12,10 +12,9 @@
 
 ### Active
 - **PP-020** [task] Supabase DB Migration – Schema deployen (critical) → `ticket/PP-020-db-migration`
-- **PP-026** [task] Unified Workflow Dashboard – Tickets, Sprints, Tests, Versioning, Deploy & Release synchronisieren (high) → `ticket/PP-026-workflow-dashboard`
 
 ### Review
-_(keine)_
+- **PP-026** [task] Unified Workflow Dashboard – Tickets, Sprints, Tests, Versioning, Deploy & Release synchronisieren (high)
 
 ### Backlog
 - **PP-011** [feature] Mobile UX Polish: Skeleton Screens, Lazy Loading, Bottom-Nav Feinschliff (high)
@@ -46,8 +45,8 @@ _(keine)_
 | Status | Anzahl |
 |--------|--------|
 | Backlog | 10 |
-| Active | 2 |
-| Review | 0 |
+| Active | 1 |
+| Review | 1 |
 | Done | 14 |
 | **Gesamt** | **26** |
 
