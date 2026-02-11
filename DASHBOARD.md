@@ -1,5 +1,5 @@
 # PraxisPuls – Dashboard
-> Generiert: 2026-02-11 12:54 | Version: 0.1.0 | Branch: `main`
+> Generiert: 2026-02-11 13:18 | Version: 0.1.0 | Branch: `main`
 
 ## Sprint: survey-engine – Survey Engine
 > Wochen 3-4 | Kern-Feature: Patient kann Umfrage via QR-Code ausfüllen, Smart Review Routing funktioniert
@@ -24,7 +24,6 @@
 _(keine)_
 
 ### Review
-- **PP-020** [task] Supabase DB Migration – Schema deployen (critical)
 - **PP-026** [task] Unified Workflow Dashboard – Tickets, Sprints, Tests, Versioning, Deploy & Release synchronisieren (high)
 
 ### Backlog
@@ -40,7 +39,8 @@ _(keine)_
 - **PP-024** [chore] Lokaler CI-Status-Check via gh CLI + npm Script (low)
 - **PP-025** [chore] Playwright HTML Report auf GitHub Pages publizieren (low)
 
-### Done (letzte 10 von 14)
+### Done (letzte 10 von 15)
+- **PP-020** [task] Supabase DB Migration – Schema deployen (critical)
 - **PP-019** [bug] CI Pipeline Fixes + Test-Ergebnis-Feedback (high)
 - **PP-015** [task] Test-Foundation: Vitest v4 + Unit Tests + Pre-commit + CI (high)
 - **PP-014** [task] Static Analysis + Security Scanning Setup (high)
@@ -50,7 +50,6 @@ _(keine)_
 - **PP-008** [bug] Ticket-Dashboard: Beschreibung und Sektionen nicht sichtbar (high)
 - **PP-007** [feature] Automatische Versionierung + Build-Info implementieren (medium)
 - **PP-006** [research] Konzept: Automatische Versionierung mit Sprint- und Ticket-Integration (medium)
-- **PP-005** [bug] QR-Codes: Hover-Previews zu klein und zeigen nicht das richtige PDF (medium)
 
 ## Statistik
 
@@ -58,8 +57,8 @@ _(keine)_
 |--------|--------|
 | Backlog | 11 |
 | Active | 0 |
-| Review | 2 |
-| Done | 14 |
+| Review | 1 |
+| Done | 15 |
 | **Gesamt** | **27** |
 
 ## Version & Deploy
@@ -75,6 +74,7 @@ _(Keine Git-Tags vorhanden – erster Release mit `npm run release:patch`)_
 
 ## Changelog (letzte Commits)
 
+- `b03fed3 chore(tickets): move PP-020 to review – DB already deployed`
 - `391089f docs: add Windows 11 environment section to CLAUDE.md`
 - `e40199d chore(tickets): add PP-027, cleanup PP-026 active duplicate, regenerate dashboard`
 - `7200c4f feat(dx): add CI & Tests, Releases, Changelog sections to dashboard [PP-026]`
@@ -89,7 +89,6 @@ _(Keine Git-Tags vorhanden – erster Release mit `npm run release:patch`)_
 - `a9cd0bc feat(testing): add Vitest v4 unit tests + expand CI to 4 parallel jobs [PP-015]`
 - `8a73fbc feat(security): add gitleaks to pre-commit hook`
 - `c57b77a chore: remove PP-014 from backlog (now in done)`
-- `4cb600a chore: remove duplicate ticket file from review folder`
 
 ## Links & Resources
 

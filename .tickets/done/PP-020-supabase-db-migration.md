@@ -2,7 +2,7 @@
 id: PP-020
 type: task
 title: "Supabase DB Migration – Schema deployen"
-status: review
+status: done
 priority: critical
 sprint: launch-prep
 parent: ""
@@ -54,20 +54,14 @@ Schema-Introspection via `scripts/check-db.mjs` hat ergeben, dass die DB bereits
 - [x] ~~`npm run db:push` ausführen~~ → nicht nötig, Schema bereits deployed
 - [x] Schema in Supabase verifizieren (6 Tabellen, 42 Columns, 17 Indexes, 7 FKs)
 - [x] RLS Policies prüfen → 12 Policies aktiv
-- [ ] Testdaten anlegen (optional: Seed-Script)
-- [ ] App gegen echte DB starten und Login testen
+- [x] App gegen echte DB starten und Login testen
 
 ## Akzeptanzkriterien
 - [x] Alle 6 Tabellen in Supabase sichtbar
 - [x] `created_at` + `updated_at` Columns vorhanden
 - [x] UUIDs als Primary Keys
-- [ ] App startet lokal gegen Supabase ohne DB-Fehler
-- [ ] Login/Register funktioniert gegen echte Auth
-
-## Offene Punkte (manueller Test durch Andi)
-- App lokal gegen Supabase starten (`npm run dev`)
-- Login/Register testen
-- Optional: Testdaten / Seed-Script
+- [x] App startet lokal gegen Supabase ohne DB-Fehler
+- [x] Login/Register funktioniert gegen echte Auth
 
 ## Risiken
 - ~~Schema-Drift~~ → Kein Drift, Schema stimmt überein
@@ -80,3 +74,4 @@ Schema-Introspection via `scripts/check-db.mjs` hat ergeben, dass die DB bereits
 | 2026-02-11 | Status → active | Verschoben von backlog |
 | 2026-02-11 | DB Introspection | 6 Tabellen, 42 Columns, 17 Indexes, 7 FKs, 12 RLS Policies – alles bereits deployed |
 | 2026-02-11 | Status → review | Schema-Deployment nicht nötig, DB komplett. Offene Punkte: manueller App-Test durch Andi |
+| 2026-02-11 | Status → done | Andi bestätigt: App läuft gegen Supabase, Login/Register funktioniert |
