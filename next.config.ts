@@ -46,13 +46,20 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default withSentryConfig(nextConfig, {
+const sentryBuildOptions = {
   org: process.env.SENTRY_ORG,
   project: process.env.SENTRY_PROJECT,
   silent: !process.env.CI,
+  telemetry: false,
   widenClientFileUpload: true,
   tunnelRoute: "/monitoring",
   sourcemaps: {
     deleteSourcemapsAfterUpload: true,
   },
-});
+};
+
+// Only wrap with Sentry build plugin when auth token is available
+// (avoids "No auth token" warnings on Vercel / local builds)
+export default process.env.SENTRY_AUTH_TOKEN
+  ? withSentryConfig(nextConfig, sentryBuildOptions)
+  : nextConfig;
