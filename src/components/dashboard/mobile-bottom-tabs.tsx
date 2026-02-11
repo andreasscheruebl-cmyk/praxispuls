@@ -45,7 +45,7 @@ export function MobileBottomTabs({ navItems }: { navItems: NavItem[] }) {
   );
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 border-t bg-white md:hidden">
+    <nav className="fixed bottom-0 left-0 right-0 z-50 border-t bg-white md:hidden" style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}>
       <div className="flex items-stretch justify-around">
         {visibleItems.map((item) => {
           const Icon = iconMap[item.icon] || LayoutDashboard;
@@ -55,13 +55,13 @@ export function MobileBottomTabs({ navItems }: { navItems: NavItem[] }) {
             <Link
               key={item.href}
               href={item.href}
-              className={`flex flex-1 flex-col items-center gap-0.5 py-2 text-[10px] transition-colors ${
+              className={`flex flex-1 flex-col items-center gap-1 py-3 text-xs transition-colors ${
                 isActive
                   ? "text-primary"
                   : "text-muted-foreground"
               }`}
             >
-              <Icon className="h-5 w-5" />
+              <Icon className="h-6 w-6" />
               <span className={isActive ? "font-medium" : ""}>{item.label}</span>
             </Link>
           );

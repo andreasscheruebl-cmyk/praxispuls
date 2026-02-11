@@ -108,7 +108,7 @@ export default async function DashboardLayout({
         </header>
 
         {/* Page content */}
-        <main className={`flex-1 overflow-y-auto bg-gray-50 p-4 md:p-8 ${themeId === "vertrauen" ? "pb-24 md:pb-8" : ""}`}>
+        <main className="flex-1 overflow-y-auto bg-gray-50 p-4 pb-24 md:p-8">
           {children}
         </main>
 
