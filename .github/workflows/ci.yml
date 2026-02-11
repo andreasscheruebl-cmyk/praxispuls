@@ -20,6 +20,7 @@ jobs:
 
       - name: ESLint
         run: |
+          set -o pipefail
           npx next lint 2>&1 | tee lint-output.txt
           WARNINGS=$(grep -c "Warning:" lint-output.txt || true)
           ERRORS=$(grep -c "Error:" lint-output.txt || true)
@@ -53,6 +54,7 @@ jobs:
 
       - name: Vitest
         run: |
+          set -o pipefail
           npm run test:coverage 2>&1 | tee test-output.txt
           echo "## Unit Tests" >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
@@ -88,6 +90,7 @@ jobs:
 
       - name: E2E (public pages)
         run: |
+          set -o pipefail
           npx playwright test e2e/public-pages.spec.ts --project=chromium 2>&1 | tee e2e-output.txt
           echo "## E2E Tests" >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY

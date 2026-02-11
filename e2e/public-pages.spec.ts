@@ -7,15 +7,7 @@ test.describe("Public Pages", () => {
     await expect(page.locator("body")).toBeVisible();
   });
 
-  test("login page loads", async ({ page }) => {
-    await page.goto("/login");
-    await expect(page.getByRole("heading")).toContainText(/Anmelden|Login/i);
-  });
-
-  test("register page loads", async ({ page }) => {
-    await page.goto("/register");
-    await expect(page.getByRole("heading")).toContainText(/Registr/i);
-  });
+  // login + register tests moved to auth-redirect.spec.ts (require Supabase Auth)
 
   test("impressum page loads", async ({ page }) => {
     await page.goto("/impressum");
