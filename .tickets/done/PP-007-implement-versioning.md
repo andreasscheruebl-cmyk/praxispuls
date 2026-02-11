@@ -2,7 +2,7 @@
 id: PP-007
 type: feature
 title: "Automatische Versionierung + Build-Info implementieren"
-status: review
+status: done
 priority: medium
 sprint: survey-engine
 parent: PP-006
@@ -75,13 +75,13 @@ Basierend auf dem Konzept aus PP-006: Versionierung, Build-Info und Health-Endpo
 - `package.json` (geändert — Scripts)
 
 ## Akzeptanzkriterien
-- [ ] `next.config.ts` injiziert Build-Info als `NEXT_PUBLIC_*` Env-Vars
-- [ ] `src/lib/version.ts` exportiert `getBuildInfo()` und `getVersionString()`
-- [ ] `GET /api/health` gibt Build-Info + Status als JSON zurück
-- [ ] Dashboard-Sidebar-Footer zeigt klickbares Version-Badge
-- [ ] Sentry-Config hat `release` Property mit Version+Hash
-- [ ] `npm run release:minor` bumpt Version, erstellt Commit + Git-Tag
-- [ ] Build bleibt sauber
+- [x] `next.config.ts` injiziert Build-Info als `NEXT_PUBLIC_*` Env-Vars
+- [x] `src/lib/version.ts` exportiert `getBuildInfo()` und `getVersionString()`
+- [x] `GET /api/health` gibt Build-Info + Status als JSON zurück
+- [x] Dashboard-Sidebar-Footer zeigt klickbares Version-Badge
+- [x] Sentry-Config hat `release` Property mit Version+Hash
+- [x] `npm run release:minor` bumpt Version, erstellt Commit + Git-Tag
+- [x] Build bleibt sauber
 
 ## Test-Plan
 - [ ] `npx next build` — sauber
@@ -106,3 +106,5 @@ Basierend auf dem Konzept aus PP-006: Versionierung, Build-Info und Health-Endpo
 | 2026-02-11 | Implementiert | `sentry.server.config.ts` + `sentry.edge.config.ts`: release + environment Tags |
 | 2026-02-11 | Implementiert | `package.json`: release:patch/minor/major Scripts mit Git-Tags |
 | 2026-02-11 | Build | `npx next build` sauber ✅, `/api/health` Route sichtbar |
+| 2026-02-11 | Production | Vercel Deploy ✅, `/api/health` gibt korrektes JSON mit version+hash+env |
+| 2026-02-11 | Done | Andi bestätigt auf Production, Ticket abgeschlossen |

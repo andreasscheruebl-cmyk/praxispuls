@@ -2,7 +2,7 @@
 id: PP-006
 type: research
 title: "Konzept: Automatische Versionierung mit Sprint- und Ticket-Integration"
-status: review
+status: done
 priority: medium
 sprint: survey-engine
 parent: ""
@@ -152,3 +152,4 @@ git push --follow-tags   # Pusht Version-Commit + Tag → Vercel deployed
 | 2026-02-11 | Recherche | 5 Tools verglichen: standard-version (deprecated), release-please (CI-only), changesets (falsche Paradigma), semantic-release (overengineered), commit-and-tag-version (passt) |
 | 2026-02-11 | Recherche | Next.js Version-Injection via next.config.ts env-Var evaluiert (zero deps) |
 | 2026-02-11 | Empfehlung | `commit-and-tag-version` — minimal overhead, nutzt Conventional Commits, kein CI nötig |
+| 2026-02-11 | Done | Research abgeschlossen, PP-007 (Implementierung) bereits umgesetzt und deployed |

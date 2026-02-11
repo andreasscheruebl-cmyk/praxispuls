@@ -2,7 +2,7 @@
 id: PP-009
 type: bug
 title: "Mobile: Viewport fehlt, Bottom-Tabs zu klein, Safe-Area fehlt"
-status: review
+status: done
 priority: critical
 sprint: survey-engine
 parent: ""
@@ -74,7 +74,7 @@ Bottom-Nav hat kein `padding-bottom` für die iPhone Home-Indicator-Leiste. Tabs
 - [x] `viewport` Export in `src/app/layout.tsx` (Next.js 15 `Viewport` Type)
 - [x] Bottom-Tabs: Text auf `text-xs`, Tap-Targets mindestens 44px, Safe-Area-Padding
 - [x] `pb-24` Bottom-Padding für ALLE Themes auf Mobile (nicht nur Vertrauen)
-- [ ] Kein horizontaler Scroll auf 375px Breite (iPhone SE) — manueller Test
+- [x] Kein horizontaler Scroll auf 375px Breite (iPhone SE)
 - [x] Build sauber
 
 ## Betroffene Dateien
@@ -91,3 +91,5 @@ Bottom-Nav hat kein `padding-bottom` für die iPhone Home-Indicator-Leiste. Tabs
 | 2026-02-11 | Fix 2 | Bottom-Tabs: text-xs, py-3, h-6 w-6, safe-area-inset-bottom |
 | 2026-02-11 | Fix 3 | pb-24 für alle Themes auf Mobile |
 | 2026-02-11 | Build | `npx next build` sauber ✅ |
+| 2026-02-11 | Deployed | Merge auf main, Vercel Production Deploy |
+| 2026-02-11 | Done | Andi bestätigt, Ticket abgeschlossen |
