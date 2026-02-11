@@ -1,5 +1,5 @@
 # PraxisPuls – Dashboard
-> Generiert: 2026-02-11 12:50 | Version: 0.1.0 | Branch: `main`
+> Generiert: 2026-02-11 12:54 | Version: 0.1.0 | Branch: `main`
 
 ## Sprint: survey-engine – Survey Engine
 > Wochen 3-4 | Kern-Feature: Patient kann Umfrage via QR-Code ausfüllen, Smart Review Routing funktioniert
@@ -21,9 +21,10 @@
 ## Kanban
 
 ### Active
-- **PP-020** [task] Supabase DB Migration – Schema deployen (critical) → `ticket/PP-020-db-migration`
+_(keine)_
 
 ### Review
+- **PP-020** [task] Supabase DB Migration – Schema deployen (critical)
 - **PP-026** [task] Unified Workflow Dashboard – Tickets, Sprints, Tests, Versioning, Deploy & Release synchronisieren (high)
 
 ### Backlog
@@ -56,8 +57,8 @@
 | Status | Anzahl |
 |--------|--------|
 | Backlog | 11 |
-| Active | 1 |
-| Review | 1 |
+| Active | 0 |
+| Review | 2 |
 | Done | 14 |
 | **Gesamt** | **27** |
 
@@ -74,6 +75,8 @@ _(Keine Git-Tags vorhanden – erster Release mit `npm run release:patch`)_
 
 ## Changelog (letzte Commits)
 
+- `391089f docs: add Windows 11 environment section to CLAUDE.md`
+- `e40199d chore(tickets): add PP-027, cleanup PP-026 active duplicate, regenerate dashboard`
 - `7200c4f feat(dx): add CI & Tests, Releases, Changelog sections to dashboard [PP-026]`
 - `909e529 chore(tickets): move PP-026 to review + regenerate dashboard`
 - `9bd6cff feat(dx): add unified dashboard generator + cleanup old status files [PP-026]`
@@ -87,8 +90,6 @@ _(Keine Git-Tags vorhanden – erster Release mit `npm run release:patch`)_
 - `8a73fbc feat(security): add gitleaks to pre-commit hook`
 - `c57b77a chore: remove PP-014 from backlog (now in done)`
 - `4cb600a chore: remove duplicate ticket file from review folder`
-- `558a21b Merge ticket/PP-014-static-analysis into main`
-- `dfe047f chore(tickets): close PP-014 – static analysis setup complete`
 
 ## Links & Resources
 
