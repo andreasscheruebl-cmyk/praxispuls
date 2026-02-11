@@ -1,5 +1,7 @@
 # PraxisPuls
 
+[![CI](https://github.com/andreasscheruebl-cmyk/praxispuls/actions/workflows/ci.yml/badge.svg)](https://github.com/andreasscheruebl-cmyk/praxispuls/actions/workflows/ci.yml)
+
 **Patientenfeedback sammeln, Google-Bewertungen steigern, QM-Pflicht erfüllen – automatisch.**
 
 SaaS für Zahnarztpraxen: QM-konforme Patientenumfrage + Smart Google-Review-Routing.
