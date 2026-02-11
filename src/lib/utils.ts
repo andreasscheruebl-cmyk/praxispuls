@@ -52,5 +52,3 @@ export function formatDateDE(date: Date | string): string {
     year: "numeric",
   });
 }
-
-// test
