@@ -1,5 +1,5 @@
 # PraxisPuls – Dashboard
-> Generiert: 2026-02-11 12:37 | Version: 0.1.0 | Branch: `ticket/PP-026-workflow-dashboard`
+> Generiert: 2026-02-11 12:50 | Version: 0.1.0 | Branch: `main`
 
 ## Sprint: survey-engine – Survey Engine
 > Wochen 3-4 | Kern-Feature: Patient kann Umfrage via QR-Code ausfüllen, Smart Review Routing funktioniert
@@ -9,20 +9,19 @@
 | 7 | 0 | 0 | 1 | 8 |
 
 ## CI & Tests
-✅ Run #21905150501 (success) on `main` – 2026-02-11
+✅ Run #21905358309 (success) on `main` – 2026-02-11
 
 | Job | Status |
 |-----|--------|
 | Security Scanning | ✅ success |
-| E2E Tests | ✅ success |
 | Lint & Types | ✅ success |
+| E2E Tests | ✅ success |
 | Unit Tests | ✅ success |
 
 ## Kanban
 
 ### Active
 - **PP-020** [task] Supabase DB Migration – Schema deployen (critical) → `ticket/PP-020-db-migration`
-- **PP-026** [task] Unified Workflow Dashboard – Tickets, Sprints, Tests, Versioning, Deploy & Release synchronisieren (high) → `ticket/PP-026-workflow-dashboard`
 
 ### Review
 - **PP-026** [task] Unified Workflow Dashboard – Tickets, Sprints, Tests, Versioning, Deploy & Release synchronisieren (high)
@@ -32,6 +31,7 @@
 - **PP-016** [task] Integration + E2E + Security Tests (high)
 - **PP-021** [task] Legal Pages finalisieren (Impressum, Datenschutz, AGB) (high)
 - **PP-022** [task] SEO + Monitoring (Meta Tags, Sentry, Plausible) (high)
+- **PP-027** [bug] Vercel Build Warnings – Sentry Auth Token + Telemetrie (high)
 - **PP-017** [task] Component Tests + Property-Based + Projekt-spezifische Tests (medium)
 - **PP-018** [task] Test-Polish: A11y, Visual Regression, Performance, Monitoring (medium)
 - **PP-012** [feature] Mobile UX v1.1: Smart-Sticky Header, Animated Numbers, Caching (low)
@@ -55,8 +55,8 @@
 
 | Status | Anzahl |
 |--------|--------|
-| Backlog | 10 |
-| Active | 2 |
+| Backlog | 11 |
+| Active | 1 |
 | Review | 1 |
 | Done | 14 |
 | **Gesamt** | **27** |
@@ -74,6 +74,7 @@ _(Keine Git-Tags vorhanden – erster Release mit `npm run release:patch`)_
 
 ## Changelog (letzte Commits)
 
+- `7200c4f feat(dx): add CI & Tests, Releases, Changelog sections to dashboard [PP-026]`
 - `909e529 chore(tickets): move PP-026 to review + regenerate dashboard`
 - `9bd6cff feat(dx): add unified dashboard generator + cleanup old status files [PP-026]`
 - `c3e7cce ci: fix pipefail + remove auth-dependent E2E tests [PP-019]`
@@ -88,7 +89,6 @@ _(Keine Git-Tags vorhanden – erster Release mit `npm run release:patch`)_
 - `4cb600a chore: remove duplicate ticket file from review folder`
 - `558a21b Merge ticket/PP-014-static-analysis into main`
 - `dfe047f chore(tickets): close PP-014 – static analysis setup complete`
-- `c2eb1d2 chore(tickets): move PP-014 to review – static analysis setup complete`
 
 ## Links & Resources
 

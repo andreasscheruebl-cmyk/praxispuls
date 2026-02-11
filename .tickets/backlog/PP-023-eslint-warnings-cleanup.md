@@ -31,6 +31,11 @@ Hauptquellen (aus PP-014 Analyse):
 - [ ] Build weiterhin sauber
 - [ ] Kein Funktionalitäts-Änderung (reines Refactoring)
 
+## Bekannte Warnings
+- `src/lib/themes.ts:83` – `security/detect-object-injection` bei `THEMES[themeId]` (False Positive, themeId ist typisiert)
+- `survey-form.tsx` – `sonarjs/cognitive-complexity` (große Komponente)
+- Diverse API Routes – `max-lines-per-function`
+
 ## Ansatz
 - Warning-Liste generieren: `npx next lint 2>&1 | grep "Warning"`
 - Gruppieren nach Rule
