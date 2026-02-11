@@ -95,19 +95,107 @@ function ticketLine(t: Ticket, showBranch = false): string {
   return `- **${t.id}** [${t.type}] ${t.title}${prio}${branch}`;
 }
 
-// --- Get last CI run (optional, needs gh CLI) ---
-function getLastCiRun(): string | null {
+// --- Find and execute gh CLI (Windows: may not be on PATH in git bash) ---
+function ghExec(args: string): string {
+  // Try gh directly first (works if on PATH)
   try {
-    const result = execSync(
-      'gh run list --limit 1 --json databaseId,status,conclusion,headBranch,event,createdAt --jq ".[0]"',
-      { encoding: "utf-8", timeout: 5000, stdio: ["pipe", "pipe", "pipe"] }
+    return execSync(`gh ${args}`, {
+      encoding: "utf-8",
+      timeout: 10000,
+      stdio: ["pipe", "pipe", "pipe"],
+    });
+  } catch { /* not on PATH */ }
+
+  // Windows: try well-known install locations via cmd.exe
+  const ghPaths = [
+    "C:/Program Files/GitHub CLI/gh.exe",
+    "C:/Program Files (x86)/GitHub CLI/gh.exe",
+  ];
+  for (const ghPath of ghPaths) {
+    if (fs.existsSync(ghPath)) {
+      return execSync(`"${ghPath}" ${args}`, {
+        encoding: "utf-8",
+        timeout: 10000,
+        stdio: ["pipe", "pipe", "pipe"],
+      });
+    }
+  }
+  throw new Error("gh CLI not found");
+}
+
+// --- CI run info ---
+interface CiRun {
+  summary: string;
+  jobs: { name: string; conclusion: string }[];
+}
+
+function getLastCiRun(): CiRun | null {
+  try {
+    // Get latest run ID first
+    const listResult = ghExec(
+      "run list --limit 1 --json databaseId"
+    );
+    const list = JSON.parse(listResult.trim());
+    if (!list.length) return null;
+    const runId = list[0].databaseId;
+
+    // Get full run details
+    const result = ghExec(
+      `run view ${runId} --json databaseId,status,conclusion,headBranch,createdAt,jobs`
     );
     if (!result.trim()) return null;
-    const run = JSON.parse(result.trim());
-    const icon = run.conclusion === "success" ? "✅" : run.conclusion === "failure" ? "❌" : "⏳";
-    return `${icon} Run #${run.databaseId} (${run.conclusion || run.status}) on \`${run.headBranch}\` – ${run.createdAt?.slice(0, 10) || "?"}`;
+    const raw = JSON.parse(result.trim());
+    const icon = raw.conclusion === "success" ? "✅" : raw.conclusion === "failure" ? "❌" : "⏳";
+    const jobs = (raw.jobs || []).map((j: { name: string; conclusion: string }) => ({
+      name: j.name,
+      conclusion: j.conclusion,
+    }));
+    return {
+      summary: `${icon} Run #${raw.databaseId} (${raw.conclusion || raw.status}) on \`${raw.headBranch}\` – ${raw.createdAt?.slice(0, 10) || "?"}`,
+      jobs,
+    };
   } catch {
     return null;
+  }
+}
+
+// --- Get recent releases/tags ---
+interface Release {
+  tag: string;
+  date: string;
+  message: string;
+}
+
+function getReleases(): Release[] {
+  try {
+    const result = execSync(
+      'git tag -l --sort=-version:refname --format="%(refname:short)|%(creatordate:short)|%(subject)"',
+      { encoding: "utf-8", timeout: 5000, stdio: ["pipe", "pipe", "pipe"] }
+    );
+    return result
+      .trim()
+      .split("\n")
+      .filter((l) => l.trim())
+      .slice(0, 10)
+      .map((line) => {
+        const [tag = "", date = "", ...rest] = line.split("|");
+        return { tag, date, message: rest.join("|") };
+      });
+  } catch {
+    return [];
+  }
+}
+
+// --- Get recent commits for changelog ---
+function getRecentCommits(limit = 15): string[] {
+  try {
+    const result = execSync(
+      `git log --oneline -${limit} --format="%h %s"`,
+      { encoding: "utf-8", timeout: 5000, stdio: ["pipe", "pipe", "pipe"] }
+    );
+    return result.trim().split("\n").filter((l) => l.trim());
+  } catch {
+    return [];
   }
 }
 
@@ -190,10 +278,23 @@ function main() {
   lines.push(`| ${sprintDone} | ${sprintActive} | ${sprintReview} | ${sprintBacklog} | ${sprintTickets.length} |`);
   lines.push("");
 
-  // CI
+  // CI + Test Results
   if (ciRun) {
-    lines.push(`## CI`);
-    lines.push(ciRun);
+    lines.push(`## CI & Tests`);
+    lines.push(ciRun.summary);
+    lines.push("");
+    if (ciRun.jobs.length > 0) {
+      lines.push("| Job | Status |");
+      lines.push("|-----|--------|");
+      ciRun.jobs.forEach((j) => {
+        const icon = j.conclusion === "success" ? "✅" : j.conclusion === "failure" ? "❌" : j.conclusion === "skipped" ? "⏭️" : "⏳";
+        lines.push(`| ${j.name} | ${icon} ${j.conclusion} |`);
+      });
+      lines.push("");
+    }
+  } else {
+    lines.push("## CI & Tests");
+    lines.push("_(gh CLI nicht verfügbar – `gh run view` für Details)_");
     lines.push("");
   }
 
@@ -253,6 +354,32 @@ function main() {
   lines.push(`- **Git Tag:** ${git.lastTag}`);
   lines.push(`- **Production:** https://praxispuls.vercel.app`);
   lines.push(`- **Deploy:** Automatisch via Vercel bei Push auf \`main\``);
+  lines.push("");
+
+  // Releases
+  const releases = getReleases();
+  lines.push("## Releases");
+  lines.push("");
+  if (releases.length === 0) {
+    lines.push("_(Keine Git-Tags vorhanden – erster Release mit `npm run release:patch`)_");
+  } else {
+    lines.push("| Version | Datum | Beschreibung |");
+    lines.push("|---------|-------|-------------|");
+    releases.forEach((r) => {
+      lines.push(`| ${r.tag} | ${r.date} | ${r.message} |`);
+    });
+  }
+  lines.push("");
+
+  // Changelog (recent commits)
+  const commits = getRecentCommits();
+  lines.push("## Changelog (letzte Commits)");
+  lines.push("");
+  if (commits.length === 0) {
+    lines.push("_(keine)_");
+  } else {
+    commits.forEach((c) => lines.push(`- \`${c}\``));
+  }
   lines.push("");
 
   // Links & Resources
