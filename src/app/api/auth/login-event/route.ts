@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
 import { getUserOptional } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { practices, loginEvents } from "@/lib/db/schema";
+import { loginEvents } from "@/lib/db/schema";
 import { eq, desc } from "drizzle-orm";
+import { getActivePracticeForUser } from "@/lib/practice";
 
 /**
  * POST – Record a login event for the current user.
@@ -11,14 +12,11 @@ import { eq, desc } from "drizzle-orm";
 export async function POST(request: Request) {
   try {
     const user = await getUserOptional();
-    if (!user?.email) {
+    if (!user) {
       return NextResponse.json({ error: "Nicht angemeldet" }, { status: 401 });
     }
 
-    const practice = await db.query.practices.findFirst({
-      where: eq(practices.email, user.email),
-      columns: { id: true },
-    });
+    const practice = await getActivePracticeForUser(user.id);
     if (!practice) {
       return NextResponse.json({ error: "Praxis nicht gefunden" }, { status: 404 });
     }
@@ -50,14 +48,11 @@ export async function POST(request: Request) {
 export async function GET() {
   try {
     const user = await getUserOptional();
-    if (!user?.email) {
+    if (!user) {
       return NextResponse.json({ error: "Nicht angemeldet" }, { status: 401 });
     }
 
-    const practice = await db.query.practices.findFirst({
-      where: eq(practices.email, user.email),
-      columns: { id: true },
-    });
+    const practice = await getActivePracticeForUser(user.id);
     if (!practice) {
       return NextResponse.json({ events: [] });
     }

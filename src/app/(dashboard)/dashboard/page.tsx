@@ -1,6 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { TrendingUp, MessageSquare, Star, AlertTriangle } from "lucide-react";
-import { getPractice } from "@/actions/practice";
+import { getActivePractice } from "@/actions/practice";
 import { getDashboardOverview, getNpsTrend, getReviewFunnel } from "@/lib/db/queries/dashboard";
 import { NpsChart } from "@/components/dashboard/nps-chart";
 import { ReviewFunnel } from "@/components/dashboard/review-funnel";
@@ -12,7 +12,7 @@ import { redirect } from "next/navigation";
 export const metadata = { title: "Dashboard" };
 
 export default async function DashboardPage() {
-  const practice = await getPractice();
+  const practice = await getActivePractice();
   if (!practice) redirect("/onboarding");
 
   const themeId = (practice.theme as ThemeId) || "standard";

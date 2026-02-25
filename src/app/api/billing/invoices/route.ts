@@ -1,21 +1,16 @@
 import { NextResponse } from "next/server";
 import { getUserOptional } from "@/lib/auth";
-import { db } from "@/lib/db";
-import { practices } from "@/lib/db/schema";
-import { eq } from "drizzle-orm";
 import { stripe } from "@/lib/stripe";
+import { getActivePracticeForUser } from "@/lib/practice";
 
 export async function GET() {
   try {
     const user = await getUserOptional();
-    if (!user?.email) {
+    if (!user) {
       return NextResponse.json({ error: "Nicht angemeldet" }, { status: 401 });
     }
 
-    const practice = await db.query.practices.findFirst({
-      where: eq(practices.email, user.email),
-    });
-
+    const practice = await getActivePracticeForUser(user.id);
     if (!practice?.stripeCustomerId) {
       return NextResponse.json({ invoices: [] });
     }

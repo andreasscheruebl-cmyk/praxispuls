@@ -1,13 +1,11 @@
 import Link from "next/link";
 import { getUser } from "@/lib/auth";
+import { getActivePractice } from "@/actions/practice";
 import { LogoutButton } from "@/components/dashboard/logout-button";
 import { MobileNav } from "@/components/dashboard/mobile-nav";
 import { MobileBottomTabs } from "@/components/dashboard/mobile-bottom-tabs";
 import { BuildBadge } from "@/components/shared/build-badge";
 import { ThemeProvider } from "@/components/theme-provider";
-import { db } from "@/lib/db";
-import { practices } from "@/lib/db/schema";
-import { eq } from "drizzle-orm";
 import { type ThemeId } from "@/lib/themes";
 import {
   LayoutDashboard,
@@ -39,11 +37,8 @@ export default async function DashboardLayout({
   // This will redirect to /login if not authenticated
   const user = await getUser();
 
-  // Load theme from practice
-  const practice = await db.query.practices.findFirst({
-    where: eq(practices.email, user.email!),
-    columns: { theme: true },
-  });
+  // Load theme from active practice
+  const practice = await getActivePractice();
   const themeId = (practice?.theme as ThemeId) || "vertrauen";
 
   return (

@@ -59,6 +59,7 @@ export type PlanId = "free" | "starter" | "professional";
 
 export type PlanLimits = {
   maxResponsesPerMonth: number;
+  maxLocations: number;
   templates: SurveyTemplateId[];
   hasAlerts: boolean;
   hasBranding: boolean;
@@ -68,6 +69,7 @@ export type PlanLimits = {
 export const PLAN_LIMITS: Record<PlanId, PlanLimits> = {
   free: {
     maxResponsesPerMonth: 30,
+    maxLocations: 1,
     templates: ["zahnarzt_standard"],
     hasAlerts: false,
     hasBranding: false,
@@ -75,6 +77,7 @@ export const PLAN_LIMITS: Record<PlanId, PlanLimits> = {
   },
   starter: {
     maxResponsesPerMonth: 200,
+    maxLocations: 3,
     templates: ["zahnarzt_standard", "zahnarzt_kurz", "zahnarzt_prophylaxe"],
     hasAlerts: true,
     hasBranding: true,
@@ -82,6 +85,7 @@ export const PLAN_LIMITS: Record<PlanId, PlanLimits> = {
   },
   professional: {
     maxResponsesPerMonth: Infinity,
+    maxLocations: 10,
     templates: ["zahnarzt_standard", "zahnarzt_kurz", "zahnarzt_prophylaxe"],
     hasAlerts: true,
     hasBranding: true,

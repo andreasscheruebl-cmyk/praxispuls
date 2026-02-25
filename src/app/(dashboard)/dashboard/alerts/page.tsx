@@ -1,6 +1,6 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { AlertTriangle, CheckCircle } from "lucide-react";
-import { getPractice } from "@/actions/practice";
+import { getActivePractice } from "@/actions/practice";
 import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
 import { alerts, responses } from "@/lib/db/schema";
@@ -10,7 +10,7 @@ import { AlertItem } from "@/components/dashboard/alert-item";
 export const metadata = { title: "Alerts" };
 
 export default async function AlertsPage() {
-  const practice = await getPractice();
+  const practice = await getActivePractice();
   if (!practice) redirect("/onboarding");
 
   const allAlerts = await db

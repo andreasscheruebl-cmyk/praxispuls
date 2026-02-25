@@ -8,16 +8,16 @@ import { getGoogleReviewLink, getPlaceDetails } from "@/lib/google";
 import { slugify } from "@/lib/utils";
 import { SURVEY_TEMPLATES } from "@/lib/survey-templates";
 import { logAudit, getRequestMeta } from "@/lib/audit";
+import { getActivePracticeForUser } from "@/lib/practice";
 
 export async function GET() {
   try {
     const user = await getUserOptional();
-    if (!user?.email) {
+    if (!user) {
       return NextResponse.json({ error: "Nicht angemeldet" }, { status: 401 });
     }
-    const practice = await db.query.practices.findFirst({
-      where: and(eq(practices.email, user.email), isNull(practices.deletedAt)),
-    });
+
+    const practice = await getActivePracticeForUser(user.id);
     if (!practice) return NextResponse.json({ error: "Praxis nicht gefunden" }, { status: 404 });
     return NextResponse.json(practice);
   } catch {
@@ -28,7 +28,7 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     const user = await getUserOptional();
-    if (!user?.email) {
+    if (!user) {
       return NextResponse.json({ error: "Nicht angemeldet" }, { status: 401 });
     }
     const body = await request.json();
@@ -40,7 +40,7 @@ export async function POST(request: Request) {
 
     // Check if this user already has an active practice
     const existingPractice = await db.query.practices.findFirst({
-      where: and(eq(practices.email, user.email), isNull(practices.deletedAt)),
+      where: and(eq(practices.ownerUserId, user.id), isNull(practices.deletedAt)),
       columns: { id: true },
     });
     if (existingPractice) {
@@ -88,14 +88,15 @@ export async function POST(request: Request) {
     const template = SURVEY_TEMPLATES.find(t => t.id === templateId) || SURVEY_TEMPLATES[0]!;
 
     const [practice] = await db.insert(practices).values({
+      ownerUserId: user.id,
       name: name.trim(),
       slug,
-      email: user.email,
+      email: user.email!,
       postalCode,
       googlePlaceId,
       googleReviewUrl,
       logoUrl: logoUrl || null,
-      alertEmail: user.email,
+      alertEmail: user.email!,
       surveyTemplate: templateId,
     }).returning();
 
@@ -118,16 +119,14 @@ export async function POST(request: Request) {
 export async function PUT(request: Request) {
   try {
     const user = await getUserOptional();
-    if (!user?.email) {
+    if (!user) {
       return NextResponse.json({ error: "Nicht angemeldet" }, { status: 401 });
     }
     const body = await request.json();
     const parsed = practiceUpdateSchema.parse(body);
     const meta = getRequestMeta(request);
 
-    const practice = await db.query.practices.findFirst({
-      where: and(eq(practices.email, user.email), isNull(practices.deletedAt)),
-    });
+    const practice = await getActivePracticeForUser(user.id);
     if (!practice) return NextResponse.json({ error: "Praxis nicht gefunden" }, { status: 404 });
 
     // Verify Google Place ID if changed
