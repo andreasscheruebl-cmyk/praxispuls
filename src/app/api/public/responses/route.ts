@@ -7,8 +7,8 @@ import { routeByNps } from "@/lib/review-router";
 import { eq, and } from "drizzle-orm";
 import { getMonthlyResponseCount } from "@/lib/db/queries/dashboard";
 import { PLAN_LIMITS } from "@/types";
-import type { PlanId } from "@/types";
 import { sendDetractorAlert } from "@/lib/email";
+import { getEffectivePlan } from "@/lib/plans";
 
 export async function POST(request: Request) {
   try {
@@ -59,7 +59,7 @@ export async function POST(request: Request) {
     }
 
     // Check plan limits
-    const planId = (practice.plan || "free") as PlanId;
+    const planId = getEffectivePlan(practice);
     const limits = PLAN_LIMITS[planId];
     const monthlyCount = await getMonthlyResponseCount(practice.id);
 

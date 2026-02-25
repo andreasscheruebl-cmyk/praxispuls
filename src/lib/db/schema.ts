@@ -34,6 +34,9 @@ export const practices = pgTable(
     theme: text("theme").default("standard"), // standard | vertrauen
     npsThreshold: smallint("nps_threshold").default(9),
     googleRedirectEnabled: boolean("google_redirect_enabled").default(true),
+    planOverride: text("plan_override"), // free | starter | professional — admin override
+    overrideReason: text("override_reason"), // beta_tester | demo | friend | support | other
+    overrideExpiresAt: timestamp("override_expires_at", { withTimezone: true }),
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow(),
     deletedAt: timestamp("deleted_at", { withTimezone: true }), // Soft delete

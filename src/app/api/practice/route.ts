@@ -9,6 +9,7 @@ import { slugify } from "@/lib/utils";
 import { SURVEY_TEMPLATES } from "@/lib/survey-templates";
 import { logAudit, getRequestMeta } from "@/lib/audit";
 import { getActivePracticeForUser } from "@/lib/practice";
+import { getEffectivePlan } from "@/lib/plans";
 
 export async function GET() {
   try {
@@ -19,7 +20,7 @@ export async function GET() {
 
     const practice = await getActivePracticeForUser(user.id);
     if (!practice) return NextResponse.json({ error: "Praxis nicht gefunden" }, { status: 404 });
-    return NextResponse.json(practice);
+    return NextResponse.json({ ...practice, plan: getEffectivePlan(practice) });
   } catch {
     return NextResponse.json({ error: "Interner Fehler" }, { status: 500 });
   }
