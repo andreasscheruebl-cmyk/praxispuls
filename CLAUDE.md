@@ -17,30 +17,45 @@ Andi – Solo-Dev, Bayern. Arbeitet Abende/Wochenenden. Pragmatische Lösungen b
 - **Code + Kommentare:** Englisch
 - **UI-Texte:** Deutsch, Siezen ("Sie")
 
+## Quick Start
+```bash
+npm install              # Dependencies
+cp .env.example .env.local  # Env vars ausfüllen
+npm run dev              # Dev-Server (Turbopack, Port 3000)
+npm run build            # Production Build
+npm run typecheck        # TypeScript Check
+npm run lint             # ESLint
+npm run test             # Unit Tests (Vitest)
+npm run test:e2e         # E2E Tests (Playwright)
+npm run knip             # Dead Code Detection
+npm run status           # Dashboard generieren
+npm run db:push          # Schema zu Supabase pushen
+npm run db:studio        # Drizzle Studio (Port 4983)
+```
+
 ---
 
-## 🚨 TICKET-PFLICHT (NICHT VERHANDELBAR)
+## GitHub Workflow (PFLICHT)
 
-Dieses Projekt nutzt TicketOps. Tickets liegen in `.tickets/` als Markdown-Dateien.
-**Ohne Ticket wird KEIN Code angefasst. Keine Ausnahme.**
+Dieses Projekt nutzt **GitHub Issues + Projects + PRs** für Projektmanagement.
+**Ohne Issue wird KEIN Code angefasst. Keine Ausnahme.**
 
 ### Vor JEDER Code-Änderung
 
-1. Prüfe `.tickets/active/` – gibt es ein passendes Ticket?
-2. **JA** → Arbeite im zugehörigen Branch (`ticket/{ID}-{slug}`)
-3. **NEIN** → Erstelle zuerst ein Ticket ODER frage mich:
-   - „Dafür existiert kein Ticket. Soll ich PP-XXX erstellen?"
-   - Schlage Typ, Titel und 3-5 Akzeptanzkriterien vor
+1. Prüfe offene Issues (`gh issue list`) – gibt es ein passendes Issue?
+2. **JA** → Branch erstellen: `git checkout -b feat/42-slug`
+3. **NEIN** → Issue erstellen ODER frage mich:
+   - „Dafür existiert kein Issue. Soll ich eins erstellen?"
+   - Schlage Titel, Labels und Akzeptanzkriterien vor
    - Warte auf meine Bestätigung BEVOR du Code schreibst
 
-### Was OHNE Ticket erlaubt ist
+### Was OHNE Issue erlaubt ist
 
 - Dateien lesen und analysieren
-- `.tickets/` Dateien erstellen und bearbeiten
 - Tests ausführen (explorativ)
 - Recherche und Analyse
 
-### Was OHNE Ticket VERBOTEN ist
+### Was OHNE Issue VERBOTEN ist
 
 - Code-Dateien erstellen, ändern oder löschen
 - Dependencies hinzufügen (`npm install`)
@@ -48,220 +63,75 @@ Dieses Projekt nutzt TicketOps. Tickets liegen in `.tickets/` als Markdown-Datei
 - Environment Variables ändern
 - Git Commits
 
+### Branch-Naming
+
+`type/issue-nummer-slug` – z.B.:
+- `feat/42-dark-mode` – neues Feature
+- `fix/43-login-bug` – Bug Fix
+- `chore/44-deps-update` – Maintenance
+
 ### Commit-Format
 
 ```
-type(scope): beschreibung [TICKET-ID]
+type(scope): beschreibung (#issue)
 ```
 
 Types: `feat`, `fix`, `chore`, `docs`, `refactor`, `test`, `perf`, `ci`, `style`
+Beispiel: `feat(survey): add NPS slider (#42)`
 
-### Ticket in Review geben
+### PR-Workflow
 
-Ein Ticket geht in REVIEW wenn:
+1. Issue erstellen oder bestehendes wählen
+2. Branch: `git checkout -b feat/42-slug`
+3. Arbeiten + committen
+4. PR erstellen: `gh pr create` (Body enthält `Closes #42`)
+5. Review (Claude Code oder manuell)
+6. Merge: `gh pr merge`
+7. Issue wird automatisch geschlossen
+
+**⚠️ Claude darf Issues NIEMALS manuell schließen!** Issues werden durch PR-Merge auto-geschlossen.
+
+### PR in Review geben
+
+Ein PR ist bereit für Review wenn:
 - Alle Code-Änderungen implementiert
-- Build sauber (`next build` ✅)
+- Build sauber (`npm run build` ✅)
 - **Alle Tests grün:**
   - `npm run test` (Unit Tests) ✅
   - `npm run typecheck` (TypeScript) ✅
   - `npx next lint` (ESLint, keine Errors) ✅
   - E2E Tests wenn betroffen (`npx playwright test`) ✅
-- **Test-Ergebnisse im Ticket-Log dokumentiert** (Anzahl Tests, Pass/Fail, Coverage wenn relevant)
-- Ticket-Dokumentation vollständig (Analyse, Änderungen, Verifikation, betroffene Dateien)
-- Ticket-Log aktualisiert
-- Ticket-Datei nach `.tickets/review/` verschoben, `status: review`
 
-**⚠️ Kein Review ohne grüne Tests!** Wenn Tests fehlschlagen, bleibt das Ticket auf `active` bis die Tests gefixt sind.
+### Labels
 
-### Ticket abschließen
+| Label | Bedeutung |
+|-------|-----------|
+| `feature` | Neues Feature |
+| `bug` | Fehlerbehebung |
+| `chore` | Maintenance, Cleanup |
+| `docs` | Dokumentation |
+| `refactor` | Code-Refactoring |
+| `P0-critical` | Muss sofort gefixt werden |
+| `P1-high` | Hohe Priorität |
+| `P2-medium` | Mittlere Priorität |
+| `P3-low` | Niedrige Priorität |
 
-**⚠️ Claude darf Tickets NIEMALS auf `done` setzen oder nach `.tickets/done/` verschieben!**
-Maximal erlaubt: nach `.tickets/review/` verschieben. Nur Andi entscheidet wann ein Ticket done ist.
+### Milestones + Projects
 
-Ein Ticket ist erst DONE wenn:
-- Andi hat Review/Test bestätigt
-- Alle Akzeptanzkriterien abgehakt
-- Tests geschrieben UND grün
-- **Andi** verschiebt Ticket nach `.tickets/done/`, `status: done`
+- **Milestones** für Release-Planung: `v0.1.0-beta`, `v0.2.0`, etc.
+- **GitHub Projects** Board: **Backlog** → **In Progress** → **Review** → **Done**
 
-### Bei Prompt ohne Ticket-Kontext
-Wenn der User einen Prompt gibt ohne Ticket-Bezug:
-1. Frage: "Soll ich dafür ein Ticket erstellen?"
-2. Schlage Typ, Titel und Akzeptanzkriterien vor
-3. Warte auf Bestätigung BEVOR du Code schreibst
-
-### Ticket-Status
-
-Gültige Status-Werte (entsprechen den Ordnern in `.tickets/`):
-
-| Status | Ordner | Bedeutung |
-|--------|--------|-----------|
-| `backlog` | `.tickets/backlog/` | Geplant, noch nicht begonnen |
-| `active` | `.tickets/active/` | In Arbeit |
-| `review` | `.tickets/review/` | Implementierung fertig, wartet auf Review/Test durch Andi |
-| `done` | `.tickets/done/` | Abgeschlossen und bestätigt |
-
-**Workflow:** `backlog` → `active` → `review` → `done`
-
-Ein Ticket geht in `review` wenn:
-- Alle Code-Änderungen gemacht sind
-- Build sauber ist
-- **Alle Tests grün** (Unit, TypeScript, Lint, E2E wenn betroffen)
-- **Test-Ergebnisse im Ticket-Log** (Anzahl, Pass/Fail, Coverage)
-- Ticket-Dokumentation vollständig (Analyse, Änderungen, Verifikation)
-- Bereit für manuellen Test / Review durch Andi
-
-Erst nach Andis Bestätigung → `done`.
-
-### Automatisches Logging
-
-Jede Ticket-Bearbeitung wird **vollständig** im Ticket dokumentiert — im Log-Bereich UND in den passenden Beschreibungs-Sektionen.
-
-#### Was ins Ticket-Log gehört (Tabelle am Ende)
-- **Jeder Arbeitsschritt** als eigene Zeile mit Datum
-- Dateien erstellt/geändert (mit Pfad)
-- **Test-Ergebnisse (PFLICHT vor Review):**
-  - `npm run test` → z.B. "79/79 passed, 93% coverage"
-  - `npm run typecheck` → "passed" oder Fehler
-  - `npx next lint` → "0 errors, X warnings"
-  - `npx playwright test` → "6/6 passed" (wenn E2E betroffen)
-  - CI-Run-Ergebnis wenn gepusht → Run-ID + Job-Status
-- Entscheidungen getroffen (was und warum)
-- Probleme/Blocker
-
-#### Was in die Ticket-Beschreibung gehört
-- **Analyse:** Was wurde untersucht? Welche Dateien gelesen? Was war der Ist-Zustand?
-- **Lösungsansatz:** Welcher Ansatz wurde gewählt und warum?
-- **Änderungen:** Konkrete Beschreibung aller Code-Änderungen (welche Datei, was geändert)
-- **Verifikation:** Build-Ergebnis, Test-Ergebnis, manuelle Prüfschritte
-- **Betroffene Dateien:** Vollständige Liste aller geänderten/erstellten/gelöschten Dateien
-
-#### Ziel
-Jedes Ticket soll **nach Abschluss als vollständige Dokumentation** dienen — jemand der das Ticket liest, muss nachvollziehen können was gemacht wurde, warum, und wie es verifiziert wurde.
-
-### Dashboard aktualisieren
-
-**Nach jedem Ticket-Statuswechsel** (backlog→active, active→review, etc.) MUSS das Dashboard aktualisiert werden:
-```bash
-npm run status
-```
-Das generiert `DASHBOARD.md` automatisch aus `.tickets/`, `sprints.json`, `package.json`.
-
-- `DASHBOARD.md` ist die **Single Source of Truth** für den Projektstatus
-- Nicht manuell editieren — wird überschrieben
-- `STATUS.md` und `.tickets/BOARD.md` existieren nicht mehr (ersetzt durch Dashboard)
-
----
-
-## Ticket-Befehle
+### gh CLI Befehle
 
 | Befehl | Aktion |
 |--------|--------|
-| `ticket:new feature "Titel"` | Ticket in `.tickets/backlog/` erstellen |
-| `ticket:new bug "Titel"` | Bug-Ticket erstellen (Priority: high) |
-| `ticket:list` | Aktive Tickets auflisten |
-| `ticket:list all` | Alle Tickets |
-| `ticket:board` | Kanban-Übersicht |
-| `ticket:pick PP-XXX` | Ticket aktivieren, Branch nennen |
-| `ticket:review PP-XXX` | Ticket in Review geben (→ `.tickets/review/`) |
-| `ticket:done PP-XXX` | Ticket abschließen (nach Andis Bestätigung) |
-| `ticket:log PP-XXX "text"` | Log-Eintrag hinzufügen |
-| `ticket:stats` | Statistik |
-| `sprint:status` | Aktuellen Sprint-Fortschritt anzeigen |
-| `sprint:plan <name>` | Sprint planen, Tickets vorschlagen |
-| `sprint:start <name>` | Sprint aktivieren |
-| `sprint:end` | Sprint abschließen, offene Tickets besprechen |
-| `sprint:tickets` | Alle Tickets im aktuellen Sprint |
-
-### Ticket erstellen
-
-Nutze Templates aus `.tickets/templates/`. Nächste Nummer aus `.tickets/COUNTER.txt`, Counter inkrementieren.
-
-```yaml
----
-id: PP-XXX
-type: feature|bug|task|research|requirement|test|refactor|docs|chore|release
-title: "Titel"
-status: backlog|active|review|done
-priority: critical|high|medium|low
-sprint: foundation|survey-engine|dashboard|qr-onboarding|payments-polish|launch-prep
-branch: ticket/PP-XXX-slug
-created: YYYY-MM-DD
-updated: YYYY-MM-DD
----
-```
-
-### Workflow
-
-```
-Ich sage: "Implementiere Feature X"
-Du machst:
-  1. .tickets/active/ prüfen → kein Ticket
-  2. Vorschlag: "Soll ich PP-XXX erstellen? Akzeptanzkriterien: ..."
-  3. Ich bestätige
-  4. Ticket erstellen in backlog/ → nach active/ verschieben
-  5. Branch → Analyse → Code → Tests → Ticket-Doku aktualisieren
-  6. Build prüfen → Ticket nach review/ verschieben (status: review)
-  7. Andi testet/bestätigt → Ticket nach done/ (status: done)
-```
-
----
-
-## Sprint-Management
-
-### Sprint-Kontext
-
-**IMMER** zu Beginn einer Session `.tickets/sprints.json` lesen, um den aktuellen Sprint zu kennen.
-
-```
-Aktueller Sprint:     .tickets/sprints.json → "current_sprint"
-Sprint-Details:       .tickets/sprints.json → sprints.<name>
-Sprint-Übersicht:     .tickets/SPRINT.md (auto-generiert)
-```
-
-### Sprint-Regeln
-
-1. **Neue Tickets** bekommen automatisch den aktuellen Sprint zugewiesen
-2. **Scope-Schutz**: Wenn eine Aufgabe nicht zum aktuellen Sprint passt:
-   - "⚠️ Das gehört nicht zu Sprint X. Soll ich es für Sprint Y planen oder ins Backlog legen?"
-3. **Sprint-Wechsel**: Nur Andi kann Sprints starten/beenden
-4. **Sprint-Fokus**: Priorisiere immer Tickets des aktuellen Sprints
-
-### Sprint-Planung
-
-```
-User: "Plane Sprint foundation"
-
-Claude Code:
-  1. Liest sprints.json → foundation.deliverables
-  2. Schlägt Tickets vor (eins pro Deliverable)
-  3. User bestätigt
-  4. Erstellt Tickets in .tickets/backlog/ mit sprint: foundation
-```
-
-### Sprint-Ende
-
-```
-User: "Sprint foundation abschließen"
-
-Claude Code:
-  1. Prüft alle Tickets mit sprint: foundation
-  2. Zählt: X done, Y noch offen
-  3. Listet offene Tickets auf
-  4. User entscheidet: verschieben oder abbrechen
-  5. sprints.json aktualisieren
-```
-
-### Sprint-Übersicht
-
-| Sprint | Wochen | Fokus |
-|--------|--------|-------|
-| foundation | 1-2 | Setup, DB, Auth, Layout |
-| survey-engine | 3-4 | Umfrage, Review-Routing, Templates |
-| dashboard | 5-6 | NPS-Charts, Responses, Alerts |
-| qr-onboarding | 7-8 | QR-Generator, Wizard, Branding |
-| payments-polish | 9-10 | Stripe, Limits, Performance |
-| launch-prep | 11-12 | Landing Page, DSGVO, Beta-Test |
+| `gh issue create` | Issue erstellen |
+| `gh issue list` | Offene Issues |
+| `gh issue view 42` | Issue #42 anzeigen |
+| `gh pr create` | PR erstellen |
+| `gh pr list` | Offene PRs |
+| `gh pr merge` | PR mergen |
+| `gh pr view` | PR anzeigen |
 
 ---
 
@@ -305,12 +175,28 @@ Claude Code:
 - Error-Format: `{ error: string, code: string }`
 
 ### Git
-- Conventional Commits: `feat:`, `fix:`, `chore:`, `docs:`, `refactor:`
-- **Branching:** Code-Änderungen IMMER auf Ticket-Branch (`ticket/PP-XXX-slug`), NIE direkt auf `main`
-- **Merge:** Nach Review direkt auf `main` mergen (kein PR nötig)
-- **Ablauf:** `git checkout -b ticket/PP-XXX-slug` → arbeiten → committen → review → `git checkout main && git merge ticket/PP-XXX-slug`
+- Conventional Commits: `feat(scope): description (#issue)`
+- **Branching:** IMMER auf Issue-Branch (`feat/42-slug`), NIE direkt auf `main`
+- **PRs:** Branch → PR erstellen (`gh pr create`) → Review → Merge (`gh pr merge`)
+- **Ablauf:** `git checkout -b feat/42-slug` → arbeiten → committen → `gh pr create` → merge
+- **Pre-commit Hooks** (simple-git-hooks):
+  - `gitleaks protect --staged` – blockt Secrets
+  - `lint-staged` → ESLint --fix auf .ts/.tsx
+- **Pre-push Hook**: `vitest run` – Unit Tests müssen grün sein
+
+### Testing
+- **Unit Tests**: Vitest (`src/lib/__tests__/`) – `npm run test`
+- **E2E Tests**: Playwright (`e2e/`) – `npm run test:e2e`
+- **Coverage**: `npm run test:coverage` (v8)
+- **Dead Code**: `npm run knip`
 
 ---
+
+## Monitoring
+- **Sentry**: Error Tracking + Performance (Source Maps Upload im Build)
+  - Client Config: `src/instrumentation-client.ts` (nicht `sentry.client.config.ts` – Turbopack!)
+- **Plausible**: Analytics (self-hosted oder Cloud)
+- **Health Endpoint**: `/api/health`
 
 ## DSGVO
 - Keine PII in responses-Tabelle
@@ -344,13 +230,7 @@ Wenn Andi eines davon anfragt: "⚠️ Das ist v2. Soll ich es trotzdem machen?"
 ---
 
 ## Aktuelle Prioritäten
-1. Supabase DB aufsetzen (Migration) – `npm run db:push` gegen Supabase
-2. Alle Features E2E testen
-3. Legal Pages finalisieren (Impressum, Datenschutz, AGB)
-4. SEO + Monitoring (Meta Tags, Sentry, Plausible)
-
-## Projektstruktur
-Siehe README.md für die vollständige Struktur.
+Siehe GitHub Issues (`gh issue list`) und GitHub Projects für den aktuellen Projektstatus.
 
 ## DB Schema
 Siehe `src/lib/db/schema.ts` – 4 Tabellen:
@@ -363,42 +243,60 @@ Siehe `src/lib/db/schema.ts` – 4 Tabellen:
 
 ```
 praxispuls/
-├── CLAUDE.md                       ← DU BIST HIER
-├── .tickets/
-│   ├── COUNTER.txt
-│   ├── BOARD.md
-│   ├── SPRINT.md                   ← Auto-generiert: aktueller Sprint
-│   ├── sprints.json                ← Sprint-Definitionen + aktueller Sprint
-│   ├── templates/
-│   ├── backlog/
-│   ├── active/
-│   ├── review/
-│   ├── done/
-│   └── archive/
+├── CLAUDE.md
+├── .github/
+│   └── workflows/ci.yml            ← GitHub Actions CI
 ├── src/
-│   ├── app/                        ← Next.js App Router
+│   ├── app/
 │   │   ├── (auth)/
 │   │   ├── (dashboard)/
 │   │   ├── (marketing)/
 │   │   ├── s/[slug]/               ← Public Survey (SSR)
-│   │   └── api/
+│   │   ├── api/
+│   │   │   ├── account/
+│   │   │   ├── billing/
+│   │   │   ├── google/
+│   │   │   ├── health/
+│   │   │   ├── practice/
+│   │   │   ├── public/
+│   │   │   └── webhooks/
+│   │   └── global-error.tsx
 │   ├── components/
 │   │   ├── ui/                     ← shadcn/ui
 │   │   ├── dashboard/
+│   │   ├── shared/
 │   │   ├── survey/
-│   │   └── marketing/
+│   │   ├── marketing/
+│   │   └── theme-provider.tsx
 │   ├── lib/
+│   │   ├── __tests__/              ← Unit Tests (Vitest)
 │   │   ├── db/schema.ts            ← Drizzle Schema
+│   │   ├── db/queries/             ← DB Query Functions
 │   │   ├── supabase/
 │   │   ├── stripe.ts
 │   │   ├── email.ts
+│   │   ├── themes.ts               ← Theme-System
 │   │   ├── review-router.ts
-│   │   └── validations.ts          ← Zod Schemas
-│   └── proxy.ts                    ← Auth + Rate Limiting
+│   │   ├── validations.ts          ← Zod Schemas
+│   │   └── ...
+│   ├── middleware.ts                ← Supabase Auth Middleware
+│   └── types/index.ts              ← TypeScript Types + PLAN_LIMITS
+├── e2e/                            ← E2E Tests (Playwright)
 ├── drizzle/                        ← Migrations
 ├── scripts/                        ← TicketOps Scripts
 └── package.json
 ```
+
+## Dev-Server (Claude Preview)
+- Config: `.claude/launch.json` – `node` als runtimeExecutable (nicht `npm`/`npx` – Windows spawn kann keine .cmd)
+- Next.js: `node node_modules/next/dist/bin/next dev --turbopack` (Port 3000)
+- Drizzle Studio: `node node_modules/drizzle-kit/bin.cjs studio` (Port 4983)
+
+## Claude Code Automations
+- **Hooks** (`.claude/settings.json`): Auto-Lint nach Edit/Write (.ts/.tsx), Block .env Edits
+- **Skills**: `ticket-workflow` (Claude-only, TicketOps-Enforcement), `/review-checklist` (User-only, Pre-Review Checks)
+- **Agents**: `security-reviewer` (Stripe, RLS, DSGVO, OWASP)
+- Hooks empfangen JSON via stdin – `node -e` als Parser (`jq` nicht verfügbar)
 
 ## Environment Variables
 Siehe `.env.example` für alle benötigten Variablen.

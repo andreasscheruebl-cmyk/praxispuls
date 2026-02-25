@@ -1,18 +1,19 @@
 ﻿#!/bin/bash
-# TicketOps – Commit-Message Hook
+# Conventional Commits – Commit-Message Hook
 
 MSG_FILE=$1
 MSG=$(head -1 "$MSG_FILE")
 
 if echo "$MSG" | grep -qP "^Merge"; then exit 0; fi
+if echo "$MSG" | grep -qP "^Co-Authored-By:"; then exit 0; fi
 
-PATTERN="^(feat|fix|chore|docs|refactor|test|perf|ci|style)\(.+\): .+ \[[A-Z]+-[0-9]+\]$"
+PATTERN="^(feat|fix|chore|docs|refactor|test|perf|ci|style)(\(.+\))?: .+"
 
 if ! echo "$MSG" | grep -qP "$PATTERN"; then
     echo ""
     echo "❌ Commit-Message ungültig!"
-    echo "   Format: type(scope): beschreibung [TICKET-ID]"
-    echo "   Beispiel: feat(survey): add NPS component [PP-042]"
+    echo "   Format: type(scope): description (#issue)"
+    echo "   Beispiel: feat(survey): add NPS slider (#42)"
     echo "   Dein Commit: ${MSG}"
     echo "   Bypass: git commit --no-verify"
     exit 1

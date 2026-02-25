@@ -21,8 +21,7 @@
     "typecheck": "tsc --noEmit",
     "release:patch": "npm version patch -m \"chore(release): v%s\"",
     "release:minor": "npm version minor -m \"chore(release): v%s\"",
-    "release:major": "npm version major -m \"chore(release): v%s\"",
-    "status": "npx tsx scripts/generate-dashboard.ts"
+    "release:major": "npm version major -m \"chore(release): v%s\""
   },
   "simple-git-hooks": {
     "pre-commit": "gitleaks protect --staged && npx lint-staged",
