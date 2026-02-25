@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { getUserOptional } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { practices, surveys } from "@/lib/db/schema";
-import { eq, and, ne } from "drizzle-orm";
+import { eq, and, ne, isNull } from "drizzle-orm";
 import { practiceUpdateSchema } from "@/lib/validations";
 import { getGoogleReviewLink, getPlaceDetails } from "@/lib/google";
 import { slugify } from "@/lib/utils";
@@ -38,7 +38,27 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Name fehlt" }, { status: 400 });
     }
 
-    const slug = slugify(name);
+    // Check if this user already has an active practice
+    const existingPractice = await db.query.practices.findFirst({
+      where: and(eq(practices.ownerUserId, user.id), isNull(practices.deletedAt)),
+      columns: { id: true },
+    });
+    if (existingPractice) {
+      return NextResponse.json(
+        { error: "Sie haben bereits eine Praxis eingerichtet. Bitte nutzen Sie die Einstellungen, um Änderungen vorzunehmen." },
+        { status: 409 }
+      );
+    }
+
+    // Generate unique slug (append random suffix on collision)
+    let slug = slugify(name);
+    const existingSlug = await db.query.practices.findFirst({
+      where: eq(practices.slug, slug),
+      columns: { id: true },
+    });
+    if (existingSlug) {
+      slug = `${slug}-${Math.random().toString(36).slice(2, 6)}`;
+    }
 
     // Verify Google Place ID is real before saving
     let googleReviewUrl: string | null = null;
@@ -80,10 +100,11 @@ export async function POST(request: Request) {
       surveyTemplate: templateId,
     }).returning();
 
+    const surveySlug = `${slug}-umfrage`;
     await db.insert(surveys).values({
       practiceId: practice!.id,
       title: "Patientenbefragung",
-      slug: `${slug}-umfrage`,
+      slug: surveySlug,
       questions: template.questions,
       isActive: true,
     });
