@@ -19,6 +19,8 @@ export default function OnboardingPage() {
   const router = useRouter();
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [pendingLogoFile, setPendingLogoFile] = useState<File | null>(null);
   const [data, setData] = useState({
     name: "",
     postalCode: "",
@@ -29,18 +31,32 @@ export default function OnboardingPage() {
 
   async function handleComplete() {
     setLoading(true);
+    setError(null);
     try {
       const res = await fetch("/api/practice", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
       });
-      if (res.ok) {
-        router.push("/dashboard/qr-codes");
-        router.refresh();
+
+      if (!res.ok) {
+        const body = await res.json().catch(() => null);
+        setError(body?.error || "Fehler beim Einrichten. Bitte versuchen Sie es erneut.");
+        setLoading(false);
+        return;
       }
+
+      // Upload deferred logo now that the practice exists
+      if (pendingLogoFile) {
+        const formData = new FormData();
+        formData.append("file", pendingLogoFile);
+        await fetch("/api/practice/logo", { method: "POST", body: formData });
+      }
+
+      router.push("/dashboard/qr-codes");
+      router.refresh();
     } catch {
-      // ignore
+      setError("Netzwerkfehler. Bitte versuchen Sie es erneut.");
     }
     setLoading(false);
   }
@@ -76,6 +92,8 @@ export default function OnboardingPage() {
                 <LogoUpload
                   currentLogoUrl={data.logoUrl || null}
                   onUpload={(url) => setData({ ...data, logoUrl: url })}
+                  deferUpload
+                  onFileSelect={(file) => setPendingLogoFile(file)}
                 />
               </div>
               <Button onClick={() => setStep(2)} className="w-full" disabled={!data.name.trim()}>
@@ -130,6 +148,11 @@ export default function OnboardingPage() {
                   </button>
                 ))}
               </div>
+              {error && (
+                <p className="rounded-md bg-destructive/10 p-3 text-sm text-destructive" role="alert">
+                  {error}
+                </p>
+              )}
               <div className="flex gap-3">
                 <Button variant="outline" onClick={() => setStep(2)} className="flex-1">Zurück</Button>
                 <Button onClick={handleComplete} className="flex-1" disabled={loading}>

@@ -14,6 +14,10 @@ const ALLOWED_TYPES = [
 type LogoUploadProps = {
   currentLogoUrl: string | null;
   onUpload: (url: string) => void;
+  /** When true, skip server upload and return the File via onFileSelect instead */
+  deferUpload?: boolean;
+  /** Called with the selected File when deferUpload is true */
+  onFileSelect?: (file: File) => void;
 };
 
 /**
@@ -21,7 +25,7 @@ type LogoUploadProps = {
  * Shows a preview of the current logo or a placeholder icon.
  * Clicking the preview area opens a file picker.
  */
-export function LogoUpload({ currentLogoUrl, onUpload }: LogoUploadProps) {
+export function LogoUpload({ currentLogoUrl, onUpload, deferUpload, onFileSelect }: LogoUploadProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -62,6 +66,15 @@ export function LogoUpload({ currentLogoUrl, onUpload }: LogoUploadProps) {
     }
 
     setError(null);
+
+    // Deferred mode: show local preview, pass File to parent
+    if (deferUpload) {
+      const localUrl = URL.createObjectURL(file);
+      setPreviewUrl(localUrl);
+      onFileSelect?.(file);
+      return;
+    }
+
     setUploading(true);
 
     try {
