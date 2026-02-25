@@ -4,7 +4,7 @@ import { db } from "@/lib/db";
 import { practices, surveys } from "@/lib/db/schema";
 import { getUser } from "@/lib/auth";
 import { practiceUpdateSchema } from "@/lib/validations";
-import { eq } from "drizzle-orm";
+import { eq, and, isNull } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { slugify } from "@/lib/utils";
 import { getGoogleReviewLink } from "@/lib/google";
@@ -17,7 +17,7 @@ export async function getPractice() {
   const user = await getUser();
 
   const practice = await db.query.practices.findFirst({
-    where: eq(practices.email, user.email!),
+    where: and(eq(practices.email, user.email!), isNull(practices.deletedAt)),
   });
 
   return practice;
