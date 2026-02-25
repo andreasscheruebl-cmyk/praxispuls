@@ -1,14 +1,12 @@
 import { NextResponse } from "next/server";
 import { getUserOptional } from "@/lib/auth";
-import { db } from "@/lib/db";
-import { practices } from "@/lib/db/schema";
-import { eq } from "drizzle-orm";
 import { createCheckoutSession } from "@/lib/stripe";
+import { getActivePracticeForUser } from "@/lib/practice";
 
 export async function POST(request: Request) {
   try {
     const user = await getUserOptional();
-    if (!user?.email) {
+    if (!user) {
       return NextResponse.json({ error: "Nicht angemeldet" }, { status: 401 });
     }
 
@@ -19,17 +17,14 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Ungültiger Plan" }, { status: 400 });
     }
 
-    const practice = await db.query.practices.findFirst({
-      where: eq(practices.email, user.email),
-    });
-
+    const practice = await getActivePracticeForUser(user.id);
     if (!practice) {
       return NextResponse.json({ error: "Praxis nicht gefunden" }, { status: 404 });
     }
 
     const session = await createCheckoutSession({
       practiceId: practice.id,
-      email: user.email,
+      email: user.email!,
       plan,
       returnUrl: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard/billing`,
     });

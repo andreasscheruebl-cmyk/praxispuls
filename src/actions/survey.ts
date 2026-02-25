@@ -2,7 +2,7 @@
 
 import { db } from "@/lib/db";
 import { surveys } from "@/lib/db/schema";
-import { getPractice } from "./practice";
+import { getActivePractice } from "./practice";
 import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { SURVEY_TEMPLATES } from "@/lib/survey-templates";
@@ -11,7 +11,7 @@ import { SURVEY_TEMPLATES } from "@/lib/survey-templates";
  * Get all surveys for current practice
  */
 export async function getSurveys() {
-  const practice = await getPractice();
+  const practice = await getActivePractice();
   if (!practice) return [];
 
   return db.query.surveys.findMany({
@@ -23,7 +23,7 @@ export async function getSurveys() {
  * Toggle survey active state
  */
 export async function toggleSurvey(surveyId: string) {
-  const practice = await getPractice();
+  const practice = await getActivePractice();
   if (!practice) throw new Error("Praxis nicht gefunden");
 
   const survey = await db.query.surveys.findFirst({
@@ -49,7 +49,7 @@ export async function changeSurveyTemplate(
   surveyId: string,
   templateId: string
 ) {
-  const practice = await getPractice();
+  const practice = await getActivePractice();
   if (!practice) throw new Error("Praxis nicht gefunden");
 
   const template = SURVEY_TEMPLATES.find((t) => t.id === templateId);

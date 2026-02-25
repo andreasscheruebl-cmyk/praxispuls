@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import { sendWelcomeEmail } from "@/lib/email";
 import { db } from "@/lib/db";
 import { practices, loginEvents } from "@/lib/db/schema";
-import { eq } from "drizzle-orm";
+import { eq, and, isNull } from "drizzle-orm";
 
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url);
@@ -26,9 +26,9 @@ export async function GET(request: Request) {
       }
 
       // Record login event
-      if (user?.email) {
+      if (user?.id) {
         const practice = await db.query.practices.findFirst({
-          where: eq(practices.email, user.email),
+          where: and(eq(practices.ownerUserId, user.id), isNull(practices.deletedAt)),
           columns: { id: true },
         });
         if (practice) {

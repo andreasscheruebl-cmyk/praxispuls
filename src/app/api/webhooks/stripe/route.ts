@@ -5,6 +5,7 @@ import { practices } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import type Stripe from "stripe";
 import { logAudit } from "@/lib/audit";
+import { getPracticesForUser } from "@/lib/practice";
 
 /**
  * Stripe Webhook Handler
@@ -86,7 +87,7 @@ export async function POST(request: Request) {
 // ============================================================
 
 /**
- * checkout.session.completed → Activate plan, store Stripe IDs
+ * checkout.session.completed → Activate plan, store Stripe IDs, sync plan to all practices
  */
 async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
   const practiceId = session.metadata?.practiceId;
@@ -114,6 +115,7 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
   const subscription = await stripe.subscriptions.retrieve(subscriptionId);
   const plan = getPlanFromSubscription(subscription);
 
+  // Update the checkout practice with Stripe IDs
   await db
     .update(practices)
     .set({
@@ -131,10 +133,13 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
     entityId: subscriptionId,
     after: { plan, stripeCustomerId: customerId, stripeSubscriptionId: subscriptionId },
   });
+
+  // Sync plan to all other practices of the same owner
+  await syncPlanToAllPractices(practiceId, plan);
 }
 
 /**
- * customer.subscription.updated → Plan change (up/downgrade)
+ * customer.subscription.updated → Plan change (up/downgrade), sync to all practices
  */
 async function handleSubscriptionUpdated(subscription: Stripe.Subscription) {
   const plan = getPlanFromSubscription(subscription);
@@ -168,10 +173,13 @@ async function handleSubscriptionUpdated(subscription: Stripe.Subscription) {
     before: { plan: practice.plan },
     after: { plan },
   });
+
+  // Sync plan to all other practices of the same owner
+  await syncPlanToAllPractices(practice.id, plan);
 }
 
 /**
- * customer.subscription.deleted → Downgrade to free
+ * customer.subscription.deleted → Downgrade to free, sync to all practices
  */
 async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
   const [practice] = await db
@@ -204,6 +212,9 @@ async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
     before: { plan: practice.plan },
     after: { plan: "free" },
   });
+
+  // Sync plan to all other practices of the same owner
+  await syncPlanToAllPractices(practice.id, "free");
 }
 
 /**
@@ -245,4 +256,42 @@ function getPlanFromSubscription(
   if (amount === 9900) return "professional";
 
   return "starter";
+}
+
+/**
+ * Sync plan to all practices owned by the same user.
+ * The "source" practice (where subscription lives) is already updated.
+ * This updates all sibling practices to the same plan.
+ */
+async function syncPlanToAllPractices(sourcePracticeId: string, plan: string) {
+  // Find the source practice to get the owner
+  const sourcePractice = await db.query.practices.findFirst({
+    where: eq(practices.id, sourcePracticeId),
+    columns: { ownerUserId: true },
+  });
+
+  if (!sourcePractice) return;
+
+  // Get all practices for this owner
+  const allPractices = await getPracticesForUser(sourcePractice.ownerUserId);
+
+  // Update siblings (skip the source practice, already updated)
+  for (const p of allPractices) {
+    if (p.id === sourcePracticeId) continue;
+    if (p.plan === plan) continue; // Already on the right plan
+
+    await db
+      .update(practices)
+      .set({ plan, updatedAt: new Date() })
+      .where(eq(practices.id, p.id));
+
+    logAudit({
+      practiceId: p.id,
+      action: "plan.synced",
+      entity: "practice",
+      entityId: p.id,
+      before: { plan: p.plan },
+      after: { plan },
+    });
+  }
 }

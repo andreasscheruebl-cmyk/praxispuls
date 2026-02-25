@@ -4,6 +4,7 @@ import { getUserOptional } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { practices } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
+import { getActivePracticeForUser } from "@/lib/practice";
 
 const MAX_FILE_SIZE = 2 * 1024 * 1024; // 2 MB
 const ALLOWED_TYPES = [
@@ -46,15 +47,12 @@ export async function POST(request: Request) {
   try {
     // 1. Auth check
     const user = await getUserOptional();
-    if (!user?.email) {
+    if (!user) {
       return NextResponse.json({ error: "Nicht angemeldet", code: "UNAUTHORIZED" }, { status: 401 });
     }
 
-    // 2. Find the practice for this user
-    const practice = await db.query.practices.findFirst({
-      where: eq(practices.email, user.email),
-    });
-
+    // 2. Find the active practice for this user
+    const practice = await getActivePracticeForUser(user.id);
     if (!practice) {
       return NextResponse.json(
         { error: "Praxis nicht gefunden", code: "PRACTICE_NOT_FOUND" },

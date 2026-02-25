@@ -6,21 +6,54 @@ import { getUser } from "@/lib/auth";
 import { practiceUpdateSchema } from "@/lib/validations";
 import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
+import { cookies } from "next/headers";
 import { slugify } from "@/lib/utils";
 import { getGoogleReviewLink } from "@/lib/google";
 import { SURVEY_TEMPLATES } from "@/lib/survey-templates";
+import {
+  getPracticesForUser,
+  getActivePracticeForUser,
+} from "@/lib/practice";
+
+const ACTIVE_PRACTICE_COOKIE = "active_practice_id";
 
 /**
- * Get current user's practice
+ * Get all practices owned by the current user.
  */
-export async function getPractice() {
+export async function getPractices() {
   const user = await getUser();
+  return getPracticesForUser(user.id);
+}
 
-  const practice = await db.query.practices.findFirst({
-    where: eq(practices.email, user.email!),
+/**
+ * Get the active practice for the current user.
+ * Reads `active_practice_id` cookie; falls back to the first practice.
+ */
+export async function getActivePractice(practiceId?: string) {
+  const user = await getUser();
+  return getActivePracticeForUser(user.id, practiceId);
+}
+
+/**
+ * Set the active practice cookie.
+ */
+export async function setActivePractice(practiceId: string) {
+  const user = await getUser();
+  const userPractices = await getPracticesForUser(user.id);
+
+  const match = userPractices.find((p) => p.id === practiceId);
+  if (!match) throw new Error("Praxis nicht gefunden oder kein Zugriff");
+
+  const cookieStore = await cookies();
+  cookieStore.set(ACTIVE_PRACTICE_COOKIE, practiceId, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    maxAge: 60 * 60 * 24 * 365, // 1 year
+    path: "/",
   });
 
-  return practice;
+  revalidatePath("/dashboard");
 }
 
 /**
@@ -39,10 +72,10 @@ export async function createPractice(data: {
     ? getGoogleReviewLink(data.googlePlaceId)
     : null;
 
-  // Create practice
   const [practice] = await db
     .insert(practices)
     .values({
+      ownerUserId: user.id,
       name: data.name,
       slug,
       email: user.email!,
@@ -56,7 +89,8 @@ export async function createPractice(data: {
 
   // Create default survey from template
   const templateId = data.surveyTemplate || "zahnarzt_standard";
-  const template = SURVEY_TEMPLATES.find((t) => t.id === templateId) || SURVEY_TEMPLATES[0]!;
+  const template =
+    SURVEY_TEMPLATES.find((t) => t.id === templateId) || SURVEY_TEMPLATES[0]!;
 
   await db.insert(surveys).values({
     practiceId: practice!.id,
@@ -64,6 +98,16 @@ export async function createPractice(data: {
     slug: `${slug}-umfrage`,
     questions: template.questions,
     isActive: true,
+  });
+
+  // Set as active practice
+  const cookieStore = await cookies();
+  cookieStore.set(ACTIVE_PRACTICE_COOKIE, practice!.id, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    maxAge: 60 * 60 * 24 * 365,
+    path: "/",
   });
 
   revalidatePath("/dashboard");
@@ -77,11 +121,13 @@ export async function updatePractice(data: unknown) {
   const user = await getUser();
   const parsed = practiceUpdateSchema.parse(data);
 
-  const practice = await db.query.practices.findFirst({
-    where: eq(practices.email, user.email!),
-  });
-
+  const practice = await getActivePractice();
   if (!practice) throw new Error("Praxis nicht gefunden");
+
+  // Verify ownership
+  if (practice.ownerUserId !== user.id) {
+    throw new Error("Kein Zugriff auf diese Praxis");
+  }
 
   const googleReviewUrl = parsed.googlePlaceId
     ? getGoogleReviewLink(parsed.googlePlaceId)

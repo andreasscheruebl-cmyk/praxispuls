@@ -2,9 +2,10 @@ import { NextResponse } from "next/server";
 import { getUserOptional } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { practices } from "@/lib/db/schema";
-import { eq, and, isNull } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import { createServiceClient } from "@/lib/supabase/server";
 import { getPlacePhotoUrl } from "@/lib/google";
+import { getActivePracticeForUser } from "@/lib/practice";
 
 /**
  * POST /api/practice/logo-from-url
@@ -13,7 +14,7 @@ import { getPlacePhotoUrl } from "@/lib/google";
 export async function POST(request: Request) {
   try {
     const user = await getUserOptional();
-    if (!user?.email) {
+    if (!user) {
       return NextResponse.json({ error: "Nicht angemeldet" }, { status: 401 });
     }
 
@@ -22,10 +23,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "URL fehlt" }, { status: 400 });
     }
 
-    const practice = await db.query.practices.findFirst({
-      where: and(eq(practices.email, user.email), isNull(practices.deletedAt)),
-      columns: { id: true, logoUrl: true },
-    });
+    const practice = await getActivePracticeForUser(user.id);
     if (!practice) {
       return NextResponse.json({ error: "Praxis nicht gefunden" }, { status: 404 });
     }

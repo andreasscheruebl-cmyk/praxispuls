@@ -1,6 +1,6 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { MessageSquare } from "lucide-react";
-import { getPractice } from "@/actions/practice";
+import { getActivePractice } from "@/actions/practice";
 import { getRecentResponses } from "@/lib/db/queries/dashboard";
 import { redirect } from "next/navigation";
 
@@ -25,7 +25,7 @@ function NpsBadge({ category }: { category: string }) {
 }
 
 export default async function ResponsesPage() {
-  const practice = await getPractice();
+  const practice = await getActivePractice();
   if (!practice) redirect("/onboarding");
 
   const responses = await getRecentResponses(practice.id, 50);

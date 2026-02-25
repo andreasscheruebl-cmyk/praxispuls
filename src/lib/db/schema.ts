@@ -13,28 +13,35 @@ import { relations } from "drizzle-orm";
 // ============================================================
 // PRACTICES (Tenants)
 // ============================================================
-export const practices = pgTable("practices", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  name: text("name").notNull(),
-  slug: text("slug").unique().notNull(),
-  email: text("email").unique().notNull(),
-  googlePlaceId: text("google_place_id"),
-  googleReviewUrl: text("google_review_url"),
-  postalCode: text("postal_code"),
-  logoUrl: text("logo_url"),
-  primaryColor: text("primary_color").default("#2563EB"),
-  plan: text("plan").default("free"), // free | starter | professional
-  stripeCustomerId: text("stripe_customer_id"),
-  stripeSubscriptionId: text("stripe_subscription_id"),
-  alertEmail: text("alert_email"),
-  surveyTemplate: text("survey_template").default("zahnarzt_standard"),
-  theme: text("theme").default("standard"), // standard | vertrauen
-  npsThreshold: smallint("nps_threshold").default(9),
-  googleRedirectEnabled: boolean("google_redirect_enabled").default(true),
-  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
-  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow(),
-  deletedAt: timestamp("deleted_at", { withTimezone: true }), // Soft delete
-});
+export const practices = pgTable(
+  "practices",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    ownerUserId: uuid("owner_user_id").notNull(),
+    name: text("name").notNull(),
+    slug: text("slug").unique().notNull(),
+    email: text("email").notNull(),
+    googlePlaceId: text("google_place_id"),
+    googleReviewUrl: text("google_review_url"),
+    postalCode: text("postal_code"),
+    logoUrl: text("logo_url"),
+    primaryColor: text("primary_color").default("#2563EB"),
+    plan: text("plan").default("free"), // free | starter | professional
+    stripeCustomerId: text("stripe_customer_id"),
+    stripeSubscriptionId: text("stripe_subscription_id"),
+    alertEmail: text("alert_email"),
+    surveyTemplate: text("survey_template").default("zahnarzt_standard"),
+    theme: text("theme").default("standard"), // standard | vertrauen
+    npsThreshold: smallint("nps_threshold").default(9),
+    googleRedirectEnabled: boolean("google_redirect_enabled").default(true),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow(),
+    deletedAt: timestamp("deleted_at", { withTimezone: true }), // Soft delete
+  },
+  (table) => ({
+    ownerIdx: index("idx_practices_owner").on(table.ownerUserId),
+  })
+);
 
 // ============================================================
 // SURVEYS
