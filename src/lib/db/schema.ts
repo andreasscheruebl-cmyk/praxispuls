@@ -32,6 +32,9 @@ export const practices = pgTable(
     alertEmail: text("alert_email"),
     surveyTemplate: text("survey_template").default("zahnarzt_standard"),
     theme: text("theme").default("standard"), // standard | vertrauen
+    planOverride: text("plan_override"), // free | starter | professional (admin-set)
+    overrideReason: text("override_reason"),
+    overrideExpiresAt: timestamp("override_expires_at", { withTimezone: true }),
     npsThreshold: smallint("nps_threshold").default(9),
     googleRedirectEnabled: boolean("google_redirect_enabled").default(true),
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
