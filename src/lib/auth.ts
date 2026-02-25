@@ -30,3 +30,23 @@ export async function getUserOptional() {
   } = await supabase.auth.getUser();
   return user;
 }
+
+/**
+ * Require the current user to be an admin.
+ * Throws if not authenticated or not in ADMIN_EMAILS.
+ * Use in Server Actions that perform admin operations.
+ */
+export async function requireAdmin() {
+  const user = await getUser();
+
+  const adminEmails = (process.env.ADMIN_EMAILS || "")
+    .split(",")
+    .map((e) => e.trim().toLowerCase())
+    .filter(Boolean);
+
+  if (!adminEmails.includes(user.email?.toLowerCase() || "")) {
+    throw new Error("Unauthorized: admin access required");
+  }
+
+  return user;
+}
