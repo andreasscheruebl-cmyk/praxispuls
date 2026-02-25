@@ -28,7 +28,6 @@ npm run lint             # ESLint
 npm run test             # Unit Tests (Vitest)
 npm run test:e2e         # E2E Tests (Playwright)
 npm run knip             # Dead Code Detection
-npm run status           # Dashboard generieren
 npm run db:push          # Schema zu Supabase pushen
 npm run db:studio        # Drizzle Studio (Port 4983)
 ```
@@ -115,11 +114,16 @@ Ein PR ist bereit für Review wenn:
 | `P1-high` | Hohe Priorität |
 | `P2-medium` | Mittlere Priorität |
 | `P3-low` | Niedrige Priorität |
+| `claude-task` | Gut für Claude Code geeignet |
+| `blocked` | Blockiert durch externe Abhängigkeit |
 
-### Milestones + Projects
+### Milestones
 
-- **Milestones** für Release-Planung: `v0.1.0-beta`, `v0.2.0`, etc.
-- **GitHub Projects** Board: **Backlog** → **In Progress** → **Review** → **Done**
+| Milestone | Ziel | Deadline |
+|-----------|------|----------|
+| v0.1-MVP | Core Features lauffähig | März 2026 |
+| v0.2-Beta | Beta-Test mit Pilotpraxen | Mai 2026 |
+| v1.0-Launch | Öffentlicher Launch | Juli 2026 |
 
 ### gh CLI Befehle
 
@@ -245,6 +249,8 @@ Siehe `src/lib/db/schema.ts` – 4 Tabellen:
 praxispuls/
 ├── CLAUDE.md
 ├── .github/
+│   ├── ISSUE_TEMPLATE/             ← Issue Template (universal)
+│   ├── pull_request_template.md    ← PR Template
 │   └── workflows/ci.yml            ← GitHub Actions CI
 ├── src/
 │   ├── app/
@@ -283,7 +289,8 @@ praxispuls/
 │   └── types/index.ts              ← TypeScript Types + PLAN_LIMITS
 ├── e2e/                            ← E2E Tests (Playwright)
 ├── drizzle/                        ← Migrations
-├── scripts/                        ← TicketOps Scripts
+├── scripts/
+│   └── git-hooks/                  ← Git Hooks (commit-msg)
 └── package.json
 ```
 
@@ -294,7 +301,7 @@ praxispuls/
 
 ## Claude Code Automations
 - **Hooks** (`.claude/settings.json`): Auto-Lint nach Edit/Write (.ts/.tsx), Block .env Edits
-- **Skills**: `ticket-workflow` (Claude-only, TicketOps-Enforcement), `/review-checklist` (User-only, Pre-Review Checks)
+- **Skills**: `/fix-issue <nr>` (Issue bearbeiten), `/create-pr` (PR erstellen), `/review-checklist` (Pre-Review Checks)
 - **Agents**: `security-reviewer` (Stripe, RLS, DSGVO, OWASP)
 - Hooks empfangen JSON via stdin – `node -e` als Parser (`jq` nicht verfügbar)
 

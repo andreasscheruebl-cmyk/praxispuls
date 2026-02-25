@@ -1,0 +1,39 @@
+name: "Issue"
+description: "Feature, Bug oder Task erstellen"
+body:
+  - type: dropdown
+    id: type
+    attributes:
+      label: Typ
+      options:
+        - "Feature — Neue Funktionalität"
+        - "Bug — Etwas ist kaputt"
+        - "Chore — Maintenance, Refactoring, CI/CD"
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Beschreibung
+      placeholder: "Was soll passieren / was ist kaputt / was soll verbessert werden?"
+    validations:
+      required: true
+
+  - type: textarea
+    id: acceptance-criteria
+    attributes:
+      label: Acceptance Criteria
+      description: "Wann ist das Issue erledigt? Klare, testbare Kriterien."
+      value: |
+        - [ ]
+        - [ ]
+        - [ ]
+    validations:
+      required: true
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Kontext (optional)
+      description: "Betroffene Dateien, Screenshots, Error Logs, technische Details..."
