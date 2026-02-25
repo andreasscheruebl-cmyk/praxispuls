@@ -98,24 +98,11 @@ Ein PR ist bereit für Review wenn:
 - **Alle Tests grün:**
   - `npm run test` (Unit Tests) ✅
   - `npm run typecheck` (TypeScript) ✅
-  - `npx next lint` (ESLint, keine Errors) ✅
+  - `npm run lint` (ESLint, keine Errors) ✅
   - E2E Tests wenn betroffen (`npx playwright test`) ✅
 
 ### Labels
-
-| Label | Bedeutung |
-|-------|-----------|
-| `feature` | Neues Feature |
-| `bug` | Fehlerbehebung |
-| `chore` | Maintenance, Cleanup |
-| `docs` | Dokumentation |
-| `refactor` | Code-Refactoring |
-| `P0-critical` | Muss sofort gefixt werden |
-| `P1-high` | Hohe Priorität |
-| `P2-medium` | Mittlere Priorität |
-| `P3-low` | Niedrige Priorität |
-| `claude-task` | Gut für Claude Code geeignet |
-| `blocked` | Blockiert durch externe Abhängigkeit |
+`feature`, `bug`, `chore`, `docs`, `refactor` + Prioritäten `P0-critical` bis `P3-low` + `claude-task`, `blocked`
 
 ### Milestones
 
@@ -124,18 +111,6 @@ Ein PR ist bereit für Review wenn:
 | v0.1-MVP | Core Features lauffähig | März 2026 |
 | v0.2-Beta | Beta-Test mit Pilotpraxen | Mai 2026 |
 | v1.0-Launch | Öffentlicher Launch | Juli 2026 |
-
-### gh CLI Befehle
-
-| Befehl | Aktion |
-|--------|--------|
-| `gh issue create` | Issue erstellen |
-| `gh issue list` | Offene Issues |
-| `gh issue view 42` | Issue #42 anzeigen |
-| `gh pr create` | PR erstellen |
-| `gh pr list` | Offene PRs |
-| `gh pr merge` | PR mergen |
-| `gh pr view` | PR anzeigen |
 
 ---
 
@@ -215,7 +190,6 @@ Ein PR ist bereit für Review wenn:
 - ❌ PVS-Integration
 - ❌ SMS/WhatsApp
 - ❌ KI-Sentiment-Analyse
-- ❌ Multi-Standort
 - ❌ QM-PDF-Reports
 - ❌ Tablet Kiosk-Modus
 - ❌ Jameda/Doctolib
@@ -237,11 +211,13 @@ Wenn Andi eines davon anfragt: "⚠️ Das ist v2. Soll ich es trotzdem machen?"
 Siehe GitHub Issues (`gh issue list`) und GitHub Projects für den aktuellen Projektstatus.
 
 ## DB Schema
-Siehe `src/lib/db/schema.ts` – 4 Tabellen:
+Siehe `src/lib/db/schema.ts` – 6 Tabellen:
 - practices (Tenants)
 - surveys (Umfragen)
 - responses (Antworten, kein PII!)
 - alerts (Detractor-Notifications)
+- loginEvents (Login-Audit-Log)
+- auditEvents (Change-Tracking)
 
 ## Projektstruktur
 
