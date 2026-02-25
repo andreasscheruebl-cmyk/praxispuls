@@ -56,7 +56,7 @@ export default async function AdminLayout({
             </Link>
             <div className="flex items-center gap-3 px-1 py-1">
               <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-slate-700 text-xs font-medium text-white">
-                {user.email?.charAt(0).toUpperCase()}
+                {user.email?.charAt(0).toUpperCase() || "?"}
               </div>
               <p className="flex-1 truncate text-xs text-slate-400">{user.email}</p>
             </div>
