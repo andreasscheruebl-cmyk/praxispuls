@@ -21,7 +21,7 @@ type NpsTrendPoint = {
   detractors: number;
 };
 
-export const NpsChart = memo(function NpsChart({ data, color = "#2563eb" }: { data: NpsTrendPoint[]; color?: string }) {
+export const NpsChart = memo(function NpsChart({ data, color = "#0D9488" }: { data: NpsTrendPoint[]; color?: string }) {
   if (data.length < 2) {
     return (
       <div className="flex h-[250px] items-center justify-center text-sm text-muted-foreground">

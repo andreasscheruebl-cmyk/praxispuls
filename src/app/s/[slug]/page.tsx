@@ -6,8 +6,6 @@ import { db } from "@/lib/db";
 import { surveys } from "@/lib/db/schema";
 import { eq, and, isNull } from "drizzle-orm";
 import { SurveyForm } from "@/components/survey/survey-form";
-import { ThemeProvider } from "@/components/theme-provider";
-import { type ThemeId, getThemeConfig } from "@/lib/themes";
 
 type Props = {
   params: Promise<{ slug: string }>;
@@ -58,16 +56,12 @@ export default async function SurveyPage({ params }: Props) {
     );
   }
 
-  const themeId = (survey.practice.theme as ThemeId) || "vertrauen";
-  const themeConfig = getThemeConfig(themeId);
-
   return (
-    <ThemeProvider themeId={themeId}>
       <div
-        className={`flex min-h-screen flex-col ${themeConfig.survey.paperTexture ? "bg-paper-texture" : "bg-gray-50"}`}
+        className="flex min-h-screen flex-col bg-paper-texture"
         style={{
           // Apply practice branding color
-          ["--practice-color" as string]: survey.practice.primaryColor || "#2563EB",
+          ["--practice-color" as string]: survey.practice.primaryColor || "#0D9488",
         }}
       >
         {/* Header */}
@@ -96,8 +90,7 @@ export default async function SurveyPage({ params }: Props) {
             <SurveyForm
               surveyId={survey.id}
               practiceName={survey.practice.name}
-              practiceColor={survey.practice.primaryColor || "#2563EB"}
-              themeId={themeId}
+              practiceColor={survey.practice.primaryColor || "#0D9488"}
             />
           </div>
         </main>
@@ -112,6 +105,5 @@ export default async function SurveyPage({ params }: Props) {
           </p>
         </footer>
       </div>
-    </ThemeProvider>
   );
 }

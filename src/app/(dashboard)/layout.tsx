@@ -2,12 +2,9 @@ import Link from "next/link";
 import { getUser, getAdminEmails } from "@/lib/auth";
 import { getActivePractice, getPractices } from "@/actions/practice";
 import { LogoutButton } from "@/components/dashboard/logout-button";
-import { MobileNav } from "@/components/dashboard/mobile-nav";
 import { MobileBottomTabs } from "@/components/dashboard/mobile-bottom-tabs";
 import { PracticeSwitcher } from "@/components/dashboard/practice-switcher";
 import { BuildBadge } from "@/components/shared/build-badge";
-import { ThemeProvider } from "@/components/theme-provider";
-import { type ThemeId } from "@/lib/themes";
 import { getEffectivePlan } from "@/lib/plans";
 import { PLAN_LIMITS } from "@/types";
 import {
@@ -46,14 +43,12 @@ export default async function DashboardLayout({
     getPractices(),
     getActivePractice(),
   ]);
-  const themeId = (practice?.theme as ThemeId) || "vertrauen";
   const effectivePlan = practice ? getEffectivePlan(practice) : "free";
   const maxLocations = PLAN_LIMITS[effectivePlan].maxLocations;
   const isAdmin = getAdminEmails().includes(user.email?.toLowerCase() || "");
   const isSuspended = !!practice?.suspendedAt;
 
   return (
-    <ThemeProvider themeId={themeId}>
     <div className="flex min-h-screen">
       {/* Sidebar – desktop only */}
       <aside className="hidden w-64 flex-shrink-0 border-r bg-white md:block">
@@ -145,9 +140,6 @@ export default async function DashboardLayout({
                 {user.email?.charAt(0).toUpperCase()}
               </Link>
               <LogoutButton variant="icon" />
-              {themeId !== "vertrauen" && (
-                <MobileNav email={user.email || ""} navItems={navItems.map(i => ({ href: i.href, label: i.label }))} />
-              )}
             </div>
           </div>
           {/* Mobile practice switcher */}
@@ -191,12 +183,9 @@ export default async function DashboardLayout({
           )}
         </main>
 
-        {/* Bottom tabs for Vertrauen theme (mobile) */}
-        {themeId === "vertrauen" && (
-          <MobileBottomTabs navItems={navItems.map(i => ({ href: i.href, label: i.label, icon: i.icon }))} />
-        )}
+        {/* Bottom tabs (mobile) */}
+        <MobileBottomTabs navItems={navItems.map(i => ({ href: i.href, label: i.label, icon: i.icon }))} />
       </div>
     </div>
-    </ThemeProvider>
   );
 }

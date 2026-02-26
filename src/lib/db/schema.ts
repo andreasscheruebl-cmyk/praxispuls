@@ -25,13 +25,13 @@ export const practices = pgTable(
     googleReviewUrl: text("google_review_url"),
     postalCode: text("postal_code"),
     logoUrl: text("logo_url"),
-    primaryColor: text("primary_color").default("#2563EB"),
+    primaryColor: text("primary_color").default("#0D9488"),
     plan: text("plan").default("free"), // free | starter | professional
     stripeCustomerId: text("stripe_customer_id"),
     stripeSubscriptionId: text("stripe_subscription_id"),
     alertEmail: text("alert_email"),
     surveyTemplate: text("survey_template").default("zahnarzt_standard"),
-    theme: text("theme").default("standard"), // standard | vertrauen
+    theme: text("theme").default("vertrauen"),
     planOverride: text("plan_override"), // free | starter | professional (admin-set)
     overrideReason: text("override_reason"),
     overrideExpiresAt: timestamp("override_expires_at", { withTimezone: true }),

@@ -30,7 +30,7 @@ function emailLayout(content: string): string {
       <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 500px; background: #ffffff; border-radius: 8px; overflow: hidden;">
         <!-- Header -->
         <tr><td style="padding: 32px 32px 0; text-align: center;">
-          <h1 style="margin: 0; font-size: 22px; font-weight: 700; color: #2563eb;">PraxisPuls</h1>
+          <h1 style="margin: 0; font-size: 22px; font-weight: 700; color: #0D9488;">PraxisPuls</h1>
         </td></tr>
         <!-- Content -->
         <tr><td style="padding: 24px 32px 32px;">
@@ -51,7 +51,7 @@ function emailLayout(content: string): string {
 
 /** Shared CTA button style */
 function emailButton(text: string, href: string): string {
-  return `<a href="${href}" style="display: inline-block; padding: 12px 24px; background: #2563eb; color: #ffffff; text-decoration: none; border-radius: 6px; font-weight: 500;">${text}</a>`;
+  return `<a href="${href}" style="display: inline-block; padding: 12px 24px; background: #0D9488; color: #ffffff; text-decoration: none; border-radius: 6px; font-weight: 500;">${text}</a>`;
 }
 
 /**

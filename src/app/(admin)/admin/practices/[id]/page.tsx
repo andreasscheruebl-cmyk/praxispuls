@@ -75,10 +75,6 @@ export default async function AdminPracticeDetailPage({
               <span>{practice.postalCode ?? "—"}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-muted-foreground">Theme</span>
-              <span>{practice.theme ?? "standard"}</span>
-            </div>
-            <div className="flex justify-between">
               <span className="text-muted-foreground">Erstellt</span>
               <span>
                 {practice.createdAt ? formatDateDE(practice.createdAt) : "—"}
