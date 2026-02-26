@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useEffect, type ReactNode } from "react";
+import { createContext, useEffect, type ReactNode } from "react";
 import { type ThemeId, type ThemeConfig, getThemeConfig } from "@/lib/themes";
 
 type ThemeContextValue = {
@@ -35,8 +35,4 @@ export function ThemeProvider({
       {children}
     </ThemeContext.Provider>
   );
-}
-
-export function useTheme(): ThemeContextValue {
-  return useContext(ThemeContext);
 }

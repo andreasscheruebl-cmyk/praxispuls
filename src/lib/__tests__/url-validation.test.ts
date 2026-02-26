@@ -1,3 +1,4 @@
+/* eslint-disable sonarjs/no-clear-text-protocols -- SSRF tests intentionally use http:// URLs */
 import { describe, it, expect } from "vitest";
 import { isSafeUrl } from "../url-validation";
 

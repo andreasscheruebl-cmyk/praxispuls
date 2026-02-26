@@ -60,7 +60,7 @@ export async function removePlanOverride(practiceId: string) {
 /**
  * Filter params for practices list.
  */
-export interface PracticesFilter {
+interface PracticesFilter {
   search?: string;
   plan?: PlanId;
   hasGoogle?: boolean;
@@ -205,7 +205,7 @@ export async function getExtendedPlatformStats() {
 // AUDIT EVENTS
 // ============================================================
 
-export interface AuditFilter {
+interface AuditFilter {
   practiceId?: string;
   action?: string;
   from?: string; // ISO date
@@ -276,7 +276,7 @@ export async function getAuditActionTypes() {
 // LOGIN EVENTS
 // ============================================================
 
-export interface LoginFilter {
+interface LoginFilter {
   practiceId?: string;
   from?: string;
   to?: string;
