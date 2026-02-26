@@ -8,9 +8,6 @@
     "src/components/ui/**"
   ],
   "ignoreDependencies": [
-    "eslint-config-next",
-    "simple-git-hooks",
-    "lint-staged",
-    "@vitest/coverage-v8"
+    "eslint-config-next"
   ]
 }
