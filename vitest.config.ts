@@ -18,6 +18,7 @@ export default defineConfig({
         "src/lib/audit.ts",
         "src/lib/qr-pdf.ts",
         "src/lib/version.ts",
+        "src/lib/plausible.ts",
       ],
       thresholds: {
         lines: 80,

@@ -14,9 +14,9 @@ export function isSafeUrl(urlString: string): boolean {
 
   const hostname = url.hostname.toLowerCase();
 
-  // Block localhost and loopback
+  // Block localhost and loopback (IPv6 bracket notation: [::1])
   if (
-    ["localhost", "127.0.0.1", "::1", "0.0.0.0"].includes(hostname)
+    ["localhost", "127.0.0.1", "[::1]", "::1", "0.0.0.0"].includes(hostname)
   ) {
     return false;
   }

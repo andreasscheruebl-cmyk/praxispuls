@@ -1,5 +1,19 @@
 import { describe, it, expect } from "vitest";
-import { getNpsCategory, slugify, formatDateDE } from "../utils";
+import { cn, getNpsCategory, slugify, formatDateDE, formatDateTimeDE } from "../utils";
+
+describe("cn", () => {
+  it("merges class names", () => {
+    expect(cn("px-2", "py-1")).toBe("px-2 py-1");
+  });
+
+  it("deduplicates conflicting Tailwind classes", () => {
+    expect(cn("px-2", "px-4")).toBe("px-4");
+  });
+
+  it("handles conditional classes", () => {
+    expect(cn("base", false && "hidden", "end")).toBe("base end");
+  });
+});
 
 describe("getNpsCategory", () => {
   it("returns promoter for score 9", () => {
@@ -65,6 +79,25 @@ describe("formatDateDE", () => {
 
   it("formats date string in German format", () => {
     expect(formatDateDE("2026-12-25T00:00:00Z")).toBe("25.12.2026");
+  });
+});
+
+describe("formatDateTimeDE", () => {
+  it("returns em dash for null", () => {
+    expect(formatDateTimeDE(null)).toBe("—");
+  });
+
+  it("formats Date object with time", () => {
+    const date = new Date("2026-01-15T14:30:00Z");
+    const result = formatDateTimeDE(date);
+    expect(result).toContain("15.01.2026");
+    expect(result).toMatch(/\d{2}:\d{2}/);
+  });
+
+  it("formats date string with time", () => {
+    const result = formatDateTimeDE("2026-06-01T09:15:00Z");
+    expect(result).toContain("01.06.2026");
+    expect(result).toMatch(/\d{2}:\d{2}/);
   });
 });
 
