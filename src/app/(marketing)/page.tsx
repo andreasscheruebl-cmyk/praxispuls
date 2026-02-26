@@ -1,5 +1,7 @@
 import Link from "next/link";
+import { CreditCard, MapPin, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { HeroVisual } from "@/components/marketing/hero-visual";
 import { ScrollLink } from "@/components/marketing/scroll-link";
 
 const jsonLd = {
@@ -34,27 +36,49 @@ export default function HomePage() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
       {/* Hero */}
-      <section className="flex min-h-[60vh] items-center py-20 md:min-h-[80vh] md:py-32">
-        <div className="container mx-auto px-4 text-center">
-          <h1 className="mx-auto max-w-3xl text-4xl font-bold tracking-tight md:text-6xl">
-            Patientenfeedback sammeln.{" "}
-            <span className="text-primary">Google-Bewertungen steigern.</span>
-          </h1>
-          <p className="mx-auto mt-6 max-w-2xl text-lg text-muted-foreground">
-            QM-konforme Patientenbefragung mit automatischem Google-Review-Routing
-            – in 5 Minuten eingerichtet, ab 49 €/Monat.
-          </p>
-          <div className="mt-10 flex items-center justify-center gap-4">
-            <Button asChild size="lg">
-              <Link href="/register">Kostenlos starten</Link>
-            </Button>
-            <ScrollLink targetId="so-funktionierts">
-              So funktioniert&apos;s
-            </ScrollLink>
+      <section className="py-16 md:py-24 lg:py-32">
+        <div className="container mx-auto px-4">
+          <div className="grid items-center gap-12 lg:grid-cols-2 lg:gap-16">
+            {/* Text left */}
+            <div className="animate-hero-text-in max-w-xl">
+              <h1 className="text-4xl font-bold tracking-tight md:text-6xl">
+                Patientenfeedback sammeln.{" "}
+                <span className="text-primary">
+                  Google-Bewertungen steigern.
+                </span>
+              </h1>
+              <p className="mt-6 text-lg text-muted-foreground">
+                QM-konforme Patientenbefragung mit automatischem
+                Google-Review-Routing – in 5 Minuten eingerichtet, ab
+                49&nbsp;€/Monat.
+              </p>
+              <div className="mt-8 flex flex-wrap items-center gap-4">
+                <Button asChild size="lg">
+                  <Link href="/register">Kostenlos starten</Link>
+                </Button>
+                <ScrollLink targetId="so-funktionierts">
+                  So funktioniert&apos;s
+                </ScrollLink>
+              </div>
+              <div className="mt-6 flex flex-wrap items-center gap-x-5 gap-y-2 text-sm text-muted-foreground">
+                <span className="flex items-center gap-1.5">
+                  <CreditCard className="h-4 w-4 text-primary/70" />
+                  Keine Kreditkarte nötig
+                </span>
+                <span className="flex items-center gap-1.5">
+                  <Shield className="h-4 w-4 text-primary/70" />
+                  DSGVO-konform
+                </span>
+                <span className="flex items-center gap-1.5">
+                  <MapPin className="h-4 w-4 text-primary/70" />
+                  Server in Deutschland
+                </span>
+              </div>
+            </div>
+
+            {/* Visual right */}
+            <HeroVisual />
           </div>
-          <p className="mt-4 text-sm text-muted-foreground">
-            Keine Kreditkarte nötig · DSGVO-konform · Server in Deutschland
-          </p>
         </div>
       </section>
 
