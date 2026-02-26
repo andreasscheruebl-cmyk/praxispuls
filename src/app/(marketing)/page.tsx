@@ -36,7 +36,7 @@ export default function HomePage() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
       {/* Hero */}
-      <section className="overflow-hidden py-16 md:py-24 lg:py-32">
+      <section className="py-16 md:py-24 lg:py-32">
         <div className="container mx-auto px-4">
           <div className="grid items-center gap-12 lg:grid-cols-2 lg:gap-16">
             {/* Text left */}
