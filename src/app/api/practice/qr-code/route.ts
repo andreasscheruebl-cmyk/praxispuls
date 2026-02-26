@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getUserOptional } from "@/lib/auth";
+import { requireAuthForApi } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { surveys } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
@@ -8,14 +8,13 @@ import { getActivePracticeForUser } from "@/lib/practice";
 
 export async function GET() {
   try {
-    const user = await getUserOptional();
-    if (!user) {
-      return NextResponse.json({ error: "Nicht angemeldet" }, { status: 401 });
-    }
+    const auth = await requireAuthForApi();
+    if (auth.error) return auth.error;
+    const user = auth.user;
 
     const practice = await getActivePracticeForUser(user.id);
     if (!practice) {
-      return NextResponse.json({ error: "Praxis nicht gefunden" }, { status: 404 });
+      return NextResponse.json({ error: "Praxis nicht gefunden", code: "NOT_FOUND" }, { status: 404 });
     }
 
     const survey = await db.query.surveys.findFirst({
@@ -23,7 +22,7 @@ export async function GET() {
     });
 
     if (!survey) {
-      return NextResponse.json({ error: "Keine Umfrage gefunden" }, { status: 404 });
+      return NextResponse.json({ error: "Keine Umfrage gefunden", code: "NOT_FOUND" }, { status: 404 });
     }
 
     const qrCodeDataUrl = await generateQrCodeDataUrl(survey.slug, {
@@ -36,6 +35,6 @@ export async function GET() {
       surveySlug: survey.slug,
     });
   } catch {
-    return NextResponse.json({ error: "Interner Fehler" }, { status: 500 });
+    return NextResponse.json({ error: "Interner Fehler", code: "INTERNAL_ERROR" }, { status: 500 });
   }
 }

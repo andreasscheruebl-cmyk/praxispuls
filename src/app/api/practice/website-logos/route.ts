@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getUserOptional } from "@/lib/auth";
+import { requireAuthForApi } from "@/lib/auth";
 import { isSafeUrl } from "@/lib/url-validation";
 
 /**
@@ -12,15 +12,13 @@ import { isSafeUrl } from "@/lib/url-validation";
  */
 export async function GET(request: Request) {
   try {
-    const user = await getUserOptional();
-    if (!user) {
-      return NextResponse.json({ error: "Nicht angemeldet" }, { status: 401 });
-    }
+    const auth = await requireAuthForApi();
+    if (auth.error) return auth.error;
 
     const { searchParams } = new URL(request.url);
     const websiteUrl = searchParams.get("url");
     if (!websiteUrl) {
-      return NextResponse.json({ error: "Missing url parameter" }, { status: 400 });
+      return NextResponse.json({ error: "Missing url parameter", code: "BAD_REQUEST" }, { status: 400 });
     }
 
     // Normalize URL

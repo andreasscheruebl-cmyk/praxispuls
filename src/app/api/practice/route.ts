@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getUserOptional } from "@/lib/auth";
+import { requireAuthForApi } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { practices, surveys } from "@/lib/db/schema";
 import { eq, and, ne, isNull } from "drizzle-orm";
@@ -14,13 +14,12 @@ import { PLAN_LIMITS } from "@/types";
 
 export async function GET() {
   try {
-    const user = await getUserOptional();
-    if (!user) {
-      return NextResponse.json({ error: "Nicht angemeldet" }, { status: 401 });
-    }
+    const auth = await requireAuthForApi();
+    if (auth.error) return auth.error;
+    const user = auth.user;
 
     const practice = await getActivePracticeForUser(user.id);
-    if (!practice) return NextResponse.json({ error: "Praxis nicht gefunden" }, { status: 404 });
+    if (!practice) return NextResponse.json({ error: "Praxis nicht gefunden", code: "NOT_FOUND" }, { status: 404 });
 
     const locationCount = await getLocationCountForUser(user.id);
     const effectivePlan = getEffectivePlan(practice);
@@ -28,21 +27,21 @@ export async function GET() {
 
     return NextResponse.json({ ...practice, locationCount, maxLocations });
   } catch {
-    return NextResponse.json({ error: "Interner Fehler" }, { status: 500 });
+    return NextResponse.json({ error: "Interner Fehler", code: "INTERNAL_ERROR" }, { status: 500 });
   }
 }
 
 export async function POST(request: Request) {
   try {
-    const user = await getUserOptional();
-    if (!user) {
-      return NextResponse.json({ error: "Nicht angemeldet" }, { status: 401 });
-    }
+    const auth = await requireAuthForApi();
+    if (auth.error) return auth.error;
+    const user = auth.user;
+
     const body = await request.json();
     const { name, postalCode, googlePlaceId, surveyTemplate, logoUrl } = body;
 
     if (!name?.trim()) {
-      return NextResponse.json({ error: "Name fehlt" }, { status: 400 });
+      return NextResponse.json({ error: "Name fehlt", code: "BAD_REQUEST" }, { status: 400 });
     }
 
     // Validate external data before transaction
@@ -51,7 +50,7 @@ export async function POST(request: Request) {
       const placeDetails = await getPlaceDetails(googlePlaceId);
       if (!placeDetails) {
         return NextResponse.json(
-          { error: "Ungültige Google Place ID. Bitte wählen Sie Ihre Praxis erneut aus." },
+          { error: "Ungültige Google Place ID. Bitte wählen Sie Ihre Praxis erneut aus.", code: "BAD_REQUEST" },
           { status: 400 }
         );
       }
@@ -139,22 +138,22 @@ export async function POST(request: Request) {
     return NextResponse.json(result.practice, { status: 201 });
   } catch (err) {
     console.error("Create practice error:", err);
-    return NextResponse.json({ error: "Fehler beim Erstellen" }, { status: 500 });
+    return NextResponse.json({ error: "Fehler beim Erstellen", code: "INTERNAL_ERROR" }, { status: 500 });
   }
 }
 
 export async function PUT(request: Request) {
   try {
-    const user = await getUserOptional();
-    if (!user) {
-      return NextResponse.json({ error: "Nicht angemeldet" }, { status: 401 });
-    }
+    const auth = await requireAuthForApi();
+    if (auth.error) return auth.error;
+    const user = auth.user;
+
     const body = await request.json();
     const parsed = practiceUpdateSchema.parse(body);
     const meta = getRequestMeta(request);
 
     const practice = await getActivePracticeForUser(user.id);
-    if (!practice) return NextResponse.json({ error: "Praxis nicht gefunden" }, { status: 404 });
+    if (!practice) return NextResponse.json({ error: "Praxis nicht gefunden", code: "NOT_FOUND" }, { status: 404 });
 
     // Verify Google Place ID if changed
     let googleReviewUrl = practice.googleReviewUrl;
@@ -162,7 +161,7 @@ export async function PUT(request: Request) {
       const placeDetails = await getPlaceDetails(parsed.googlePlaceId);
       if (!placeDetails) {
         return NextResponse.json(
-          { error: "Ungültige Google Place ID. Bitte wählen Sie Ihre Praxis erneut aus." },
+          { error: "Ungültige Google Place ID. Bitte wählen Sie Ihre Praxis erneut aus.", code: "BAD_REQUEST" },
           { status: 400 }
         );
       }
@@ -209,6 +208,6 @@ export async function PUT(request: Request) {
 
     return NextResponse.json({ success: true });
   } catch {
-    return NextResponse.json({ error: "Fehler" }, { status: 500 });
+    return NextResponse.json({ error: "Fehler", code: "INTERNAL_ERROR" }, { status: 500 });
   }
 }

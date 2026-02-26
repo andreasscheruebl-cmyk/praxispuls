@@ -19,7 +19,7 @@ export async function POST(request: Request) {
 
   if (!signature || !process.env.STRIPE_WEBHOOK_SECRET) {
     return NextResponse.json(
-      { error: "Missing signature or webhook secret" },
+      { error: "Missing signature or webhook secret", code: "BAD_REQUEST" },
       { status: 400 }
     );
   }
@@ -36,7 +36,7 @@ export async function POST(request: Request) {
     const message = err instanceof Error ? err.message : "Unknown error";
     console.error(`Webhook signature verification failed: ${message}`);
     return NextResponse.json(
-      { error: "Invalid signature" },
+      { error: "Invalid signature", code: "BAD_REQUEST" },
       { status: 400 }
     );
   }
@@ -76,7 +76,7 @@ export async function POST(request: Request) {
   } catch (err) {
     console.error(`Webhook handler error for ${event.type}:`, err);
     return NextResponse.json(
-      { error: "Webhook handler failed" },
+      { error: "Webhook handler failed", code: "INTERNAL_ERROR" },
       { status: 500 }
     );
   }

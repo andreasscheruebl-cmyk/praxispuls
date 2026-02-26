@@ -1,18 +1,17 @@
 import { NextResponse } from "next/server";
-import { getUserOptional } from "@/lib/auth";
+import { requireAuthForApi } from "@/lib/auth";
 import { createPortalSession } from "@/lib/stripe";
 import { getActivePracticeForUser } from "@/lib/practice";
 
 export async function POST() {
   try {
-    const user = await getUserOptional();
-    if (!user) {
-      return NextResponse.json({ error: "Nicht angemeldet" }, { status: 401 });
-    }
+    const auth = await requireAuthForApi();
+    if (auth.error) return auth.error;
+    const user = auth.user;
 
     const practice = await getActivePracticeForUser(user.id);
     if (!practice?.stripeCustomerId) {
-      return NextResponse.json({ error: "Kein Abo vorhanden" }, { status: 400 });
+      return NextResponse.json({ error: "Kein Abo vorhanden", code: "BAD_REQUEST" }, { status: 400 });
     }
 
     const session = await createPortalSession({
@@ -23,6 +22,6 @@ export async function POST() {
     return NextResponse.json({ url: session.url });
   } catch (err) {
     console.error("Portal error:", err);
-    return NextResponse.json({ error: "Fehler beim Öffnen des Kundenportals" }, { status: 500 });
+    return NextResponse.json({ error: "Fehler beim Öffnen des Kundenportals", code: "INTERNAL_ERROR" }, { status: 500 });
   }
 }

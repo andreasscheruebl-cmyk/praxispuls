@@ -1,5 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
+import { NextResponse } from "next/server";
+import type { User } from "@supabase/supabase-js";
 
 /**
  * Get the current authenticated user or redirect to login.
@@ -29,6 +31,26 @@ export async function getUserOptional() {
     data: { user },
   } = await supabase.auth.getUser();
   return user;
+}
+
+/**
+ * Require authentication for API routes.
+ * Returns a discriminated union: either { user } or { error } (NextResponse).
+ */
+export async function requireAuthForApi(): Promise<
+  | { user: User; error?: never }
+  | { user?: never; error: NextResponse }
+> {
+  const user = await getUserOptional();
+  if (!user) {
+    return {
+      error: NextResponse.json(
+        { error: "Nicht angemeldet", code: "UNAUTHORIZED" },
+        { status: 401 }
+      ),
+    };
+  }
+  return { user };
 }
 
 /**

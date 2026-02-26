@@ -1,13 +1,11 @@
 import { NextResponse } from "next/server";
-import { getUserOptional } from "@/lib/auth";
+import { requireAuthForApi } from "@/lib/auth";
 import { searchPlaces, getPlaceDetails } from "@/lib/google";
 
 export async function GET(request: Request) {
   try {
-    const user = await getUserOptional();
-    if (!user) {
-      return NextResponse.json({ error: "Nicht angemeldet" }, { status: 401 });
-    }
+    const auth = await requireAuthForApi();
+    if (auth.error) return auth.error;
 
     const { searchParams } = new URL(request.url);
     const query = searchParams.get("q");
@@ -18,7 +16,7 @@ export async function GET(request: Request) {
       const details = await getPlaceDetails(placeId);
       if (!details) {
         return NextResponse.json(
-          { error: "Google Place ID nicht gefunden" },
+          { error: "Google Place ID nicht gefunden", code: "NOT_FOUND" },
           { status: 404 }
         );
       }
@@ -34,6 +32,6 @@ export async function GET(request: Request) {
     const results = await searchPlaces(query, postalCode);
     return NextResponse.json(results);
   } catch {
-    return NextResponse.json({ error: "Interner Fehler" }, { status: 500 });
+    return NextResponse.json({ error: "Interner Fehler", code: "INTERNAL_ERROR" }, { status: 500 });
   }
 }
