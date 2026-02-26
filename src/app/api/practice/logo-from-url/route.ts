@@ -6,6 +6,7 @@ import { eq } from "drizzle-orm";
 import { createServiceClient } from "@/lib/supabase/server";
 import { getPlacePhotoUrl } from "@/lib/google";
 import { getActivePracticeForUser } from "@/lib/practice";
+import { isSafeUrl } from "@/lib/url-validation";
 
 /**
  * POST /api/practice/logo-from-url
@@ -39,6 +40,14 @@ export async function POST(request: Request) {
         }
         fetchUrl = googleUrl;
       }
+    }
+
+    // SSRF protection: block private/internal URLs
+    if (!isSafeUrl(fetchUrl)) {
+      return NextResponse.json(
+        { error: "URL nicht erlaubt", code: "BAD_REQUEST" },
+        { status: 400 }
+      );
     }
 
     // Fetch image server-side (no CORS issues)

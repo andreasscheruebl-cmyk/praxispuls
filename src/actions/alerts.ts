@@ -19,7 +19,7 @@ export async function markAlertRead(alertId: string) {
     with: { practice: true },
   });
 
-  if (!alert || alert.practice.email !== user.email) {
+  if (!alert || alert.practice.ownerUserId !== user.id) {
     throw new Error("Alert nicht gefunden");
   }
 
@@ -44,7 +44,7 @@ export async function addAlertNote(alertId: string, note: string) {
     with: { practice: true },
   });
 
-  if (!alert || alert.practice.email !== user.email) {
+  if (!alert || alert.practice.ownerUserId !== user.id) {
     throw new Error("Alert nicht gefunden");
   }
 
