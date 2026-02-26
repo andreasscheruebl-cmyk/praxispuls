@@ -1,6 +1,7 @@
 import { getAuditEvents, getAuditActionTypes, getAllPractices } from "@/lib/db/queries/admin";
 import { AuditFilters } from "@/components/admin/audit-filters";
 import { AuditDetail } from "@/components/admin/audit-detail";
+import { formatDateTimeDE } from "@/lib/utils";
 import {
   Table,
   TableBody,
@@ -54,17 +55,6 @@ export default async function AdminAuditPage({
     return `/admin/audit?${sp.toString()}`;
   }
 
-  const formatDate = (date: Date | null) => {
-    if (!date) return "—";
-    return new Intl.DateTimeFormat("de-DE", {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    }).format(new Date(date));
-  };
-
   return (
     <div className="space-y-6">
       <div>
@@ -101,7 +91,7 @@ export default async function AdminAuditPage({
               result.events.map((event) => (
                 <TableRow key={event.id}>
                   <TableCell className="whitespace-nowrap text-sm">
-                    {formatDate(event.createdAt)}
+                    {formatDateTimeDE(event.createdAt)}
                   </TableCell>
                   <TableCell>
                     <Badge variant="outline" className="font-mono text-xs">

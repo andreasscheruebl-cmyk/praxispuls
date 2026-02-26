@@ -3,7 +3,7 @@ import { practices } from "@/lib/db/schema";
 import { eq, and, isNull, count } from "drizzle-orm";
 import { cookies } from "next/headers";
 
-const ACTIVE_PRACTICE_COOKIE = "active_practice_id";
+export const ACTIVE_PRACTICE_COOKIE = "active_practice_id";
 
 /**
  * Count active (non-deleted) practices for a user.
