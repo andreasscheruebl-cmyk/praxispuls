@@ -126,6 +126,11 @@ Ein PR ist bereit für Review wenn:
 - zod (Validation)
 - qrcode (QR generation)
 
+## Arbeitsweise
+- **Kein unaufgefordertes Refactoring.** Nur das tun, was explizit verlangt wurde – keine "Verbesserungen" nebenbei.
+- **Erst lesen, dann handeln.** Relevante Dateien lesen und Ansatz verstehen, bevor Code geändert wird.
+- **Vor PR/Branch: Remote prüfen.** `gh pr list` und `git fetch` vor neuem Branch, um Duplikate zu vermeiden.
+
 ## Coding Rules
 
 ### TypeScript
@@ -283,3 +288,5 @@ praxispuls/
 
 ## Environment Variables
 Siehe `.env.example` für alle benötigten Variablen.
+- **Vercel Env Vars:** IMMER `printf "value"` statt `echo "value"` – `echo` hängt Newline an, das Stripe/Sentry bricht.
+- **Nach dem Setzen:** Env Vars auf Whitespace/Newlines prüfen.
