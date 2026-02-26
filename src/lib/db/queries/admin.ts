@@ -1,5 +1,5 @@
 import { db } from "@/lib/db";
-import { practices, responses, auditEvents, loginEvents } from "@/lib/db/schema";
+import { practices, surveys, responses, auditEvents, loginEvents } from "@/lib/db/schema";
 import type { Practice } from "@/lib/db/schema";
 import type { PlanId } from "@/types";
 import { getEffectivePlan } from "@/lib/plans";
@@ -65,6 +65,7 @@ interface PracticesFilter {
   plan?: PlanId;
   hasGoogle?: boolean;
   hasOverride?: boolean;
+  isSuspended?: boolean;
   page?: number;
   pageSize?: number;
 }
@@ -74,7 +75,7 @@ interface PracticesFilter {
  * Plan filter is applied in-app since getEffectivePlan() is app logic.
  */
 export async function getPracticesFiltered(filter: PracticesFilter) {
-  const { search, plan, hasGoogle, hasOverride, page = 1, pageSize = 20 } = filter;
+  const { search, plan, hasGoogle, hasOverride, isSuspended, page = 1, pageSize = 20 } = filter;
 
   const conditions = [isNull(practices.deletedAt)];
 
@@ -98,6 +99,12 @@ export async function getPracticesFiltered(filter: PracticesFilter) {
     conditions.push(isNotNull(practices.planOverride));
   } else if (hasOverride === false) {
     conditions.push(isNull(practices.planOverride));
+  }
+
+  if (isSuspended === true) {
+    conditions.push(isNotNull(practices.suspendedAt));
+  } else if (isSuspended === false) {
+    conditions.push(isNull(practices.suspendedAt));
   }
 
   const where = and(...conditions);
@@ -199,6 +206,69 @@ export async function getExtendedPlatformStats() {
     totalPractices: allPractices.length,
     registrations,
   };
+}
+
+// ============================================================
+// PRACTICE MANAGEMENT
+// ============================================================
+
+/**
+ * Set or clear suspension on a practice.
+ */
+export async function updatePracticeSuspension(
+  practiceId: string,
+  suspendedAt: Date | null
+) {
+  return db
+    .update(practices)
+    .set({ suspendedAt, updatedAt: new Date() })
+    .where(eq(practices.id, practiceId));
+}
+
+/**
+ * Update Google integration fields on a practice.
+ */
+export async function updatePracticeGoogle(
+  practiceId: string,
+  data: {
+    googlePlaceId?: string | null;
+    googleReviewUrl?: string | null;
+    googleRedirectEnabled?: boolean;
+  }
+) {
+  return db
+    .update(practices)
+    .set({ ...data, updatedAt: new Date() })
+    .where(eq(practices.id, practiceId));
+}
+
+/**
+ * Update the email on a practice record.
+ */
+export async function updatePracticeEmail(
+  practiceId: string,
+  email: string
+) {
+  return db
+    .update(practices)
+    .set({ email, updatedAt: new Date() })
+    .where(eq(practices.id, practiceId));
+}
+
+/**
+ * Soft-delete a practice and deactivate all its surveys.
+ */
+export async function softDeletePractice(practiceId: string) {
+  const now = new Date();
+  await db
+    .update(surveys)
+    .set({ isActive: false, updatedAt: now })
+    .where(eq(surveys.practiceId, practiceId));
+
+  return db
+    .update(practices)
+    .set({ deletedAt: now, updatedAt: now })
+    .where(eq(practices.id, practiceId));
 }
 
 // ============================================================

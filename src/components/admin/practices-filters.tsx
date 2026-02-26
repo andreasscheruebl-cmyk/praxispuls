@@ -113,6 +113,20 @@ export function PracticesFilters() {
           <SelectItem value="no">Ohne Override</SelectItem>
         </SelectContent>
       </Select>
+
+      <Select
+        value={searchParams.get("suspended") ?? "all"}
+        onValueChange={(v) => handleFilterChange("suspended", v)}
+      >
+        <SelectTrigger className="w-full sm:w-[160px]">
+          <SelectValue placeholder="Status" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="all">Status: Alle</SelectItem>
+          <SelectItem value="yes">Gesperrt</SelectItem>
+          <SelectItem value="no">Aktiv</SelectItem>
+        </SelectContent>
+      </Select>
     </div>
   );
 }

@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Inter, Playfair_Display } from "next/font/google";
 import Script from "next/script";
+import { Toaster } from "sonner";
 import "./globals.css";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
@@ -56,6 +57,7 @@ export default function RootLayout({
         {/* Blocking script: set theme + background before first paint */}
         <script dangerouslySetInnerHTML={{ __html: `(function(){var d=document.documentElement;d.setAttribute("data-theme","vertrauen");document.body.style.backgroundColor="hsl(34,47%,97%)";})()` }} />
         {children}
+        <Toaster richColors position="top-right" />
         {process.env.NEXT_PUBLIC_PLAUSIBLE_DOMAIN && (
           <Script
             defer

@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/card";
 import { ArrowLeft, ExternalLink } from "lucide-react";
 import { PLAN_BADGE_STYLES, PLAN_LABELS } from "@/lib/constants/plans";
+import { PracticeManagement } from "@/components/admin/practice-management";
 import type { PlanId } from "@/types";
 
 export default async function AdminPracticeDetailPage({
@@ -41,7 +42,16 @@ export default async function AdminPracticeDetailPage({
       </div>
 
       <div>
-        <h1 className="text-2xl font-bold">{practice.name}</h1>
+        <div className="flex items-center gap-3">
+          <h1 className="text-2xl font-bold">{practice.name}</h1>
+          {practice.suspendedAt ? (
+            <Badge variant="destructive">Gesperrt</Badge>
+          ) : practice.deletedAt ? (
+            <Badge variant="secondary">Gelöscht</Badge>
+          ) : (
+            <Badge className="bg-green-100 text-green-700 border-green-200">Aktiv</Badge>
+          )}
+        </div>
         <p className="text-muted-foreground">{practice.email}</p>
       </div>
 
@@ -261,6 +271,19 @@ export default async function AdminPracticeDetailPage({
           </CardContent>
         </Card>
       </div>
+
+      {/* Practice Management – Client Component */}
+      <PracticeManagement
+        practiceId={practice.id}
+        practiceName={practice.name}
+        ownerUserId={practice.ownerUserId}
+        email={practice.email}
+        suspendedAt={practice.suspendedAt}
+        deletedAt={practice.deletedAt}
+        googlePlaceId={practice.googlePlaceId}
+        googleReviewUrl={practice.googleReviewUrl}
+        googleRedirectEnabled={practice.googleRedirectEnabled}
+      />
     </div>
   );
 }

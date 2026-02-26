@@ -64,6 +64,29 @@ export function getAdminEmails(): string[] {
 }
 
 /**
+ * Require admin access for API routes.
+ * Returns a discriminated union: either { user } or { error } (NextResponse).
+ */
+export async function requireAdminForApi(): Promise<
+  | { user: User; error?: never }
+  | { user?: never; error: NextResponse }
+> {
+  const auth = await requireAuthForApi();
+  if (auth.error) return auth;
+
+  if (!getAdminEmails().includes(auth.user.email?.toLowerCase() || "")) {
+    return {
+      error: NextResponse.json(
+        { error: "Kein Admin-Zugriff", code: "FORBIDDEN" },
+        { status: 403 }
+      ),
+    };
+  }
+
+  return { user: auth.user };
+}
+
+/**
  * Require the current user to be an admin.
  * Throws if not authenticated or not in ADMIN_EMAILS.
  * Use in Server Actions that perform admin operations.

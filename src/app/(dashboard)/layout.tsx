@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { getUser } from "@/lib/auth";
+import { getUser, getAdminEmails } from "@/lib/auth";
 import { getActivePractice, getPractices } from "@/actions/practice";
 import { LogoutButton } from "@/components/dashboard/logout-button";
 import { MobileNav } from "@/components/dashboard/mobile-nav";
@@ -18,6 +18,7 @@ import {
   CreditCard,
   Bell,
   UserCircle,
+  Shield,
 } from "lucide-react";
 
 const navItems = [
@@ -48,6 +49,8 @@ export default async function DashboardLayout({
   const themeId = (practice?.theme as ThemeId) || "vertrauen";
   const effectivePlan = practice ? getEffectivePlan(practice) : "free";
   const maxLocations = PLAN_LIMITS[effectivePlan].maxLocations;
+  const isAdmin = getAdminEmails().includes(user.email?.toLowerCase() || "");
+  const isSuspended = !!practice?.suspendedAt;
 
   return (
     <ThemeProvider themeId={themeId}>
@@ -91,6 +94,18 @@ export default async function DashboardLayout({
               );
             })}
           </nav>
+
+          {isAdmin && (
+            <div className="border-t px-3 py-2">
+              <Link
+                href="/admin"
+                className="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-muted-foreground hover:bg-accent hover:text-foreground"
+              >
+                <Shield className="h-4 w-4" />
+                Admin-Board
+              </Link>
+            </div>
+          )}
 
           <div className="border-t p-4 space-y-2">
             <div className="flex items-center gap-3 px-1 py-1">
@@ -143,7 +158,27 @@ export default async function DashboardLayout({
 
         {/* Page content */}
         <main className="flex-1 overflow-y-auto bg-gray-50 p-4 pb-24 md:p-8">
-          {children}
+          {isSuspended ? (
+            <div className="flex min-h-[50vh] items-center justify-center">
+              <div className="max-w-md rounded-lg border bg-white p-8 text-center shadow-sm">
+                <Shield className="mx-auto mb-4 h-12 w-12 text-destructive" />
+                <h2 className="mb-2 text-xl font-semibold">Konto gesperrt</h2>
+                <p className="text-muted-foreground">
+                  Ihr Konto wurde gesperrt. Bitte kontaktieren Sie den Support
+                  unter{" "}
+                  <a
+                    href="mailto:support@praxispuls.de"
+                    className="text-primary underline"
+                  >
+                    support@praxispuls.de
+                  </a>
+                  .
+                </p>
+              </div>
+            </div>
+          ) : (
+            children
+          )}
         </main>
 
         {/* Bottom tabs for Vertrauen theme (mobile) */}
