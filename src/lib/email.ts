@@ -18,6 +18,42 @@ function getResend() {
   return new Resend(process.env.RESEND_API_KEY);
 }
 
+/** Shared email layout wrapper for consistent branding */
+function emailLayout(content: string): string {
+  return `
+<!DOCTYPE html>
+<html lang="de">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
+<body style="margin: 0; padding: 0; background-color: #f9fafb; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f9fafb; padding: 40px 16px;">
+    <tr><td align="center">
+      <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 500px; background: #ffffff; border-radius: 8px; overflow: hidden;">
+        <!-- Header -->
+        <tr><td style="padding: 32px 32px 0; text-align: center;">
+          <h1 style="margin: 0; font-size: 22px; font-weight: 700; color: #2563eb;">PraxisPuls</h1>
+        </td></tr>
+        <!-- Content -->
+        <tr><td style="padding: 24px 32px 32px;">
+          ${content}
+        </td></tr>
+        <!-- Footer -->
+        <tr><td style="padding: 16px 32px; border-top: 1px solid #e5e7eb; text-align: center;">
+          <p style="margin: 0; font-size: 12px; color: #9ca3af;">
+            PraxisPuls — Patientenfeedback für Zahnarztpraxen
+          </p>
+        </td></tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>`;
+}
+
+/** Shared CTA button style */
+function emailButton(text: string, href: string): string {
+  return `<a href="${href}" style="display: inline-block; padding: 12px 24px; background: #2563eb; color: #ffffff; text-decoration: none; border-radius: 6px; font-weight: 500;">${text}</a>`;
+}
+
 /**
  * Send detractor alert email to practice owner
  */
@@ -42,28 +78,20 @@ export async function sendDetractorAlert(params: {
     from: FROM_EMAIL,
     to,
     subject: `⚠️ Kritisches Patientenfeedback – NPS ${npsScore}`,
-    html: `
-      <div style="font-family: sans-serif; max-width: 500px; margin: 0 auto;">
-        <h2 style="color: #dc2626;">⚠️ Kritisches Feedback eingegangen</h2>
-        <p><strong>Praxis:</strong> ${escapeHtml(practiceName)}</p>
-        <p><strong>NPS-Score:</strong> ${npsScore}/10</p>
-        <p><strong>Zeitpunkt:</strong> ${dateStr}</p>
-        ${freeText ? `
-          <div style="margin-top: 16px; padding: 16px; background: #f9fafb; border-left: 4px solid #dc2626; border-radius: 4px;">
-            <p style="margin: 0; font-style: italic;">"${escapeHtml(freeText)}"</p>
-          </div>
-        ` : ""}
-        <p style="margin-top: 24px;">
-          <a href="${process.env.NEXT_PUBLIC_APP_URL}/dashboard"
-             style="display: inline-block; padding: 12px 24px; background: #2563eb; color: white; text-decoration: none; border-radius: 6px;">
-            Im Dashboard ansehen
-          </a>
-        </p>
-        <p style="margin-top: 24px; font-size: 12px; color: #9ca3af;">
-          Diese E-Mail wurde automatisch von PraxisPuls versendet.
-        </p>
-      </div>
-    `,
+    html: emailLayout(`
+      <h2 style="margin: 0 0 16px; font-size: 18px; color: #dc2626;">⚠️ Kritisches Feedback eingegangen</h2>
+      <p><strong>Praxis:</strong> ${escapeHtml(practiceName)}</p>
+      <p><strong>NPS-Score:</strong> ${npsScore}/10</p>
+      <p><strong>Zeitpunkt:</strong> ${dateStr}</p>
+      ${freeText ? `
+        <div style="margin-top: 16px; padding: 16px; background: #f9fafb; border-left: 4px solid #dc2626; border-radius: 4px;">
+          <p style="margin: 0; font-style: italic;">&ldquo;${escapeHtml(freeText)}&rdquo;</p>
+        </div>
+      ` : ""}
+      <p style="margin-top: 24px;">
+        ${emailButton("Im Dashboard ansehen", `${process.env.NEXT_PUBLIC_APP_URL}/dashboard`)}
+      </p>
+    `),
   });
 }
 
@@ -78,27 +106,22 @@ export async function sendWelcomeEmail(params: {
     from: FROM_EMAIL,
     to: params.to,
     subject: "Willkommen bei PraxisPuls! 🎉",
-    html: `
-      <div style="font-family: sans-serif; max-width: 500px; margin: 0 auto;">
-        <h2>Willkommen bei PraxisPuls!</h2>
-        <p>Hallo ${escapeHtml(params.practiceName)},</p>
-        <p>vielen Dank für Ihre Registrierung. In wenigen Schritten ist Ihre Patientenumfrage startklar:</p>
-        <ol>
-          <li>Praxisdaten vervollständigen</li>
-          <li>Google-Praxis verknüpfen</li>
-          <li>QR-Code herunterladen und aufstellen</li>
-        </ol>
-        <p>
-          <a href="${process.env.NEXT_PUBLIC_APP_URL}/onboarding"
-             style="display: inline-block; padding: 12px 24px; background: #2563eb; color: white; text-decoration: none; border-radius: 6px;">
-            Jetzt einrichten
-          </a>
-        </p>
-        <p style="margin-top: 24px; font-size: 12px; color: #9ca3af;">
-          Bei Fragen erreichen Sie uns unter info@praxispuls.de
-        </p>
-      </div>
-    `,
+    html: emailLayout(`
+      <h2 style="margin: 0 0 16px; font-size: 18px; color: #111827;">Willkommen bei PraxisPuls!</h2>
+      <p>Hallo ${escapeHtml(params.practiceName)},</p>
+      <p>vielen Dank für Ihre Registrierung. In wenigen Schritten ist Ihre Patientenumfrage startklar:</p>
+      <ol>
+        <li>Praxisdaten vervollständigen</li>
+        <li>Google-Praxis verknüpfen</li>
+        <li>QR-Code herunterladen und aufstellen</li>
+      </ol>
+      <p>
+        ${emailButton("Jetzt einrichten", `${process.env.NEXT_PUBLIC_APP_URL}/onboarding`)}
+      </p>
+      <p style="margin-top: 24px; font-size: 13px; color: #6b7280;">
+        Bei Fragen erreichen Sie uns unter info@praxispuls.de
+      </p>
+    `),
   });
 }
 
@@ -115,25 +138,20 @@ export async function sendUpgradeReminder(params: {
     from: FROM_EMAIL,
     to: params.to,
     subject: "📊 Ihr Antwort-Limit ist fast erreicht",
-    html: `
-      <div style="font-family: sans-serif; max-width: 500px; margin: 0 auto;">
-        <h2>Antwort-Limit fast erreicht</h2>
-        <p>Hallo ${escapeHtml(params.practiceName)},</p>
-        <p>Sie haben bereits <strong>${params.currentCount} von ${params.limit}</strong> Antworten diesen Monat erhalten. Das zeigt, dass Ihre Patienten aktiv Feedback geben!</p>
-        <p>Mit dem Starter-Plan für 49 €/Monat erhalten Sie:</p>
-        <ul>
-          <li>200 Antworten pro Monat</li>
-          <li>E-Mail-Alerts bei kritischem Feedback</li>
-          <li>Praxis-Branding (Logo & Farben)</li>
-          <li>Alle 3 Umfrage-Templates</li>
-        </ul>
-        <p>
-          <a href="${process.env.NEXT_PUBLIC_APP_URL}/dashboard/billing"
-             style="display: inline-block; padding: 12px 24px; background: #2563eb; color: white; text-decoration: none; border-radius: 6px;">
-            Jetzt upgraden
-          </a>
-        </p>
-      </div>
-    `,
+    html: emailLayout(`
+      <h2 style="margin: 0 0 16px; font-size: 18px; color: #111827;">Antwort-Limit fast erreicht</h2>
+      <p>Hallo ${escapeHtml(params.practiceName)},</p>
+      <p>Sie haben bereits <strong>${params.currentCount} von ${params.limit}</strong> Antworten diesen Monat erhalten. Das zeigt, dass Ihre Patienten aktiv Feedback geben!</p>
+      <p>Mit dem Starter-Plan für 49&nbsp;€/Monat erhalten Sie:</p>
+      <ul>
+        <li>200 Antworten pro Monat</li>
+        <li>E-Mail-Alerts bei kritischem Feedback</li>
+        <li>Praxis-Branding (Logo &amp; Farben)</li>
+        <li>Alle 3 Umfrage-Templates</li>
+      </ul>
+      <p>
+        ${emailButton("Jetzt upgraden", `${process.env.NEXT_PUBLIC_APP_URL}/dashboard/billing`)}
+      </p>
+    `),
   });
 }
