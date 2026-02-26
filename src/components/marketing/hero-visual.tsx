@@ -2,7 +2,7 @@ import { ArrowUp, BarChart3, Star, TrendingUp } from "lucide-react";
 
 function GoogleStarsCard() {
   return (
-    <div className="absolute -top-2 left-2 z-10 w-[240px] rotate-2 rounded-xl border border-border bg-white p-6 shadow-theme lg:left-4">
+    <div className="hero-card-1 absolute left-[5%] top-0 z-20 w-[250px] rounded-xl bg-white p-6 shadow-lg ring-1 ring-black/[0.04]">
       <p className="text-sm font-medium text-muted-foreground">
         Google-Bewertung
       </p>
@@ -23,7 +23,7 @@ function GoogleStarsCard() {
 
 function DashboardCard() {
   return (
-    <div className="absolute -left-2 top-[135px] z-10 w-[260px] rounded-xl border border-border bg-white p-6 shadow-theme lg:top-[145px]">
+    <div className="hero-card-2 absolute left-0 top-[125px] z-10 w-[290px] rounded-xl bg-white p-6 shadow-lg ring-1 ring-black/[0.04]">
       <div className="flex items-center justify-between">
         <p className="text-sm font-medium text-muted-foreground">Dashboard</p>
         <BarChart3 className="h-4 w-4 text-muted-foreground" />
@@ -54,8 +54,8 @@ function DashboardCard() {
 
 function SurveyPhoneCard() {
   return (
-    <div className="absolute right-0 top-[40px] z-20 w-[200px] rounded-2xl border-2 border-border bg-white p-6 shadow-theme lg:right-0 lg:top-[30px]">
-      <div className="mb-4 mx-auto h-1 w-12 rounded-full bg-muted" />
+    <div className="hero-card-3 absolute right-[5%] top-[15px] z-30 w-[195px] rounded-2xl bg-white p-6 shadow-lg ring-1 ring-black/[0.04]">
+      <div className="mx-auto mb-4 h-1 w-12 rounded-full bg-muted" />
       <p className="text-center text-xs leading-snug text-muted-foreground">
         Wie wahrscheinlich empfehlen Sie uns weiter?
       </p>
@@ -76,7 +76,7 @@ function SurveyPhoneCard() {
 
 function ReviewsCard() {
   return (
-    <div className="absolute bottom-2 left-[25%] z-10 w-[230px] -rotate-1 rounded-xl border border-border bg-white p-5 shadow-theme lg:bottom-0 lg:left-[20%]">
+    <div className="hero-card-4 absolute bottom-0 left-[15%] z-20 w-[250px] rounded-xl bg-white p-5 shadow-lg ring-1 ring-black/[0.04]">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="flex h-9 w-9 items-center justify-center rounded-full bg-emerald-50">
@@ -97,46 +97,46 @@ function ReviewsCard() {
 
 export function HeroVisual() {
   return (
-    <div className="relative mx-auto w-full max-w-md lg:max-w-none">
+    <div className="relative mx-auto w-full max-w-lg lg:max-w-none">
       {/* Radial gradient background */}
-      <div className="absolute inset-0 rounded-3xl bg-[radial-gradient(circle_at_50%_50%,hsl(174_84%_30%/0.10),transparent_70%)]" />
+      <div className="absolute inset-0 -m-6 rounded-3xl bg-[radial-gradient(circle_at_60%_40%,hsl(174_84%_30%/0.12),transparent_70%)]" />
 
-      {/* Desktop/Tablet: absolute positioned cards */}
-      <div className="relative hidden min-h-[420px] w-full md:block lg:min-h-[480px]">
+      {/* Desktop/Tablet: overlapping absolute cards */}
+      <div className="relative hidden min-h-[400px] w-full md:block lg:min-h-[430px]">
         <GoogleStarsCard />
         <DashboardCard />
         <SurveyPhoneCard />
         <ReviewsCard />
       </div>
 
-      {/* Mobile: grid layout */}
-      <div className="relative grid grid-cols-2 gap-3 md:hidden">
+      {/* Mobile: 2-column grid */}
+      <div className="relative grid grid-cols-2 gap-3 py-2 md:hidden">
         {/* Google Stars */}
-        <div className="rounded-xl border border-border bg-white p-4 shadow-theme">
+        <div className="hero-card-1 rounded-xl bg-white p-4 shadow-lg ring-1 ring-black/[0.04]">
           <p className="text-xs font-medium text-muted-foreground">
             Google-Bewertung
           </p>
           <div className="mt-1.5 flex items-baseline gap-1.5">
             <span className="text-2xl font-bold">4,9</span>
             <div className="flex gap-0.5 text-amber-400">
-              <Star className="h-3 w-3 fill-current" />
-              <Star className="h-3 w-3 fill-current" />
-              <Star className="h-3 w-3 fill-current" />
-              <Star className="h-3 w-3 fill-current" />
-              <Star className="h-3 w-3 fill-current" />
+              <Star className="h-3.5 w-3.5 fill-current" />
+              <Star className="h-3.5 w-3.5 fill-current" />
+              <Star className="h-3.5 w-3.5 fill-current" />
+              <Star className="h-3.5 w-3.5 fill-current" />
+              <Star className="h-3.5 w-3.5 fill-current" />
             </div>
           </div>
-          <p className="mt-0.5 text-[10px] text-muted-foreground">
+          <p className="mt-1 text-[11px] text-muted-foreground">
             142 Bewertungen
           </p>
         </div>
 
         {/* Dashboard */}
-        <div className="rounded-xl border border-border bg-white p-4 shadow-theme">
+        <div className="hero-card-2 rounded-xl bg-white p-4 shadow-lg ring-1 ring-black/[0.04]">
           <p className="text-xs font-medium text-muted-foreground">
             Dashboard
           </p>
-          <div className="mt-1.5 grid grid-cols-2 gap-2">
+          <div className="mt-2 grid grid-cols-2 gap-2">
             <div>
               <p className="text-lg font-bold">312</p>
               <p className="text-[10px] text-muted-foreground">Antworten</p>
@@ -149,22 +149,22 @@ export function HeroVisual() {
         </div>
 
         {/* Survey */}
-        <div className="rounded-2xl border-2 border-border bg-white p-3 shadow-theme">
-          <p className="text-[10px] leading-tight text-muted-foreground">
+        <div className="hero-card-3 rounded-2xl bg-white p-4 shadow-lg ring-1 ring-black/[0.04]">
+          <p className="text-[11px] leading-tight text-muted-foreground">
             Wie wahrscheinlich empfehlen Sie uns?
           </p>
           <div className="mt-2 flex items-baseline justify-center gap-1">
-            <span className="text-2xl font-bold text-primary">9</span>
+            <span className="text-3xl font-bold text-primary">9</span>
             <span className="text-sm text-muted-foreground">/ 10</span>
           </div>
-          <div className="mt-2 h-1.5 w-full rounded-full bg-muted">
+          <div className="mt-2 h-2 w-full rounded-full bg-muted">
             <div className="h-full w-[90%] rounded-full bg-primary" />
           </div>
         </div>
 
         {/* Reviews */}
-        <div className="flex items-center gap-2 rounded-xl border border-border bg-white p-4 shadow-theme">
-          <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-emerald-50">
+        <div className="hero-card-4 flex items-center gap-2.5 rounded-xl bg-white p-4 shadow-lg ring-1 ring-black/[0.04]">
+          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-emerald-50">
             <TrendingUp className="h-3.5 w-3.5 text-emerald-600" />
           </div>
           <div>

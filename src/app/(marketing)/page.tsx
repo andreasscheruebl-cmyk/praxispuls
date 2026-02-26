@@ -77,9 +77,7 @@ export default function HomePage() {
             </div>
 
             {/* Visual right */}
-            <div className="animate-hero-visual-in">
-              <HeroVisual />
-            </div>
+            <HeroVisual />
           </div>
         </div>
       </section>

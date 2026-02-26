@@ -56,14 +56,36 @@
   }
 }
 
-/* Hero entrance animations */
+/* Hero animations */
 @keyframes hero-text-in {
-  from { opacity: 0; transform: translateY(20px); }
-  to { opacity: 1; transform: translateY(0); }
+  from { opacity: 0; translate: 0 20px; }
+  to { opacity: 1; translate: 0 0; }
 }
-@keyframes hero-visual-in {
-  from { opacity: 0; transform: translateX(30px) scale(0.97); }
-  to { opacity: 1; transform: translateX(0) scale(1); }
+@keyframes hero-card-in {
+  from { opacity: 0; translate: 0 32px; scale: 0.94; }
+  to { opacity: 1; translate: 0 0; scale: 1; }
 }
-.animate-hero-text-in { animation: hero-text-in 0.6s ease-out both; }
-.animate-hero-visual-in { animation: hero-visual-in 0.7s ease-out 0.15s both; }
+@keyframes hero-float {
+  0%, 100% { translate: 0 0; }
+  50% { translate: 0 -8px; }
+}
+.animate-hero-text-in {
+  animation: hero-text-in 0.8s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+/* Staggered card entrance + subtle continuous float */
+.hero-card-1 {
+  animation: hero-card-in 0.7s cubic-bezier(0.16, 1, 0.3, 1) 0.2s both,
+             hero-float 6s ease-in-out 1.5s infinite;
+}
+.hero-card-2 {
+  animation: hero-card-in 0.7s cubic-bezier(0.16, 1, 0.3, 1) 0.35s both,
+             hero-float 7s ease-in-out 1.8s infinite;
+}
+.hero-card-3 {
+  animation: hero-card-in 0.7s cubic-bezier(0.16, 1, 0.3, 1) 0.5s both,
+             hero-float 5s ease-in-out 2.0s infinite;
+}
+.hero-card-4 {
+  animation: hero-card-in 0.7s cubic-bezier(0.16, 1, 0.3, 1) 0.65s both,
+             hero-float 8s ease-in-out 2.2s infinite;
+}
