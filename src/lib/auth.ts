@@ -25,7 +25,7 @@ export async function getUser() {
  * Get the current user without redirecting.
  * Returns null if not authenticated.
  */
-export async function getUserOptional() {
+async function getUserOptional() {
   const supabase = await createClient();
   const {
     data: { user },
