@@ -1,5 +1,32 @@
-import { Building2, BarChart3, Shield } from "lucide-react";
+import { Building2, BarChart3, ScrollText, LogIn, Shield } from "lucide-react";
 import Link from "next/link";
+
+const adminLinks = [
+  {
+    href: "/admin/practices",
+    icon: Building2,
+    title: "Praxen",
+    description: "Alle Praxen verwalten, Plans überschreiben.",
+  },
+  {
+    href: "/admin/stats",
+    icon: BarChart3,
+    title: "Statistiken",
+    description: "Plattform-Metriken, Plan-Verteilung, Trends.",
+  },
+  {
+    href: "/admin/audit",
+    icon: ScrollText,
+    title: "Audit-Log",
+    description: "Änderungen nachverfolgen, Before/After einsehen.",
+  },
+  {
+    href: "/admin/logins",
+    icon: LogIn,
+    title: "Login-History",
+    description: "Login-Events, IP-Adressen, Browser.",
+  },
+];
 
 export default function AdminPage() {
   return (
@@ -11,28 +38,18 @@ export default function AdminPage() {
         </p>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-3">
-        <Link
-          href="/admin/practices"
-          className="rounded-lg border bg-white p-6 shadow-sm hover:shadow-md transition-shadow"
-        >
-          <Building2 className="h-8 w-8 text-primary mb-3" />
-          <h2 className="font-semibold">Praxen</h2>
-          <p className="text-sm text-muted-foreground">
-            Alle Praxen verwalten, Plans überschreiben.
-          </p>
-        </Link>
-
-        <Link
-          href="/admin/stats"
-          className="rounded-lg border bg-white p-6 shadow-sm hover:shadow-md transition-shadow"
-        >
-          <BarChart3 className="h-8 w-8 text-primary mb-3" />
-          <h2 className="font-semibold">Statistiken</h2>
-          <p className="text-sm text-muted-foreground">
-            Plattform-Metriken, Audit-Logs, Login-Events.
-          </p>
-        </Link>
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {adminLinks.map((link) => (
+          <Link
+            key={link.href}
+            href={link.href}
+            className="rounded-lg border bg-white p-6 shadow-sm hover:shadow-md transition-shadow"
+          >
+            <link.icon className="h-8 w-8 text-primary mb-3" />
+            <h2 className="font-semibold">{link.title}</h2>
+            <p className="text-sm text-muted-foreground">{link.description}</p>
+          </Link>
+        ))}
 
         <div className="rounded-lg border bg-white p-6 shadow-sm opacity-60">
           <Shield className="h-8 w-8 text-muted-foreground mb-3" />

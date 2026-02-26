@@ -54,6 +54,9 @@ nul
 # Claude Code local settings (may contain permission-granted secrets)
 .claude/settings.local.json
 
+# Playwright MCP logs
+.playwright-mcp/
+
 # Personal notes
 todo.txt
 
