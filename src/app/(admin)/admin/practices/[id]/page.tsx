@@ -24,6 +24,10 @@ export default async function AdminPracticeDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
+  const uuidRe =
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  if (!uuidRe.test(id)) return notFound();
+
   const practice = await getPracticeForAdmin(id);
 
   if (!practice) return notFound();

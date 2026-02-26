@@ -3,6 +3,7 @@ import { requireAdminForApi } from "@/lib/auth";
 import { getPracticeForAdmin } from "@/lib/db/queries/admin";
 import { createServiceClient } from "@/lib/supabase/server";
 import { logAudit, getRequestMeta } from "@/lib/audit";
+import { validateUuid } from "../helpers";
 
 export async function POST(
   request: Request,
@@ -12,6 +13,9 @@ export async function POST(
   if (auth.error) return auth.error;
 
   const { id } = await params;
+  const uuidError = validateUuid(id);
+  if (uuidError) return uuidError;
+
   const practice = await getPracticeForAdmin(id);
   if (!practice) {
     return NextResponse.json(
@@ -38,13 +42,16 @@ export async function POST(
 
   if (linkError) {
     return NextResponse.json(
-      { error: "Reset-Link konnte nicht erstellt werden", code: "INTERNAL_ERROR" },
+      {
+        error: "Reset-Link konnte nicht erstellt werden",
+        code: "INTERNAL_ERROR",
+      },
       { status: 500 }
     );
   }
 
   const meta = getRequestMeta(request);
-  logAudit({
+  await logAudit({
     practiceId: id,
     action: "admin.password_reset_email",
     entity: "user",

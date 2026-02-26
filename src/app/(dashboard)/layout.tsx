@@ -79,32 +79,42 @@ export default async function DashboardLayout({
             </div>
           )}
 
-          <nav className="flex-1 space-y-1 px-3 py-4">
-            {navItems.map((item) => {
-              const Icon = iconMap[item.icon];
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-muted-foreground hover:bg-accent hover:text-foreground"
-                >
-                  <Icon className="h-4 w-4" />
-                  {item.label}
-                </Link>
-              );
-            })}
-          </nav>
-
-          {isAdmin && (
-            <div className="border-t px-3 py-2">
-              <Link
-                href="/admin"
-                className="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-muted-foreground hover:bg-accent hover:text-foreground"
-              >
-                <Shield className="h-4 w-4" />
-                Admin-Board
-              </Link>
+          {isSuspended ? (
+            <div className="flex-1 flex items-center justify-center px-3 py-4">
+              <p className="text-sm text-muted-foreground text-center">
+                Konto gesperrt
+              </p>
             </div>
+          ) : (
+            <>
+              <nav className="flex-1 space-y-1 px-3 py-4">
+                {navItems.map((item) => {
+                  const Icon = iconMap[item.icon];
+                  return (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      className="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-muted-foreground hover:bg-accent hover:text-foreground"
+                    >
+                      <Icon className="h-4 w-4" />
+                      {item.label}
+                    </Link>
+                  );
+                })}
+              </nav>
+
+              {isAdmin && (
+                <div className="border-t px-3 py-2">
+                  <Link
+                    href="/admin"
+                    className="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-muted-foreground hover:bg-accent hover:text-foreground"
+                  >
+                    <Shield className="h-4 w-4" />
+                    Admin-Board
+                  </Link>
+                </div>
+              )}
+            </>
           )}
 
           <div className="border-t p-4 space-y-2">

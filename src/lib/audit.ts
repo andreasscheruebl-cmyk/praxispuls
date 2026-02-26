@@ -13,11 +13,12 @@ type AuditParams = {
 };
 
 /**
- * Log an audit event. Fire-and-forget – never throws.
+ * Log an audit event. Can be awaited for critical operations.
+ * Never throws – errors are caught and logged.
  */
-export function logAudit(params: AuditParams): void {
-  db.insert(auditEvents)
-    .values({
+export async function logAudit(params: AuditParams): Promise<void> {
+  try {
+    await db.insert(auditEvents).values({
       practiceId: params.practiceId,
       action: params.action,
       entity: params.entity,
@@ -26,10 +27,10 @@ export function logAudit(params: AuditParams): void {
       after: params.after ?? null,
       ipAddress: params.ipAddress ?? null,
       userAgent: params.userAgent ?? null,
-    })
-    .catch((err) => {
-      console.error("Audit log failed:", err);
     });
+  } catch (err) {
+    console.error("Audit log failed:", err);
+  }
 }
 
 /**
