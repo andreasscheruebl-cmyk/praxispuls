@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { getNpsCategory, slugify, formatDateDE, getGoogleReviewUrl } from "../utils";
+import { getNpsCategory, slugify, formatDateDE } from "../utils";
 
 describe("getNpsCategory", () => {
   it("returns promoter for score 9", () => {
@@ -68,9 +68,3 @@ describe("formatDateDE", () => {
   });
 });
 
-describe("getGoogleReviewUrl", () => {
-  it("returns correct Google review URL", () => {
-    const url = getGoogleReviewUrl("ChIJ123abc");
-    expect(url).toBe("https://search.google.com/local/writereview?placeid=ChIJ123abc");
-  });
-});

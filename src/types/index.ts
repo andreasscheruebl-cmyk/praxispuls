@@ -38,7 +38,6 @@ export type SurveyTemplate = {
 // ============================================================
 export type DashboardOverview = {
   npsScore: number | null;
-  npsTrend: number | null; // change vs last period
   totalResponses: number;
   responsesThisWeek: number;
   googleReviewClicks: number;

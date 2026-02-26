@@ -1,5 +1,6 @@
 import { getLoginEvents, getAllPractices } from "@/lib/db/queries/admin";
 import { LoginFilters } from "@/components/admin/login-filters";
+import { formatDateTimeDE } from "@/lib/utils";
 import {
   Table,
   TableBody,
@@ -49,17 +50,6 @@ export default async function AdminLoginsPage({
     return `/admin/logins?${sp.toString()}`;
   }
 
-  const formatDate = (date: Date | null) => {
-    if (!date) return "—";
-    return new Intl.DateTimeFormat("de-DE", {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    }).format(new Date(date));
-  };
-
   const parseUserAgent = (ua: string | null) => {
     if (!ua) return "Unbekannt";
     if (ua.includes("Mobile")) return "Mobil";
@@ -105,7 +95,7 @@ export default async function AdminLoginsPage({
               result.events.map((event) => (
                 <TableRow key={event.id}>
                   <TableCell className="whitespace-nowrap text-sm">
-                    {formatDate(event.createdAt)}
+                    {formatDateTimeDE(event.createdAt)}
                   </TableCell>
                   <TableCell className="text-sm">
                     <div>

@@ -1,5 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { getAdminEmails } from "@/lib/auth";
 
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({
@@ -48,12 +49,7 @@ export async function updateSession(request: NextRequest) {
 
   // Admin routes: require ADMIN_EMAILS
   if (user && request.nextUrl.pathname.startsWith("/admin")) {
-    const adminEmails = (process.env.ADMIN_EMAILS || "")
-      .split(",")
-      .map((e) => e.trim().toLowerCase())
-      .filter(Boolean);
-
-    if (!user.email || !adminEmails.includes(user.email.toLowerCase())) {
+    if (!user.email || !getAdminEmails().includes(user.email.toLowerCase())) {
       const url = request.nextUrl.clone();
       url.pathname = "/dashboard";
       return NextResponse.redirect(url);

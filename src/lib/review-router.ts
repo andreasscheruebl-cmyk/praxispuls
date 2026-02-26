@@ -1,4 +1,5 @@
-import { getNpsCategory, getGoogleReviewUrl } from "./utils";
+import { getNpsCategory } from "./utils";
+import { getGoogleReviewLink } from "./google";
 
 export type RouteResult = {
   category: "promoter" | "passive" | "detractor";
@@ -27,7 +28,7 @@ export function routeByNps(
     return {
       category,
       routedTo: "google",
-      googleReviewUrl: getGoogleReviewUrl(googlePlaceId),
+      googleReviewUrl: getGoogleReviewLink(googlePlaceId),
       showGooglePrompt: true,
       alertRequired: false,
     };

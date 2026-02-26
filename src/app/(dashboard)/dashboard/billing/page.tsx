@@ -3,8 +3,7 @@
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CreditCard, Check, Zap, Crown, FileText, Download, MapPin } from "lucide-react";
-
-type PlanId = "free" | "starter" | "professional";
+import type { PlanId } from "@/types";
 
 const PLANS = [
   {
