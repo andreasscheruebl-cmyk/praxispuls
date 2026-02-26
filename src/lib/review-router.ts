@@ -1,7 +1,7 @@
 import { getNpsCategory } from "./utils";
 import { getGoogleReviewLink } from "./google";
 
-export type RouteResult = {
+type RouteResult = {
   category: "promoter" | "passive" | "detractor";
   routedTo: "google" | "internal" | null;
   googleReviewUrl: string | null;

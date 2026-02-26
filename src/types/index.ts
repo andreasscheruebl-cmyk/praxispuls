@@ -1,24 +1,12 @@
-// Re-export DB types
-export type {
-  Practice,
-  NewPractice,
-  Survey,
-  NewSurvey,
-  Response,
-  NewResponse,
-  Alert,
-  NewAlert,
-} from "@/lib/db/schema";
-
 // ============================================================
 // Survey Template Types
 // ============================================================
-export type SurveyTemplateId =
+type SurveyTemplateId =
   | "zahnarzt_standard"
   | "zahnarzt_kurz"
   | "zahnarzt_prophylaxe";
 
-export type SurveyQuestion = {
+type SurveyQuestion = {
   id: string;
   type: "nps" | "stars" | "freetext";
   label: string;
@@ -34,29 +22,11 @@ export type SurveyTemplate = {
 };
 
 // ============================================================
-// Dashboard Types
-// ============================================================
-export type DashboardOverview = {
-  npsScore: number | null;
-  totalResponses: number;
-  responsesThisWeek: number;
-  googleReviewClicks: number;
-  googleConversionRate: number | null;
-  unreadAlerts: number;
-  categoryScores: {
-    waitTime: number | null;
-    friendliness: number | null;
-    treatment: number | null;
-    facility: number | null;
-  };
-};
-
-// ============================================================
 // Plan Types
 // ============================================================
 export type PlanId = "free" | "starter" | "professional";
 
-export type PlanLimits = {
+type PlanLimits = {
   maxResponsesPerMonth: number;
   maxLocations: number;
   templates: SurveyTemplateId[];

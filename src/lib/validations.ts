@@ -82,11 +82,3 @@ export const alertNoteSchema = z.object({
   note: z.string().max(1000),
 });
 
-// ============================================================
-// TYPES
-// ============================================================
-export type LoginInput = z.infer<typeof loginSchema>;
-export type RegisterInput = z.infer<typeof registerSchema>;
-export type PracticeUpdateInput = z.infer<typeof practiceUpdateSchema>;
-export type SurveyResponseInput = z.infer<typeof surveyResponseSchema>;
-export type AlertNoteInput = z.infer<typeof alertNoteSchema>;

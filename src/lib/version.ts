@@ -1,4 +1,4 @@
-export interface BuildInfo {
+interface BuildInfo {
   version: string;
   hash: string;
   date: string;
@@ -22,11 +22,4 @@ export function getBuildInfo(): BuildInfo {
     branch,
     label: `${version}+${hash}`,
   };
-}
-
-/** Formatted display string: "v0.1.0 (abc1234 · 2026-02-10)" */
-export function getVersionString(): string {
-  const b = getBuildInfo();
-  const d = b.date.split("T")[0];
-  return `v${b.version} (${b.hash} · ${d})`;
 }
