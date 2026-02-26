@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { cache } from "react";
 import { notFound } from "next/navigation";
 import Image from "next/image";
 import { db } from "@/lib/db";
@@ -12,12 +13,17 @@ type Props = {
   params: Promise<{ slug: string }>;
 };
 
-export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const { slug } = await params;
-  const survey = await db.query.surveys.findFirst({
+// Deduplicate DB query between generateMetadata() and SurveyPage()
+const getSurveyBySlug = cache(async (slug: string) => {
+  return db.query.surveys.findFirst({
     where: and(eq(surveys.slug, slug), isNull(surveys.deletedAt)),
     with: { practice: true },
   });
+});
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { slug } = await params;
+  const survey = await getSurveyBySlug(slug);
 
   if (!survey) {
     return { title: "Umfrage nicht gefunden" };
@@ -32,11 +38,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function SurveyPage({ params }: Props) {
   const { slug } = await params;
-
-  const survey = await db.query.surveys.findFirst({
-    where: and(eq(surveys.slug, slug), isNull(surveys.deletedAt)),
-    with: { practice: true },
-  });
+  const survey = await getSurveyBySlug(slug);
 
   if (!survey || !survey.isActive || survey.practice.deletedAt) {
     notFound();

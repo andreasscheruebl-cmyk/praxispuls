@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { stripe } from "@/lib/stripe";
 import { db } from "@/lib/db";
 import { practices } from "@/lib/db/schema";
-import { eq } from "drizzle-orm";
+import { eq, inArray } from "drizzle-orm";
 import type Stripe from "stripe";
 import { logAudit } from "@/lib/audit";
 import { getPracticesForUser, getLocationCountForUser } from "@/lib/practice";
@@ -294,23 +294,27 @@ async function syncPlanToAllPractices(sourcePracticeId: string, plan: string) {
   // Get all practices for this owner
   const allPractices = await getPracticesForUser(sourcePractice.ownerUserId);
 
-  // Update siblings (skip the source practice, already updated)
-  for (const p of allPractices) {
-    if (p.id === sourcePracticeId) continue;
-    if (p.plan === plan) continue; // Already on the right plan
+  // Batch update siblings (skip source + already-correct plans)
+  const toUpdate = allPractices.filter(
+    (p) => p.id !== sourcePracticeId && p.plan !== plan
+  );
 
+  if (toUpdate.length > 0) {
     await db
       .update(practices)
       .set({ plan, updatedAt: new Date() })
-      .where(eq(practices.id, p.id));
+      .where(inArray(practices.id, toUpdate.map((p) => p.id)));
 
-    logAudit({
-      practiceId: p.id,
-      action: "plan.synced",
-      entity: "practice",
-      entityId: p.id,
-      before: { plan: p.plan },
-      after: { plan },
-    });
+    // Audit logs remain individual for traceability
+    for (const p of toUpdate) {
+      logAudit({
+        practiceId: p.id,
+        action: "plan.synced",
+        entity: "practice",
+        entityId: p.id,
+        before: { plan: p.plan },
+        after: { plan },
+      });
+    }
   }
 }

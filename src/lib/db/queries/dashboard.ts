@@ -10,62 +10,63 @@ export async function getDashboardOverview(practiceId: string) {
   const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
   const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
 
-  // Response counts
-  const [responseCounts] = await db
-    .select({
-      total: count(),
-      promoters: count(
-        sql`CASE WHEN ${responses.npsCategory} = 'promoter' THEN 1 END`
+  // Run all independent queries in parallel
+  const [
+    [responseCounts],
+    [weekCount],
+    [categoryAvgs],
+    [unreadAlerts],
+  ] = await Promise.all([
+    db
+      .select({
+        total: count(),
+        promoters: count(
+          sql`CASE WHEN ${responses.npsCategory} = 'promoter' THEN 1 END`
+        ),
+        detractors: count(
+          sql`CASE WHEN ${responses.npsCategory} = 'detractor' THEN 1 END`
+        ),
+        googleClicks: count(
+          sql`CASE WHEN ${responses.googleReviewClicked} = true THEN 1 END`
+        ),
+      })
+      .from(responses)
+      .where(
+        and(
+          eq(responses.practiceId, practiceId),
+          gte(responses.createdAt, thirtyDaysAgo)
+        )
       ),
-      detractors: count(
-        sql`CASE WHEN ${responses.npsCategory} = 'detractor' THEN 1 END`
+    db
+      .select({ count: count() })
+      .from(responses)
+      .where(
+        and(
+          eq(responses.practiceId, practiceId),
+          gte(responses.createdAt, sevenDaysAgo)
+        )
       ),
-      googleClicks: count(
-        sql`CASE WHEN ${responses.googleReviewClicked} = true THEN 1 END`
+    db
+      .select({
+        waitTime: avg(responses.ratingWaitTime),
+        friendliness: avg(responses.ratingFriendliness),
+        treatment: avg(responses.ratingTreatment),
+        facility: avg(responses.ratingFacility),
+      })
+      .from(responses)
+      .where(
+        and(
+          eq(responses.practiceId, practiceId),
+          gte(responses.createdAt, thirtyDaysAgo)
+        )
       ),
-    })
-    .from(responses)
-    .where(
-      and(
-        eq(responses.practiceId, practiceId),
-        gte(responses.createdAt, thirtyDaysAgo)
-      )
-    );
-
-  // Responses this week
-  const [weekCount] = await db
-    .select({ count: count() })
-    .from(responses)
-    .where(
-      and(
-        eq(responses.practiceId, practiceId),
-        gte(responses.createdAt, sevenDaysAgo)
-      )
-    );
-
-  // Category averages
-  const [categoryAvgs] = await db
-    .select({
-      waitTime: avg(responses.ratingWaitTime),
-      friendliness: avg(responses.ratingFriendliness),
-      treatment: avg(responses.ratingTreatment),
-      facility: avg(responses.ratingFacility),
-    })
-    .from(responses)
-    .where(
-      and(
-        eq(responses.practiceId, practiceId),
-        gte(responses.createdAt, thirtyDaysAgo)
-      )
-    );
-
-  // Unread alerts
-  const [unreadAlerts] = await db
-    .select({ count: count() })
-    .from(alerts)
-    .where(
-      and(eq(alerts.practiceId, practiceId), eq(alerts.isRead, false))
-    );
+    db
+      .select({ count: count() })
+      .from(alerts)
+      .where(
+        and(eq(alerts.practiceId, practiceId), eq(alerts.isRead, false))
+      ),
+  ]);
 
   // Calculate NPS
   const total = responseCounts?.total ?? 0;
