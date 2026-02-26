@@ -1,9 +1,9 @@
 import { db } from "@/lib/db";
-import { practices } from "@/lib/db/schema";
+import { practices, responses, auditEvents, loginEvents } from "@/lib/db/schema";
 import type { Practice } from "@/lib/db/schema";
 import type { PlanId } from "@/types";
 import { getEffectivePlan } from "@/lib/plans";
-import { eq, isNull, isNotNull, ilike, or, and, count, sql, desc } from "drizzle-orm";
+import { eq, isNull, isNotNull, ilike, or, and, count, sql, desc, gte, lte } from "drizzle-orm";
 
 /**
  * Get a single practice by ID (admin use – no ownership check).
@@ -155,4 +155,174 @@ export async function getPlatformStats() {
     .where(isNull(practices.deletedAt));
 
   return result ?? { totalPractices: 0, freePlan: 0, starterPlan: 0, professionalPlan: 0, withOverride: 0 };
+}
+
+/**
+ * Extended platform stats: responses (30d), Google connection rate, registrations trend.
+ */
+export async function getExtendedPlatformStats() {
+  const thirtyDaysAgo = new Date();
+  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+  const [responsesResult] = await db
+    .select({ total: count() })
+    .from(responses)
+    .where(gte(responses.createdAt, thirtyDaysAgo));
+
+  const allPractices = await db.query.practices.findMany({
+    where: isNull(practices.deletedAt),
+  });
+
+  const withGoogle = allPractices.filter((p) => p.googlePlaceId).length;
+  const googleRate = allPractices.length > 0
+    ? Math.round((withGoogle / allPractices.length) * 100)
+    : 0;
+
+  // Registrations per day (last 30 days)
+  const registrations = await db
+    .select({
+      date: sql<string>`to_char(${practices.createdAt}, 'YYYY-MM-DD')`,
+      count: count(),
+    })
+    .from(practices)
+    .where(and(
+      isNull(practices.deletedAt),
+      gte(practices.createdAt, thirtyDaysAgo),
+    ))
+    .groupBy(sql`to_char(${practices.createdAt}, 'YYYY-MM-DD')`)
+    .orderBy(sql`to_char(${practices.createdAt}, 'YYYY-MM-DD')`);
+
+  return {
+    responses30d: responsesResult?.total ?? 0,
+    googleRate,
+    withGoogle,
+    totalPractices: allPractices.length,
+    registrations,
+  };
+}
+
+// ============================================================
+// AUDIT EVENTS
+// ============================================================
+
+export interface AuditFilter {
+  practiceId?: string;
+  action?: string;
+  from?: string; // ISO date
+  to?: string;   // ISO date
+  page?: number;
+  pageSize?: number;
+}
+
+/**
+ * Get audit events with filtering and pagination.
+ */
+export async function getAuditEvents(filter: AuditFilter) {
+  const { practiceId, action, from, to, page = 1, pageSize = 20 } = filter;
+
+  const conditions = [];
+
+  if (practiceId) {
+    conditions.push(eq(auditEvents.practiceId, practiceId));
+  }
+  if (action) {
+    conditions.push(eq(auditEvents.action, action));
+  }
+  if (from) {
+    conditions.push(gte(auditEvents.createdAt, new Date(from)));
+  }
+  if (to) {
+    const toDate = new Date(to);
+    toDate.setHours(23, 59, 59, 999);
+    conditions.push(lte(auditEvents.createdAt, toDate));
+  }
+
+  const where = conditions.length > 0 ? and(...conditions) : undefined;
+
+  const [totalResult] = await db
+    .select({ total: count() })
+    .from(auditEvents)
+    .where(where);
+
+  const total = totalResult?.total ?? 0;
+  const offset = (page - 1) * pageSize;
+
+  const events = await db.query.auditEvents.findMany({
+    where,
+    orderBy: [desc(auditEvents.createdAt)],
+    limit: pageSize,
+    offset,
+    with: {
+      practice: { columns: { name: true, email: true } },
+    },
+  });
+
+  return { events, total, page, pageSize };
+}
+
+/**
+ * Get distinct audit action types (for filter dropdown).
+ */
+export async function getAuditActionTypes() {
+  const result = await db
+    .selectDistinct({ action: auditEvents.action })
+    .from(auditEvents)
+    .orderBy(auditEvents.action);
+
+  return result.map((r) => r.action);
+}
+
+// ============================================================
+// LOGIN EVENTS
+// ============================================================
+
+export interface LoginFilter {
+  practiceId?: string;
+  from?: string;
+  to?: string;
+  page?: number;
+  pageSize?: number;
+}
+
+/**
+ * Get login events with filtering and pagination.
+ */
+export async function getLoginEvents(filter: LoginFilter) {
+  const { practiceId, from, to, page = 1, pageSize = 20 } = filter;
+
+  const conditions = [];
+
+  if (practiceId) {
+    conditions.push(eq(loginEvents.practiceId, practiceId));
+  }
+  if (from) {
+    conditions.push(gte(loginEvents.createdAt, new Date(from)));
+  }
+  if (to) {
+    const toDate = new Date(to);
+    toDate.setHours(23, 59, 59, 999);
+    conditions.push(lte(loginEvents.createdAt, toDate));
+  }
+
+  const where = conditions.length > 0 ? and(...conditions) : undefined;
+
+  const [totalResult] = await db
+    .select({ total: count() })
+    .from(loginEvents)
+    .where(where);
+
+  const total = totalResult?.total ?? 0;
+  const offset = (page - 1) * pageSize;
+
+  const events = await db.query.loginEvents.findMany({
+    where,
+    orderBy: [desc(loginEvents.createdAt)],
+    limit: pageSize,
+    offset,
+    with: {
+      practice: { columns: { name: true, email: true } },
+    },
+  });
+
+  return { events, total, page, pageSize };
 }

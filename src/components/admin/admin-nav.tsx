@@ -3,12 +3,14 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { LayoutDashboard, Building2, BarChart3 } from "lucide-react";
+import { LayoutDashboard, Building2, BarChart3, ScrollText, LogIn } from "lucide-react";
 
 const navItems = [
   { href: "/admin", label: "Übersicht", icon: LayoutDashboard, exact: true },
   { href: "/admin/practices", label: "Praxen", icon: Building2, exact: false },
-  { href: "/admin/stats", label: "Statistiken", icon: BarChart3, exact: false },
+  { href: "/admin/stats", label: "Statistiken", icon: BarChart3, exact: true },
+  { href: "/admin/audit", label: "Audit-Log", icon: ScrollText, exact: false },
+  { href: "/admin/logins", label: "Logins", icon: LogIn, exact: false },
 ];
 
 export function AdminNav() {
