@@ -1,12 +1,15 @@
 import Link from "next/link";
 import { getUser } from "@/lib/auth";
-import { getActivePractice } from "@/actions/practice";
+import { getActivePractice, getPractices } from "@/actions/practice";
 import { LogoutButton } from "@/components/dashboard/logout-button";
 import { MobileNav } from "@/components/dashboard/mobile-nav";
 import { MobileBottomTabs } from "@/components/dashboard/mobile-bottom-tabs";
+import { PracticeSwitcher } from "@/components/dashboard/practice-switcher";
 import { BuildBadge } from "@/components/shared/build-badge";
 import { ThemeProvider } from "@/components/theme-provider";
 import { type ThemeId } from "@/lib/themes";
+import { getEffectivePlan } from "@/lib/plans";
+import { PLAN_LIMITS } from "@/types";
 import {
   LayoutDashboard,
   MessageSquare,
@@ -37,9 +40,14 @@ export default async function DashboardLayout({
   // This will redirect to /login if not authenticated
   const user = await getUser();
 
-  // Load theme from active practice
-  const practice = await getActivePractice();
+  // Load practices + active practice for switcher
+  const [allPractices, practice] = await Promise.all([
+    getPractices(),
+    getActivePractice(),
+  ]);
   const themeId = (practice?.theme as ThemeId) || "vertrauen";
+  const effectivePlan = practice ? getEffectivePlan(practice) : "free";
+  const maxLocations = PLAN_LIMITS[effectivePlan].maxLocations;
 
   return (
     <ThemeProvider themeId={themeId}>
@@ -52,6 +60,21 @@ export default async function DashboardLayout({
               PraxisPuls
             </Link>
           </div>
+
+          {/* Practice switcher */}
+          {allPractices.length > 0 && (
+            <div className="border-b px-3 py-3">
+              <PracticeSwitcher
+                practices={allPractices.map((p) => ({
+                  id: p.id,
+                  name: p.name,
+                  postalCode: p.postalCode,
+                }))}
+                activePracticeId={practice?.id || allPractices[0]!.id}
+                maxLocations={maxLocations}
+              />
+            </div>
+          )}
 
           <nav className="flex-1 space-y-1 px-3 py-4">
             {navItems.map((item) => {
@@ -87,19 +110,35 @@ export default async function DashboardLayout({
       {/* Main content */}
       <div className="flex flex-1 flex-col">
         {/* Mobile header */}
-        <header className="flex h-16 items-center justify-between border-b bg-white px-4 md:hidden">
-          <Link href="/dashboard" className="text-lg font-bold text-primary">
-            PraxisPuls
-          </Link>
-          <div className="flex items-center gap-2">
-            <Link href="/dashboard/profile" className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-xs font-medium text-primary">
-              {user.email?.charAt(0).toUpperCase()}
+        <header className="border-b bg-white md:hidden">
+          <div className="flex h-16 items-center justify-between px-4">
+            <Link href="/dashboard" className="text-lg font-bold text-primary">
+              PraxisPuls
             </Link>
-            <LogoutButton variant="icon" />
-            {themeId !== "vertrauen" && (
-              <MobileNav email={user.email || ""} navItems={navItems.map(i => ({ href: i.href, label: i.label }))} />
-            )}
+            <div className="flex items-center gap-2">
+              <Link href="/dashboard/profile" className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-xs font-medium text-primary">
+                {user.email?.charAt(0).toUpperCase()}
+              </Link>
+              <LogoutButton variant="icon" />
+              {themeId !== "vertrauen" && (
+                <MobileNav email={user.email || ""} navItems={navItems.map(i => ({ href: i.href, label: i.label }))} />
+              )}
+            </div>
           </div>
+          {/* Mobile practice switcher */}
+          {allPractices.length > 1 && (
+            <div className="border-t px-4 py-2">
+              <PracticeSwitcher
+                practices={allPractices.map((p) => ({
+                  id: p.id,
+                  name: p.name,
+                  postalCode: p.postalCode,
+                }))}
+                activePracticeId={practice?.id || allPractices[0]!.id}
+                maxLocations={maxLocations}
+              />
+            </div>
+          )}
         </header>
 
         {/* Page content */}
