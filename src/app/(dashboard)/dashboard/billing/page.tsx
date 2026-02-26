@@ -185,7 +185,7 @@ export default function BillingPage() {
             <div className="h-2 w-24 rounded-full bg-muted">
               <div
                 className={`h-2 rounded-full ${locationCount >= maxLocations ? "bg-orange-500" : "bg-primary"}`}
-                style={{ width: `${Math.min((locationCount / maxLocations) * 100, 100)}%` }}
+                style={{ width: `${maxLocations > 0 ? Math.min((locationCount / maxLocations) * 100, 100) : 0}%` }}
               />
             </div>
             <span className="text-sm font-medium">{locationCount}/{maxLocations}</span>

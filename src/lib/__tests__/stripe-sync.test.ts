@@ -29,12 +29,16 @@ vi.mock("@/lib/db", () => ({
 mockFrom.mockReturnValue({ where: mockWhere });
 
 import { getLocationCountForUser } from "../practice";
+import { getEffectivePlan } from "../plans";
 
 beforeEach(() => {
   vi.clearAllMocks();
   mockFrom.mockReturnValue({ where: mockWhere });
 });
 
+// ============================================================
+// getLocationCountForUser — database helper
+// ============================================================
 describe("getLocationCountForUser", () => {
   it("returns 0 when user has no practices", async () => {
     mockWhere.mockResolvedValue([{ value: 0 }]);
@@ -52,7 +56,7 @@ describe("getLocationCountForUser", () => {
     expect(count).toBe(3);
   });
 
-  it("returns 0 when db returns null result", async () => {
+  it("returns 0 when db returns empty result", async () => {
     mockWhere.mockResolvedValue([]);
 
     const count = await getLocationCountForUser("user-empty");
@@ -61,90 +65,107 @@ describe("getLocationCountForUser", () => {
   });
 });
 
-describe("location limit enforcement", () => {
-  const plans: PlanId[] = ["free", "starter", "professional"];
-
-  it.each(plans)("plan '%s' has a defined maxLocations", (plan) => {
-    expect(PLAN_LIMITS[plan].maxLocations).toBeGreaterThan(0);
+// ============================================================
+// getEffectivePlan — plan resolution with overrides
+// ============================================================
+describe("getEffectivePlan for limit checks", () => {
+  it("returns Stripe plan when no override is set", () => {
+    const practice = { plan: "starter", planOverride: null, overrideExpiresAt: null };
+    expect(getEffectivePlan(practice)).toBe("starter");
   });
 
-  it("free plan blocks at 1 location", () => {
-    const max = PLAN_LIMITS.free.maxLocations;
-    const currentCount = 1;
-    expect(currentCount >= max).toBe(true);
-  });
-
-  it("free plan allows first location", () => {
-    const max = PLAN_LIMITS.free.maxLocations;
-    const currentCount = 0;
-    expect(currentCount >= max).toBe(false);
-  });
-
-  it("starter plan allows up to 3 locations", () => {
-    const max = PLAN_LIMITS.starter.maxLocations;
-    expect(0 < max).toBe(true);
-    expect(1 < max).toBe(true);
-    expect(2 < max).toBe(true);
-    expect(3 >= max).toBe(true);
-  });
-
-  it("professional plan allows up to 10 locations", () => {
-    const max = PLAN_LIMITS.professional.maxLocations;
-    expect(9 < max).toBe(true);
-    expect(10 >= max).toBe(true);
-  });
-});
-
-describe("downgrade detection", () => {
-  it("detects downgrade from professional to free with excess locations", () => {
-    const locationCount = 5;
-    const newPlan: PlanId = "free";
-    const maxLocations = PLAN_LIMITS[newPlan].maxLocations;
-
-    expect(locationCount > maxLocations).toBe(true);
-  });
-
-  it("detects downgrade from professional to starter with excess locations", () => {
-    const locationCount = 5;
-    const newPlan: PlanId = "starter";
-    const maxLocations = PLAN_LIMITS[newPlan].maxLocations;
-
-    expect(locationCount > maxLocations).toBe(true);
-  });
-
-  it("no warning when location count is within limit", () => {
-    const locationCount = 2;
-    const newPlan: PlanId = "starter";
-    const maxLocations = PLAN_LIMITS[newPlan].maxLocations;
-
-    expect(locationCount > maxLocations).toBe(false);
-  });
-
-  it("no warning when upgrading", () => {
-    const locationCount = 3;
-    const newPlan: PlanId = "professional";
-    const maxLocations = PLAN_LIMITS[newPlan].maxLocations;
-
-    expect(locationCount > maxLocations).toBe(false);
-  });
-});
-
-describe("plan sync logic", () => {
-  it("all plans are valid PlanIds", () => {
-    const validPlans: PlanId[] = ["free", "starter", "professional"];
-    for (const plan of validPlans) {
-      expect(PLAN_LIMITS[plan]).toBeDefined();
-    }
-  });
-
-  it("subscription metadata should include userId and practiceId", () => {
-    // Verify the metadata shape expected by webhook handler
-    const metadata = {
-      practiceId: "practice-123",
-      userId: "user-456",
+  it("returns override when active", () => {
+    const practice = {
+      plan: "free",
+      planOverride: "professional",
+      overrideExpiresAt: new Date(Date.now() + 86400000), // tomorrow
     };
+    expect(getEffectivePlan(practice)).toBe("professional");
+  });
 
-    expect(metadata.practiceId).toBeDefined();
-    expect(metadata.userId).toBeDefined();
+  it("falls back to Stripe plan when override is expired", () => {
+    const practice = {
+      plan: "starter",
+      planOverride: "professional",
+      overrideExpiresAt: new Date(Date.now() - 86400000), // yesterday
+    };
+    expect(getEffectivePlan(practice)).toBe("starter");
+  });
+
+  it("returns 'free' when both plan and override are null", () => {
+    const practice = { plan: null, planOverride: null, overrideExpiresAt: null };
+    expect(getEffectivePlan(practice)).toBe("free");
+  });
+});
+
+// ============================================================
+// Location limit enforcement logic
+// ============================================================
+describe("location limit enforcement", () => {
+  /**
+   * Mirrors the check in api/practice/route.ts POST and actions/practice.ts:
+   *   if (currentCount >= maxLocations) → block
+   */
+  function isAtLimit(currentCount: number, plan: PlanId): boolean {
+    return currentCount >= PLAN_LIMITS[plan].maxLocations;
+  }
+
+  it("free plan: allows first location (0 -> 1)", () => {
+    expect(isAtLimit(0, "free")).toBe(false);
+  });
+
+  it("free plan: blocks second location (1 -> 2)", () => {
+    expect(isAtLimit(1, "free")).toBe(true);
+  });
+
+  it("starter plan: allows up to 3 locations", () => {
+    expect(isAtLimit(0, "starter")).toBe(false);
+    expect(isAtLimit(2, "starter")).toBe(false);
+    expect(isAtLimit(3, "starter")).toBe(true);
+  });
+
+  it("professional plan: allows up to 10 locations", () => {
+    expect(isAtLimit(9, "professional")).toBe(false);
+    expect(isAtLimit(10, "professional")).toBe(true);
+  });
+
+  it("override changes effective limit", () => {
+    // User has free Stripe plan but professional override
+    const practice = {
+      plan: "free",
+      planOverride: "professional",
+      overrideExpiresAt: new Date(Date.now() + 86400000),
+    };
+    const effectivePlan = getEffectivePlan(practice);
+    expect(isAtLimit(5, effectivePlan)).toBe(false); // professional allows 10
+    expect(isAtLimit(10, effectivePlan)).toBe(true);
+  });
+});
+
+// ============================================================
+// Downgrade detection logic
+// ============================================================
+describe("downgrade detection", () => {
+  /**
+   * Mirrors the check in webhooks/stripe syncPlanToAllPractices:
+   *   if (locationCount > maxLocations) → warn
+   */
+  function needsDowngradeWarning(locationCount: number, newPlan: PlanId): boolean {
+    return locationCount > PLAN_LIMITS[newPlan].maxLocations;
+  }
+
+  it("warns when locations exceed new plan limit", () => {
+    expect(needsDowngradeWarning(5, "free")).toBe(true);   // 5 > 1
+    expect(needsDowngradeWarning(5, "starter")).toBe(true); // 5 > 3
+  });
+
+  it("no warning when locations are within new plan limit", () => {
+    expect(needsDowngradeWarning(2, "starter")).toBe(false);      // 2 <= 3
+    expect(needsDowngradeWarning(3, "professional")).toBe(false);  // 3 <= 10
+  });
+
+  it("no warning when exactly at limit", () => {
+    expect(needsDowngradeWarning(1, "free")).toBe(false);    // 1 = 1, not >
+    expect(needsDowngradeWarning(3, "starter")).toBe(false); // 3 = 3, not >
   });
 });

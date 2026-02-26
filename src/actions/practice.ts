@@ -14,8 +14,8 @@ import {
   getPracticesForUser,
   getActivePracticeForUser,
 } from "@/lib/practice";
+import { getEffectivePlan } from "@/lib/plans";
 import { PLAN_LIMITS } from "@/types";
-import type { PlanId } from "@/types";
 
 const ACTIVE_PRACTICE_COOKIE = "active_practice_id";
 
@@ -69,10 +69,12 @@ export async function createPractice(data: {
 }) {
   const user = await getUser();
 
-  // Check location limit against user's plan
+  // Check location limit against user's effective plan
   const existingPractices = await getPracticesForUser(user.id);
   const currentCount = existingPractices.length;
-  const userPlan = (existingPractices[0]?.plan ?? "free") as PlanId;
+  const userPlan = existingPractices[0]
+    ? getEffectivePlan(existingPractices[0])
+    : "free";
   const maxLocations = PLAN_LIMITS[userPlan].maxLocations;
 
   if (currentCount >= maxLocations) {
@@ -99,6 +101,7 @@ export async function createPractice(data: {
       googleReviewUrl,
       alertEmail: user.email!,
       surveyTemplate: data.surveyTemplate || "zahnarzt_standard",
+      plan: userPlan, // Inherit effective plan from user
     })
     .returning();
 

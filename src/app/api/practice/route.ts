@@ -9,8 +9,8 @@ import { slugify } from "@/lib/utils";
 import { SURVEY_TEMPLATES } from "@/lib/survey-templates";
 import { logAudit, getRequestMeta } from "@/lib/audit";
 import { getActivePracticeForUser, getLocationCountForUser } from "@/lib/practice";
+import { getEffectivePlan } from "@/lib/plans";
 import { PLAN_LIMITS } from "@/types";
-import type { PlanId } from "@/types";
 
 export async function GET() {
   try {
@@ -23,8 +23,8 @@ export async function GET() {
     if (!practice) return NextResponse.json({ error: "Praxis nicht gefunden" }, { status: 404 });
 
     const locationCount = await getLocationCountForUser(user.id);
-    const plan = (practice.plan ?? "free") as PlanId;
-    const maxLocations = PLAN_LIMITS[plan].maxLocations;
+    const effectivePlan = getEffectivePlan(practice);
+    const maxLocations = PLAN_LIMITS[effectivePlan].maxLocations;
 
     return NextResponse.json({ ...practice, locationCount, maxLocations });
   } catch {
@@ -45,36 +45,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Name fehlt" }, { status: 400 });
     }
 
-    // Check location limit against user's plan
-    const userPractices = await db.query.practices.findMany({
-      where: and(eq(practices.ownerUserId, user.id), isNull(practices.deletedAt)),
-      columns: { id: true, plan: true },
-    });
-    const currentCount = userPractices.length;
-    const userPlan = (userPractices[0]?.plan ?? "free") as PlanId;
-    const maxLocations = PLAN_LIMITS[userPlan].maxLocations;
-
-    if (currentCount >= maxLocations) {
-      return NextResponse.json(
-        {
-          error: `Ihr aktueller Plan (${userPlan}) erlaubt maximal ${maxLocations} Standort${maxLocations === 1 ? "" : "e"}. Bitte upgraden Sie Ihren Plan, um weitere Standorte hinzuzufügen.`,
-          code: "LOCATION_LIMIT_REACHED",
-        },
-        { status: 403 }
-      );
-    }
-
-    // Generate unique slug (append random suffix on collision)
-    let slug = slugify(name);
-    const existingSlug = await db.query.practices.findFirst({
-      where: eq(practices.slug, slug),
-      columns: { id: true },
-    });
-    if (existingSlug) {
-      slug = `${slug}-${Math.random().toString(36).slice(2, 6)}`;
-    }
-
-    // Verify Google Place ID is real before saving
+    // Validate external data before transaction
     let googleReviewUrl: string | null = null;
     if (googlePlaceId) {
       const placeDetails = await getPlaceDetails(googlePlaceId);
@@ -98,32 +69,74 @@ export async function POST(request: Request) {
         );
       }
     }
+
     const templateId = surveyTemplate || "zahnarzt_standard";
     const template = SURVEY_TEMPLATES.find(t => t.id === templateId) || SURVEY_TEMPLATES[0]!;
 
-    const [practice] = await db.insert(practices).values({
-      ownerUserId: user.id,
-      name: name.trim(),
-      slug,
-      email: user.email!,
-      postalCode,
-      googlePlaceId,
-      googleReviewUrl,
-      logoUrl: logoUrl || null,
-      alertEmail: user.email!,
-      surveyTemplate: templateId,
-    }).returning();
+    // Transaction: check limit + insert atomically to prevent race conditions
+    const result = await db.transaction(async (tx) => {
+      // Check location limit against user's effective plan
+      const userPractices = await tx.query.practices.findMany({
+        where: and(eq(practices.ownerUserId, user.id), isNull(practices.deletedAt)),
+        columns: { id: true, plan: true, planOverride: true, overrideExpiresAt: true },
+      });
+      const currentCount = userPractices.length;
+      const userPlan = userPractices[0]
+        ? getEffectivePlan(userPractices[0])
+        : "free";
+      const maxLocations = PLAN_LIMITS[userPlan].maxLocations;
 
-    const surveySlug = `${slug}-umfrage`;
-    await db.insert(surveys).values({
-      practiceId: practice!.id,
-      title: "Patientenbefragung",
-      slug: surveySlug,
-      questions: template.questions,
-      isActive: true,
+      if (currentCount >= maxLocations) {
+        return {
+          error: `Ihr aktueller Plan (${userPlan}) erlaubt maximal ${maxLocations} Standort${maxLocations === 1 ? "" : "e"}. Bitte upgraden Sie Ihren Plan, um weitere Standorte hinzuzufügen.`,
+          code: "LOCATION_LIMIT_REACHED" as const,
+        };
+      }
+
+      // Generate unique slug
+      let slug = slugify(name);
+      const existingSlug = await tx.query.practices.findFirst({
+        where: eq(practices.slug, slug),
+        columns: { id: true },
+      });
+      if (existingSlug) {
+        slug = `${slug}-${Math.random().toString(36).slice(2, 6)}`;
+      }
+
+      const [practice] = await tx.insert(practices).values({
+        ownerUserId: user.id,
+        name: name.trim(),
+        slug,
+        email: user.email!,
+        postalCode,
+        googlePlaceId,
+        googleReviewUrl,
+        logoUrl: logoUrl || null,
+        alertEmail: user.email!,
+        surveyTemplate: templateId,
+        plan: userPlan, // Inherit effective plan from user
+      }).returning();
+
+      const surveySlug = `${slug}-umfrage`;
+      await tx.insert(surveys).values({
+        practiceId: practice!.id,
+        title: "Patientenbefragung",
+        slug: surveySlug,
+        questions: template.questions,
+        isActive: true,
+      });
+
+      return { practice };
     });
 
-    return NextResponse.json(practice, { status: 201 });
+    if ("error" in result) {
+      return NextResponse.json(
+        { error: result.error, code: result.code },
+        { status: 403 }
+      );
+    }
+
+    return NextResponse.json(result.practice, { status: 201 });
   } catch (err) {
     console.error("Create practice error:", err);
     return NextResponse.json({ error: "Fehler beim Erstellen" }, { status: 500 });
