@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { CreditCard, Check, Zap, Crown, FileText, Download } from "lucide-react";
+import { CreditCard, Check, Zap, Crown, FileText, Download, MapPin } from "lucide-react";
 
 type PlanId = "free" | "starter" | "professional";
 
@@ -12,7 +12,9 @@ const PLANS = [
     name: "Free",
     price: "0 €",
     period: "",
+    maxLocations: 1,
     features: [
+      "1 Standort",
       "30 Antworten / Monat",
       "1 Umfrage-Template",
       "Google Review Routing",
@@ -31,7 +33,9 @@ const PLANS = [
     price: "49 €",
     period: "/ Monat",
     popular: true,
+    maxLocations: 3,
     features: [
+      "Bis zu 3 Standorte",
       "200 Antworten / Monat",
       "Alle 3 Templates",
       "Google Review Routing",
@@ -48,7 +52,9 @@ const PLANS = [
     name: "Professional",
     price: "99 €",
     period: "/ Monat",
+    maxLocations: 10,
     features: [
+      "Bis zu 10 Standorte",
       "Unbegrenzte Antworten",
       "Alle 3 Templates",
       "Google Review Routing",
@@ -65,6 +71,8 @@ const PLANS = [
 
 export default function BillingPage() {
   const [currentPlan, setCurrentPlan] = useState<PlanId>("free");
+  const [locationCount, setLocationCount] = useState(0);
+  const [maxLocations, setMaxLocations] = useState(1);
   const [hasStripeCustomer, setHasStripeCustomer] = useState(false);
   const [loading, setLoading] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -84,6 +92,8 @@ export default function BillingPage() {
       .then((res) => res.json())
       .then((data) => {
         if (data.plan) setCurrentPlan(data.plan as PlanId);
+        if (data.locationCount != null) setLocationCount(data.locationCount);
+        if (data.maxLocations != null) setMaxLocations(data.maxLocations);
         if (data.stripeCustomerId) {
           setHasStripeCustomer(true);
           // Load invoices
@@ -158,6 +168,41 @@ export default function BillingPage() {
       {error && (
         <div className="rounded-md border border-red-200 bg-red-50 p-4 text-sm text-red-700">
           {error}
+        </div>
+      )}
+
+      {/* Location usage */}
+      <Card>
+        <CardContent className="flex items-center gap-4 py-6">
+          <MapPin className="h-8 w-8 text-primary" />
+          <div className="flex-1">
+            <h3 className="font-semibold">Standorte</h3>
+            <p className="text-sm text-muted-foreground">
+              {locationCount} von {maxLocations} Standort{maxLocations === 1 ? "" : "en"} genutzt
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="h-2 w-24 rounded-full bg-muted">
+              <div
+                className={`h-2 rounded-full ${locationCount >= maxLocations ? "bg-orange-500" : "bg-primary"}`}
+                style={{ width: `${maxLocations > 0 ? Math.min((locationCount / maxLocations) * 100, 100) : 0}%` }}
+              />
+            </div>
+            <span className="text-sm font-medium">{locationCount}/{maxLocations}</span>
+          </div>
+        </CardContent>
+      </Card>
+
+      {locationCount >= maxLocations && currentPlan !== "professional" && (
+        <div className="rounded-md border border-orange-200 bg-orange-50 p-4 text-sm text-orange-800">
+          Sie haben das Standort-Limit Ihres aktuellen Plans erreicht.{" "}
+          <button
+            onClick={() => handleCheckout(currentPlan === "free" ? "starter" : "professional")}
+            className="font-semibold underline hover:no-underline"
+          >
+            Jetzt upgraden
+          </button>
+          , um weitere Standorte hinzuzufügen.
         </div>
       )}
 

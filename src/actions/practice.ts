@@ -14,6 +14,8 @@ import {
   getPracticesForUser,
   getActivePracticeForUser,
 } from "@/lib/practice";
+import { getEffectivePlan } from "@/lib/plans";
+import { PLAN_LIMITS } from "@/types";
 
 const ACTIVE_PRACTICE_COOKIE = "active_practice_id";
 
@@ -66,6 +68,21 @@ export async function createPractice(data: {
   surveyTemplate?: string;
 }) {
   const user = await getUser();
+
+  // Check location limit against user's effective plan
+  const existingPractices = await getPracticesForUser(user.id);
+  const currentCount = existingPractices.length;
+  const userPlan = existingPractices[0]
+    ? getEffectivePlan(existingPractices[0])
+    : "free";
+  const maxLocations = PLAN_LIMITS[userPlan].maxLocations;
+
+  if (currentCount >= maxLocations) {
+    throw new Error(
+      `Standort-Limit erreicht: Ihr Plan (${userPlan}) erlaubt maximal ${maxLocations} Standort${maxLocations === 1 ? "" : "e"}.`
+    );
+  }
+
   const slug = slugify(data.name);
 
   const googleReviewUrl = data.googlePlaceId
@@ -84,6 +101,7 @@ export async function createPractice(data: {
       googleReviewUrl,
       alertEmail: user.email!,
       surveyTemplate: data.surveyTemplate || "zahnarzt_standard",
+      plan: userPlan, // Inherit effective plan from user
     })
     .returning();
 
