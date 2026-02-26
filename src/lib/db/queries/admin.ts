@@ -1,6 +1,9 @@
 import { db } from "@/lib/db";
 import { practices } from "@/lib/db/schema";
-import { eq, isNull, count, sql } from "drizzle-orm";
+import type { Practice } from "@/lib/db/schema";
+import type { PlanId } from "@/types";
+import { getEffectivePlan } from "@/lib/plans";
+import { eq, isNull, isNotNull, ilike, or, and, count, sql, desc } from "drizzle-orm";
 
 /**
  * Get a single practice by ID (admin use – no ownership check).
@@ -52,6 +55,88 @@ export async function removePlanOverride(practiceId: string) {
       updatedAt: new Date(),
     })
     .where(eq(practices.id, practiceId));
+}
+
+/**
+ * Filter params for practices list.
+ */
+export interface PracticesFilter {
+  search?: string;
+  plan?: PlanId;
+  hasGoogle?: boolean;
+  hasOverride?: boolean;
+  page?: number;
+  pageSize?: number;
+}
+
+/**
+ * Get practices with search, filter, and pagination.
+ * Plan filter is applied in-app since getEffectivePlan() is app logic.
+ */
+export async function getPracticesFiltered(filter: PracticesFilter) {
+  const { search, plan, hasGoogle, hasOverride, page = 1, pageSize = 20 } = filter;
+
+  const conditions = [isNull(practices.deletedAt)];
+
+  if (search) {
+    const pattern = `%${search}%`;
+    conditions.push(
+      or(
+        ilike(practices.name, pattern),
+        ilike(practices.email, pattern)
+      )!
+    );
+  }
+
+  if (hasGoogle === true) {
+    conditions.push(isNotNull(practices.googlePlaceId));
+  } else if (hasGoogle === false) {
+    conditions.push(isNull(practices.googlePlaceId));
+  }
+
+  if (hasOverride === true) {
+    conditions.push(isNotNull(practices.planOverride));
+  } else if (hasOverride === false) {
+    conditions.push(isNull(practices.planOverride));
+  }
+
+  const where = and(...conditions);
+
+  // If plan filter is set, we need all results to filter in-app
+  if (plan) {
+    const allResults = await db.query.practices.findMany({
+      where,
+      orderBy: [desc(practices.createdAt)],
+    });
+
+    const filtered = allResults.filter(
+      (p: Practice) => getEffectivePlan(p) === plan
+    );
+
+    const total = filtered.length;
+    const offset = (page - 1) * pageSize;
+    const paginated = filtered.slice(offset, offset + pageSize);
+
+    return { practices: paginated, total, page, pageSize };
+  }
+
+  // No plan filter: use SQL pagination
+  const [totalResult] = await db
+    .select({ total: count() })
+    .from(practices)
+    .where(where);
+
+  const total = totalResult?.total ?? 0;
+  const offset = (page - 1) * pageSize;
+
+  const results = await db.query.practices.findMany({
+    where,
+    orderBy: [desc(practices.createdAt)],
+    limit: pageSize,
+    offset,
+  });
+
+  return { practices: results, total, page, pageSize };
 }
 
 /**

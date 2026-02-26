@@ -2,18 +2,8 @@ import Link from "next/link";
 import { getUser } from "@/lib/auth";
 import { LogoutButton } from "@/components/dashboard/logout-button";
 import { BuildBadge } from "@/components/shared/build-badge";
-import {
-  LayoutDashboard,
-  Building2,
-  BarChart3,
-  ArrowLeft,
-} from "lucide-react";
-
-const adminNavItems = [
-  { href: "/admin", label: "Übersicht", icon: LayoutDashboard },
-  { href: "/admin/practices", label: "Praxen", icon: Building2 },
-  { href: "/admin/stats", label: "Statistiken", icon: BarChart3 },
-];
+import { AdminNav } from "@/components/admin/admin-nav";
+import { ArrowLeft } from "lucide-react";
 
 export default async function AdminLayout({
   children,
@@ -33,18 +23,7 @@ export default async function AdminLayout({
             </Link>
           </div>
 
-          <nav className="flex-1 space-y-1 px-3 py-4">
-            {adminNavItems.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                className="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-slate-300 hover:bg-slate-800 hover:text-white"
-              >
-                <item.icon className="h-4 w-4" />
-                {item.label}
-              </Link>
-            ))}
-          </nav>
+          <AdminNav />
 
           <div className="border-t border-slate-700 p-4 space-y-2">
             <Link
