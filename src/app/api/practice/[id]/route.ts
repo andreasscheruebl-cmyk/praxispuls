@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getUserOptional } from "@/lib/auth";
+import { requireAuthForApi } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { practices } from "@/lib/db/schema";
 import { eq, and, isNull } from "drizzle-orm";
@@ -11,10 +11,9 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const user = await getUserOptional();
-    if (!user) {
-      return NextResponse.json({ error: "Nicht angemeldet" }, { status: 401 });
-    }
+    const auth = await requireAuthForApi();
+    if (auth.error) return auth.error;
+    const user = auth.user;
 
     const { id } = await params;
 
@@ -30,7 +29,7 @@ export async function DELETE(
 
     if (!practice) {
       return NextResponse.json(
-        { error: "Standort nicht gefunden oder kein Zugriff" },
+        { error: "Standort nicht gefunden oder kein Zugriff", code: "NOT_FOUND" },
         { status: 404 }
       );
     }
@@ -69,7 +68,7 @@ export async function DELETE(
     return NextResponse.json({ success: true });
   } catch {
     return NextResponse.json(
-      { error: "Fehler beim Entfernen" },
+      { error: "Fehler beim Entfernen", code: "INTERNAL_ERROR" },
       { status: 500 }
     );
   }

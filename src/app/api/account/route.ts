@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getUserOptional } from "@/lib/auth";
+import { requireAuthForApi } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { practices, surveys } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
@@ -9,14 +9,13 @@ import { getPracticesForUser } from "@/lib/practice";
 
 export async function DELETE(request: Request) {
   try {
-    const user = await getUserOptional();
-    if (!user) {
-      return NextResponse.json({ error: "Nicht angemeldet" }, { status: 401 });
-    }
+    const auth = await requireAuthForApi();
+    if (auth.error) return auth.error;
+    const user = auth.user;
 
     const userPractices = await getPracticesForUser(user.id);
     if (userPractices.length === 0) {
-      return NextResponse.json({ error: "Praxis nicht gefunden" }, { status: 404 });
+      return NextResponse.json({ error: "Praxis nicht gefunden", code: "NOT_FOUND" }, { status: 404 });
     }
 
     const meta = getRequestMeta(request);
@@ -70,7 +69,7 @@ export async function DELETE(request: Request) {
   } catch (err) {
     console.error("Account deletion error:", err);
     return NextResponse.json(
-      { error: "Fehler beim Löschen des Accounts" },
+      { error: "Fehler beim Löschen des Accounts", code: "INTERNAL_ERROR" },
       { status: 500 }
     );
   }

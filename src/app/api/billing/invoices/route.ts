@@ -1,14 +1,13 @@
 import { NextResponse } from "next/server";
-import { getUserOptional } from "@/lib/auth";
+import { requireAuthForApi } from "@/lib/auth";
 import { stripe } from "@/lib/stripe";
 import { getActivePracticeForUser } from "@/lib/practice";
 
 export async function GET() {
   try {
-    const user = await getUserOptional();
-    if (!user) {
-      return NextResponse.json({ error: "Nicht angemeldet" }, { status: 401 });
-    }
+    const auth = await requireAuthForApi();
+    if (auth.error) return auth.error;
+    const user = auth.user;
 
     const practice = await getActivePracticeForUser(user.id);
     if (!practice?.stripeCustomerId) {
@@ -34,6 +33,6 @@ export async function GET() {
     return NextResponse.json({ invoices: formatted });
   } catch (err) {
     console.error("Invoices error:", err);
-    return NextResponse.json({ error: "Fehler" }, { status: 500 });
+    return NextResponse.json({ error: "Fehler", code: "INTERNAL_ERROR" }, { status: 500 });
   }
 }
