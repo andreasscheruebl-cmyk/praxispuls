@@ -405,7 +405,7 @@ export function PracticeManagement({
                 disabled={banLoading || isDeleted}
               >
                 <UserCheck className="mr-1 h-4 w-4" />
-                Account entsperren
+                {banLoading ? "Wird verarbeitet…" : "Account entsperren"}
               </Button>
             </div>
 

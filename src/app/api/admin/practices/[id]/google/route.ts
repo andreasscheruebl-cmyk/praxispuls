@@ -1,9 +1,13 @@
 import { NextResponse } from "next/server";
 import { requireAdminForApi } from "@/lib/auth";
-import { getPracticeForAdmin, updatePracticeGoogle } from "@/lib/db/queries/admin";
+import {
+  getPracticeForAdmin,
+  updatePracticeGoogle,
+} from "@/lib/db/queries/admin";
 import { adminGoogleUpdateSchema } from "@/lib/validations";
 import { getGoogleReviewLink } from "@/lib/google";
 import { logAudit, getRequestMeta } from "@/lib/audit";
+import { validateUuid, parseJsonBody } from "../helpers";
 
 export async function PUT(
   request: Request,
@@ -13,6 +17,9 @@ export async function PUT(
   if (auth.error) return auth.error;
 
   const { id } = await params;
+  const uuidError = validateUuid(id);
+  if (uuidError) return uuidError;
+
   const practice = await getPracticeForAdmin(id);
   if (!practice) {
     return NextResponse.json(
@@ -21,8 +28,10 @@ export async function PUT(
     );
   }
 
-  const body = await request.json();
-  const parsed = adminGoogleUpdateSchema.safeParse(body);
+  const body = await parseJsonBody(request);
+  if (body.error) return body.error;
+
+  const parsed = adminGoogleUpdateSchema.safeParse(body.data);
   if (!parsed.success) {
     return NextResponse.json(
       { error: "Ungültige Eingabe", code: "VALIDATION_ERROR" },
@@ -42,20 +51,19 @@ export async function PUT(
     googleRedirectEnabled?: boolean;
   } = {};
 
-  // Handle placeId change
   if (parsed.data.googlePlaceId !== undefined) {
     if (parsed.data.googlePlaceId === null) {
-      // Remove Google connection
       update.googlePlaceId = null;
       update.googleReviewUrl = null;
       update.googleRedirectEnabled = false;
     } else {
       update.googlePlaceId = parsed.data.googlePlaceId;
-      update.googleReviewUrl = getGoogleReviewLink(parsed.data.googlePlaceId);
+      update.googleReviewUrl = getGoogleReviewLink(
+        parsed.data.googlePlaceId
+      );
     }
   }
 
-  // Handle redirect toggle
   if (parsed.data.googleRedirectEnabled !== undefined) {
     update.googleRedirectEnabled = parsed.data.googleRedirectEnabled;
   }
@@ -63,7 +71,7 @@ export async function PUT(
   await updatePracticeGoogle(id, update);
 
   const meta = getRequestMeta(request);
-  logAudit({
+  await logAudit({
     practiceId: id,
     action: "admin.google_updated",
     entity: "practice",
