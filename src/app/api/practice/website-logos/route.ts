@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getUserOptional } from "@/lib/auth";
+import { isSafeUrl } from "@/lib/url-validation";
 
 /**
  * Extract potential logo URLs from a website by checking common locations:
@@ -38,6 +39,11 @@ export async function GET(request: Request) {
         seen.add(url);
         logos.push(url);
       }
+    }
+
+    // SSRF protection: block private/internal URLs
+    if (!isSafeUrl(baseUrl.toString())) {
+      return NextResponse.json({ logos: [] });
     }
 
     // Try to fetch the homepage HTML and extract logo references

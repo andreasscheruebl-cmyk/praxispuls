@@ -2,6 +2,15 @@ import { Resend } from "resend";
 
 const FROM_EMAIL = "PraxisPuls <noreply@praxispuls.de>";
 
+function escapeHtml(str: string): string {
+  return str
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
 function getResend() {
   if (!process.env.RESEND_API_KEY) {
     throw new Error("RESEND_API_KEY is not set");
@@ -36,12 +45,12 @@ export async function sendDetractorAlert(params: {
     html: `
       <div style="font-family: sans-serif; max-width: 500px; margin: 0 auto;">
         <h2 style="color: #dc2626;">⚠️ Kritisches Feedback eingegangen</h2>
-        <p><strong>Praxis:</strong> ${practiceName}</p>
+        <p><strong>Praxis:</strong> ${escapeHtml(practiceName)}</p>
         <p><strong>NPS-Score:</strong> ${npsScore}/10</p>
         <p><strong>Zeitpunkt:</strong> ${dateStr}</p>
         ${freeText ? `
           <div style="margin-top: 16px; padding: 16px; background: #f9fafb; border-left: 4px solid #dc2626; border-radius: 4px;">
-            <p style="margin: 0; font-style: italic;">"${freeText}"</p>
+            <p style="margin: 0; font-style: italic;">"${escapeHtml(freeText)}"</p>
           </div>
         ` : ""}
         <p style="margin-top: 24px;">
@@ -72,7 +81,7 @@ export async function sendWelcomeEmail(params: {
     html: `
       <div style="font-family: sans-serif; max-width: 500px; margin: 0 auto;">
         <h2>Willkommen bei PraxisPuls!</h2>
-        <p>Hallo ${params.practiceName},</p>
+        <p>Hallo ${escapeHtml(params.practiceName)},</p>
         <p>vielen Dank für Ihre Registrierung. In wenigen Schritten ist Ihre Patientenumfrage startklar:</p>
         <ol>
           <li>Praxisdaten vervollständigen</li>
@@ -109,7 +118,7 @@ export async function sendUpgradeReminder(params: {
     html: `
       <div style="font-family: sans-serif; max-width: 500px; margin: 0 auto;">
         <h2>Antwort-Limit fast erreicht</h2>
-        <p>Hallo ${params.practiceName},</p>
+        <p>Hallo ${escapeHtml(params.practiceName)},</p>
         <p>Sie haben bereits <strong>${params.currentCount} von ${params.limit}</strong> Antworten diesen Monat erhalten. Das zeigt, dass Ihre Patienten aktiv Feedback geben!</p>
         <p>Mit dem Starter-Plan für 49 €/Monat erhalten Sie:</p>
         <ul>

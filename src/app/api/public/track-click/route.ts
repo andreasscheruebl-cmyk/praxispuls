@@ -20,6 +20,18 @@ export async function POST(request: Request) {
       );
     }
 
+    // Verify response exists before updating
+    const existing = await db.query.responses.findFirst({
+      where: eq(responses.id, parsed.data.responseId),
+      columns: { id: true },
+    });
+    if (!existing) {
+      return NextResponse.json(
+        { error: "Response nicht gefunden", code: "NOT_FOUND" },
+        { status: 404 }
+      );
+    }
+
     await db
       .update(responses)
       .set({ googleReviewClicked: true })
