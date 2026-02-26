@@ -82,3 +82,27 @@ export const alertNoteSchema = z.object({
   note: z.string().max(1000),
 });
 
+// ============================================================
+// ADMIN – Practice Management
+// ============================================================
+export const adminEmailChangeSchema = z.object({
+  email: z.string().email("Ungültige E-Mail-Adresse"),
+});
+
+export const adminSuspendSchema = z.object({
+  suspended: z.boolean(),
+});
+
+export const adminBanSchema = z.object({
+  banned: z.boolean(),
+});
+
+export const adminSetPasswordSchema = z.object({
+  password: z.string().min(8, "Mindestens 8 Zeichen"),
+});
+
+export const adminGoogleUpdateSchema = z.object({
+  googlePlaceId: z.string().nullable().optional(),
+  googleRedirectEnabled: z.boolean().optional(),
+});
+

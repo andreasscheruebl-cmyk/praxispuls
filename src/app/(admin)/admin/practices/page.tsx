@@ -35,11 +35,15 @@ export default async function AdminPracticesPage({ searchParams }: PageProps) {
   const overrideParam = typeof params.override === "string" ? params.override : undefined;
   const hasOverride = overrideParam === "yes" ? true : overrideParam === "no" ? false : undefined;
 
+  const suspendedParam = typeof params.suspended === "string" ? params.suspended : undefined;
+  const isSuspended = suspendedParam === "yes" ? true : suspendedParam === "no" ? false : undefined;
+
   const result = await getPracticesFiltered({
     search,
     plan,
     hasGoogle,
     hasOverride,
+    isSuspended,
     page,
     pageSize: 20,
   });
@@ -52,6 +56,7 @@ export default async function AdminPracticesPage({ searchParams }: PageProps) {
     if (plan) sp.set("plan", plan);
     if (googleParam) sp.set("google", googleParam);
     if (overrideParam) sp.set("override", overrideParam);
+    if (suspendedParam) sp.set("suspended", suspendedParam);
     if (targetPage > 1) sp.set("page", String(targetPage));
     const qs = sp.toString();
     return `/admin/practices${qs ? `?${qs}` : ""}`;
@@ -98,7 +103,14 @@ export default async function AdminPracticesPage({ searchParams }: PageProps) {
                         href={`/admin/practices/${practice.id}`}
                         className="block hover:underline"
                       >
-                        <p className="font-medium">{practice.name}</p>
+                        <p className="font-medium">
+                          {practice.name}
+                          {practice.suspendedAt && (
+                            <Badge variant="destructive" className="ml-2 text-[10px] px-1.5 py-0">
+                              Gesperrt
+                            </Badge>
+                          )}
+                        </p>
                         <p className="text-xs text-muted-foreground">
                           {practice.email}
                         </p>

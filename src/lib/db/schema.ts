@@ -40,6 +40,7 @@ export const practices = pgTable(
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow(),
     deletedAt: timestamp("deleted_at", { withTimezone: true }), // Soft delete
+    suspendedAt: timestamp("suspended_at", { withTimezone: true }),
   },
   (table) => ({
     ownerIdx: index("idx_practices_owner").on(table.ownerUserId),
