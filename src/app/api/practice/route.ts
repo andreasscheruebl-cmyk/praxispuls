@@ -8,7 +8,9 @@ import { getGoogleReviewLink, getPlaceDetails } from "@/lib/google";
 import { slugify } from "@/lib/utils";
 import { SURVEY_TEMPLATES } from "@/lib/survey-templates";
 import { logAudit, getRequestMeta } from "@/lib/audit";
-import { getActivePracticeForUser } from "@/lib/practice";
+import { getActivePracticeForUser, getLocationCountForUser } from "@/lib/practice";
+import { PLAN_LIMITS } from "@/types";
+import type { PlanId } from "@/types";
 
 export async function GET() {
   try {
@@ -19,7 +21,12 @@ export async function GET() {
 
     const practice = await getActivePracticeForUser(user.id);
     if (!practice) return NextResponse.json({ error: "Praxis nicht gefunden" }, { status: 404 });
-    return NextResponse.json(practice);
+
+    const locationCount = await getLocationCountForUser(user.id);
+    const plan = (practice.plan ?? "free") as PlanId;
+    const maxLocations = PLAN_LIMITS[plan].maxLocations;
+
+    return NextResponse.json({ ...practice, locationCount, maxLocations });
   } catch {
     return NextResponse.json({ error: "Interner Fehler" }, { status: 500 });
   }
@@ -38,15 +45,22 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Name fehlt" }, { status: 400 });
     }
 
-    // Check if this user already has an active practice
-    const existingPractice = await db.query.practices.findFirst({
+    // Check location limit against user's plan
+    const userPractices = await db.query.practices.findMany({
       where: and(eq(practices.ownerUserId, user.id), isNull(practices.deletedAt)),
-      columns: { id: true },
+      columns: { id: true, plan: true },
     });
-    if (existingPractice) {
+    const currentCount = userPractices.length;
+    const userPlan = (userPractices[0]?.plan ?? "free") as PlanId;
+    const maxLocations = PLAN_LIMITS[userPlan].maxLocations;
+
+    if (currentCount >= maxLocations) {
       return NextResponse.json(
-        { error: "Sie haben bereits eine Praxis eingerichtet. Bitte nutzen Sie die Einstellungen, um Änderungen vorzunehmen." },
-        { status: 409 }
+        {
+          error: `Ihr aktueller Plan (${userPlan}) erlaubt maximal ${maxLocations} Standort${maxLocations === 1 ? "" : "e"}. Bitte upgraden Sie Ihren Plan, um weitere Standorte hinzuzufügen.`,
+          code: "LOCATION_LIMIT_REACHED",
+        },
+        { status: 403 }
       );
     }
 

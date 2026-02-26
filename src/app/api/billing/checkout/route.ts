@@ -24,6 +24,7 @@ export async function POST(request: Request) {
 
     const session = await createCheckoutSession({
       practiceId: practice.id,
+      userId: user.id,
       email: user.email!,
       plan,
       returnUrl: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard/billing`,

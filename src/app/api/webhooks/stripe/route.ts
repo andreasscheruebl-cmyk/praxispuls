@@ -5,7 +5,9 @@ import { practices } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import type Stripe from "stripe";
 import { logAudit } from "@/lib/audit";
-import { getPracticesForUser } from "@/lib/practice";
+import { getPracticesForUser, getLocationCountForUser } from "@/lib/practice";
+import { PLAN_LIMITS } from "@/types";
+import type { PlanId } from "@/types";
 
 /**
  * Stripe Webhook Handler
@@ -271,6 +273,23 @@ async function syncPlanToAllPractices(sourcePracticeId: string, plan: string) {
   });
 
   if (!sourcePractice) return;
+
+  // Downgrade protection: warn if user has more locations than new plan allows
+  const locationCount = await getLocationCountForUser(sourcePractice.ownerUserId);
+  const maxLocations = PLAN_LIMITS[plan as PlanId]?.maxLocations ?? 1;
+
+  if (locationCount > maxLocations) {
+    console.warn(
+      `Downgrade warning: User ${sourcePractice.ownerUserId} has ${locationCount} locations but new plan "${plan}" only allows ${maxLocations}. No auto-deletion — manual action required.`
+    );
+    logAudit({
+      practiceId: sourcePracticeId,
+      action: "plan.downgrade_warning",
+      entity: "practice",
+      entityId: sourcePracticeId,
+      after: { plan, locationCount, maxLocations },
+    });
+  }
 
   // Get all practices for this owner
   const allPractices = await getPracticesForUser(sourcePractice.ownerUserId);

@@ -14,6 +14,8 @@ import {
   getPracticesForUser,
   getActivePracticeForUser,
 } from "@/lib/practice";
+import { PLAN_LIMITS } from "@/types";
+import type { PlanId } from "@/types";
 
 const ACTIVE_PRACTICE_COOKIE = "active_practice_id";
 
@@ -66,6 +68,19 @@ export async function createPractice(data: {
   surveyTemplate?: string;
 }) {
   const user = await getUser();
+
+  // Check location limit against user's plan
+  const existingPractices = await getPracticesForUser(user.id);
+  const currentCount = existingPractices.length;
+  const userPlan = (existingPractices[0]?.plan ?? "free") as PlanId;
+  const maxLocations = PLAN_LIMITS[userPlan].maxLocations;
+
+  if (currentCount >= maxLocations) {
+    throw new Error(
+      `Standort-Limit erreicht: Ihr Plan (${userPlan}) erlaubt maximal ${maxLocations} Standort${maxLocations === 1 ? "" : "e"}.`
+    );
+  }
+
   const slug = slugify(data.name);
 
   const googleReviewUrl = data.googlePlaceId

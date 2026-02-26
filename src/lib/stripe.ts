@@ -15,6 +15,7 @@ const PRICES = {
  */
 export async function createCheckoutSession(params: {
   practiceId: string;
+  userId: string;
   email: string;
   plan: "starter" | "professional";
   returnUrl: string;
@@ -31,6 +32,7 @@ export async function createCheckoutSession(params: {
     cancel_url: `${params.returnUrl}?canceled=true`,
     metadata: {
       practiceId: params.practiceId,
+      userId: params.userId,
     },
     locale: "de",
     allow_promotion_codes: true,

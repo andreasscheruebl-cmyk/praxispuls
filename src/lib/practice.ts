@@ -1,9 +1,20 @@
 import { db } from "@/lib/db";
 import { practices } from "@/lib/db/schema";
-import { eq, and, isNull } from "drizzle-orm";
+import { eq, and, isNull, count } from "drizzle-orm";
 import { cookies } from "next/headers";
 
 const ACTIVE_PRACTICE_COOKIE = "active_practice_id";
+
+/**
+ * Count active (non-deleted) practices for a user.
+ */
+export async function getLocationCountForUser(userId: string): Promise<number> {
+  const [result] = await db
+    .select({ value: count() })
+    .from(practices)
+    .where(and(eq(practices.ownerUserId, userId), isNull(practices.deletedAt)));
+  return result?.value ?? 0;
+}
 
 /**
  * Get all practices owned by a user ID.
