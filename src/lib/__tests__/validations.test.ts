@@ -78,7 +78,6 @@ describe("practiceUpdateSchema", () => {
       primaryColor: "#FF5733",
       npsThreshold: 9,
       googleRedirectEnabled: true,
-      theme: "vertrauen",
     });
     expect(result.success).toBe(true);
   });
@@ -128,15 +127,6 @@ describe("practiceUpdateSchema", () => {
     expect(result.success).toBe(false);
   });
 
-  it("accepts valid theme", () => {
-    const result = practiceUpdateSchema.safeParse({ theme: "standard" });
-    expect(result.success).toBe(true);
-  });
-
-  it("rejects invalid theme", () => {
-    const result = practiceUpdateSchema.safeParse({ theme: "dark" });
-    expect(result.success).toBe(false);
-  });
 });
 
 describe("surveyResponseSchema", () => {

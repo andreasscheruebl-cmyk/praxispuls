@@ -4,21 +4,17 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Star } from "lucide-react";
 import { NpsSlider } from "@/components/survey/nps-slider";
-import { RatingCircles } from "@/components/survey/rating-circles";
-import { type ThemeId, getThemeConfig } from "@/lib/themes";
 import { trackEvent } from "@/lib/plausible";
 
 type Props = {
   surveyId: string;
   practiceName: string;
   practiceColor: string;
-  themeId?: ThemeId;
 };
 
 type Step = "nps" | "categories" | "freetext" | "submitting" | "done" | "duplicate" | "error";
 
-export function SurveyForm({ surveyId, practiceName, practiceColor, themeId = "standard" }: Props) {
-  const themeConfig = getThemeConfig(themeId);
+export function SurveyForm({ surveyId, practiceName, practiceColor }: Props) {
   const [step, setStep] = useState<Step>("nps");
   const [npsScore, setNpsScore] = useState<number | null>(null);
   const [ratings, setRatings] = useState({
@@ -92,49 +88,22 @@ export function SurveyForm({ surveyId, practiceName, practiceColor, themeId = "s
           0 = sehr unwahrscheinlich · 10 = sehr wahrscheinlich
         </p>
 
-        {themeConfig.survey.npsStyle === "slider" ? (
-          <div className="space-y-6">
-            <NpsSlider
-              value={npsScore}
-              onChange={setNpsScore}
-              color={practiceColor}
-            />
-            <Button
-              onClick={() => { if (npsScore !== null) setStep("categories"); }}
-              disabled={npsScore === null}
-              className="w-full"
-              size="lg"
-              style={{ backgroundColor: practiceColor }}
-            >
-              Weiter
-            </Button>
-          </div>
-        ) : (
-          <div className="grid grid-cols-6 gap-2 sm:grid-cols-11">
-            {Array.from({ length: 11 }, (_, i) => (
-              <button
-                key={i}
-                onClick={() => {
-                  setNpsScore(i);
-                  setStep("categories");
-                }}
-                className={`flex h-12 w-full items-center justify-center rounded-lg border-2 text-lg font-semibold transition-all ${
-                  npsScore === i
-                    ? "border-transparent text-white"
-                    : "border-gray-200 bg-white hover:border-gray-300"
-                }`}
-                style={
-                  npsScore === i
-                    ? { backgroundColor: practiceColor }
-                    : undefined
-                }
-                aria-label={`${i} von 10`}
-              >
-                {i}
-              </button>
-            ))}
-          </div>
-        )}
+        <div className="space-y-6">
+          <NpsSlider
+            value={npsScore}
+            onChange={setNpsScore}
+            color={practiceColor}
+          />
+          <Button
+            onClick={() => { if (npsScore !== null) setStep("categories"); }}
+            disabled={npsScore === null}
+            className="w-full"
+            size="lg"
+            style={{ backgroundColor: practiceColor }}
+          >
+            Weiter
+          </Button>
+        </div>
       </div>
     );
   }
@@ -157,46 +126,30 @@ export function SurveyForm({ surveyId, practiceName, practiceColor, themeId = "s
           {categories.map((cat) => (
             <div key={cat.key} className="rounded-lg bg-white p-4 shadow-theme">
               <p className="mb-2 text-sm font-medium">{cat.label}</p>
-              {themeConfig.survey.ratingStyle === "circles" ? (
-                <RatingCircles
-                  value={ratings[cat.key]}
-                  onChange={(v) => setRatings((prev) => ({ ...prev, [cat.key]: v }))}
-                  label={cat.label}
-                  color={practiceColor}
-                />
-              ) : (
-                <div className="flex gap-1">
-                  {[1, 2, 3, 4, 5].map((star) => {
-                    const isActive = star <= ratings[cat.key];
-                    const useThemeColor = themeId === "vertrauen";
-                    return (
-                      <button
-                        key={star}
-                        onClick={() =>
-                          setRatings((prev) => ({ ...prev, [cat.key]: star }))
+              <div className="flex gap-1">
+                {[1, 2, 3, 4, 5].map((star) => {
+                  const isActive = star <= ratings[cat.key];
+                  return (
+                    <button
+                      key={star}
+                      onClick={() =>
+                        setRatings((prev) => ({ ...prev, [cat.key]: star }))
+                      }
+                      className="p-1"
+                      aria-label={`${star} Sterne für ${cat.label}`}
+                    >
+                      <Star
+                        className={`h-8 w-8 ${isActive ? "" : "text-gray-300"}`}
+                        style={
+                          isActive
+                            ? { fill: practiceColor, color: practiceColor }
+                            : undefined
                         }
-                        className="p-1"
-                        aria-label={`${star} Sterne für ${cat.label}`}
-                      >
-                        <Star
-                          className={`h-8 w-8 ${
-                            isActive
-                              ? useThemeColor
-                                ? ""
-                                : "fill-yellow-400 text-yellow-400"
-                              : "text-gray-300"
-                          }`}
-                          style={
-                            isActive && useThemeColor
-                              ? { fill: practiceColor, color: practiceColor }
-                              : undefined
-                          }
-                        />
-                      </button>
-                    );
-                  })}
-                </div>
-              )}
+                      />
+                    </button>
+                  );
+                })}
+              </div>
             </div>
           ))}
         </div>

@@ -56,7 +56,6 @@ export const practiceUpdateSchema = z.object({
     .optional(),
   npsThreshold: z.number().int().min(7).max(10).optional(),
   googleRedirectEnabled: z.boolean().optional(),
-  theme: z.enum(["standard", "vertrauen"]).optional(),
 });
 
 // ============================================================
