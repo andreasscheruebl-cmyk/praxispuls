@@ -48,11 +48,16 @@ describe("getTerminology", () => {
 
   it.each([
     ["patient", "Patientenbefragung", "Patienten-Feedback"],
+    ["tierhalter", "Tierhalterbefragung", "Tierhalter-Feedback"],
     ["kunde", "Kundenbefragung", "Kunden-Feedback"],
     ["gast", "G\u00e4stebefragung", "G\u00e4ste-Feedback"],
     ["mitglied", "Mitgliederbefragung", "Mitglieder-Feedback"],
+    ["fahrschueler", "Fahrsch\u00fclerbefragung", "Fahrsch\u00fcler-Feedback"],
+    ["schueler", "Sch\u00fclerbefragung", "Sch\u00fcler-Feedback"],
+    ["eltern", "Elternbefragung", "Eltern-Feedback"],
     ["mandant", "Mandantenbefragung", "Mandanten-Feedback"],
     ["mitarbeiter", "Mitarbeiterbefragung", "Mitarbeiter-Feedback"],
+    ["individuell", "Umfrage", "Feedback"],
     ["teilnehmer", "Teilnehmerbefragung", "Teilnehmer-Feedback"],
   ] as const)(
     "type '%s' has surveyTitle '%s' and feedbackLabel '%s'",

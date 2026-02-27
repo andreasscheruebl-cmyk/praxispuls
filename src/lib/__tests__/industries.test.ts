@@ -8,6 +8,7 @@ import {
   getSubCategory,
   needsSecondLayer,
 } from "../industries";
+import { getTerminology } from "../terminology";
 
 describe("INDUSTRY_CATEGORIES", () => {
   it("has exactly 10 categories", () => {
@@ -39,12 +40,20 @@ describe("INDUSTRY_CATEGORIES", () => {
     expect(ids).toEqual(expected);
   });
 
-  it("has unique sub-category IDs across all categories", () => {
+  it("contains all expected sub-category IDs", () => {
     const allSubIds = INDUSTRY_CATEGORIES.flatMap((cat) =>
       cat.subCategories.map((s) => s.id),
     );
-    const uniqueIds = new Set(allSubIds);
-    expect(uniqueIds.size).toBe(allSubIds.length);
+    const expected: IndustrySubCategory[] = [
+      "zahnarzt", "hausarzt", "augenarzt", "dermatologe", "physiotherapie",
+      "tierarzt", "apotheke", "kfz_werkstatt", "she", "handwerk_allgemein",
+      "friseur", "kosmetik", "restaurant", "hotel", "fitnessstudio",
+      "yoga_wellness", "laden", "optiker", "fahrschule", "nachhilfe",
+      "schule", "kindergarten", "sportverein", "verein_allgemein",
+      "steuerberater", "rechtsanwalt", "eigene_branche", "private_umfrage",
+    ];
+    expect(new Set(allSubIds)).toEqual(new Set(expected));
+    expect(allSubIds).toHaveLength(expected.length);
   });
 
   it("every sub-category has a valid defaultRespondentType", () => {
@@ -136,6 +145,20 @@ describe("needsSecondLayer", () => {
 
   it("returns false for unknown category ID", () => {
     expect(needsSecondLayer("nonexistent" as IndustryCategory)).toBe(false);
+  });
+});
+
+describe("cross-module: every defaultRespondentType has terminology", () => {
+  it("all defaultRespondentTypes used in industries have a non-fallback terminology", () => {
+    const teilnehmerTerms = getTerminology("teilnehmer");
+    for (const cat of INDUSTRY_CATEGORIES) {
+      for (const sub of cat.subCategories) {
+        const terms = getTerminology(sub.defaultRespondentType);
+        if (sub.defaultRespondentType !== "teilnehmer" && sub.defaultRespondentType !== "individuell") {
+          expect(terms, `${sub.id} (${sub.defaultRespondentType}) should not fall back to teilnehmer`).not.toEqual(teilnehmerTerms);
+        }
+      }
+    }
   });
 });
 

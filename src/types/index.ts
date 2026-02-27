@@ -36,49 +36,6 @@ export type IndustryCategory =
   | "individuell";
 
 // ============================================================
-// Industry Sub-Categories (28 slugs)
-// ============================================================
-export type IndustrySubCategory =
-  // Gesundheit & Medizin
-  | "zahnarzt"
-  | "hausarzt"
-  | "augenarzt"
-  | "dermatologe"
-  | "physiotherapie"
-  | "tierarzt"
-  | "apotheke"
-  // Handwerk & Technik
-  | "kfz_werkstatt"
-  | "she"
-  | "handwerk_allgemein"
-  // Beauty & Pflege
-  | "friseur"
-  | "kosmetik"
-  // Gastronomie & Hotellerie
-  | "restaurant"
-  | "hotel"
-  // Fitness & Wellness
-  | "fitnessstudio"
-  | "yoga_wellness"
-  // Einzelhandel
-  | "laden"
-  | "optiker"
-  // Bildung & Ausbildung
-  | "fahrschule"
-  | "nachhilfe"
-  | "schule"
-  | "kindergarten"
-  // Vereine & Organisationen
-  | "sportverein"
-  | "verein_allgemein"
-  // Beratung & Recht
-  | "steuerberater"
-  | "rechtsanwalt"
-  // Individuell
-  | "eigene_branche"
-  | "private_umfrage";
-
-// ============================================================
 // Survey Template Types
 // ============================================================
 export type SurveyQuestionType =
