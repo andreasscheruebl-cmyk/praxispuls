@@ -34,6 +34,10 @@ export async function toggleSurvey(surveyId: string) {
     throw new Error("Umfrage nicht gefunden");
   }
 
+  if (survey.status !== "active" && survey.status !== "paused") {
+    throw new Error("Nur aktive oder pausierte Umfragen können umgeschaltet werden");
+  }
+
   const newStatus = survey.status === "active" ? "paused" : "active";
   await db
     .update(surveys)

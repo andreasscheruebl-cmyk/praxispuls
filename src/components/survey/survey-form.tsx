@@ -60,13 +60,15 @@ export function SurveyForm({ surveyId, practiceName, practiceColor }: Props) {
         }),
       });
 
-      if (!res.ok) {
-        setStep("error");
-        return;
-      }
       const data = await res.json();
-      if (data.code === "DUPLICATE_RESPONSE") {
-        setStep("duplicate");
+
+      if (!res.ok) {
+        if (data?.code === "DUPLICATE_RESPONSE") {
+          setStep("duplicate");
+          return;
+        }
+        console.error("Survey submission error:", res.status, data);
+        setStep("error");
         return;
       }
       if (data.routing) {
@@ -74,7 +76,8 @@ export function SurveyForm({ surveyId, practiceName, practiceColor }: Props) {
       }
       trackEvent("Survey Completed", { category: data.routing?.category || "unknown" });
       setStep("done");
-    } catch {
+    } catch (err) {
+      console.error("Survey submission failed:", err);
       setStep("error");
     }
   }

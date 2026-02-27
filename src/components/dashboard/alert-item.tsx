@@ -37,14 +37,17 @@ function getStarRatings(answers: unknown): { label: string; value: number }[] {
 export function AlertItem({ alert }: { alert: AlertData }) {
   const [note, setNote] = useState(alert.note || "");
   const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [expanded, setExpanded] = useState(!alert.isRead);
 
   async function handleMarkRead() {
     setSaving(true);
+    setError(null);
     try {
       await markAlertRead(alert.id);
     } catch (err) {
-      console.error(err);
+      console.error("Failed to mark alert read:", err);
+      setError("Fehler beim Markieren");
     } finally {
       setSaving(false);
     }
@@ -53,10 +56,12 @@ export function AlertItem({ alert }: { alert: AlertData }) {
   async function handleSaveNote() {
     if (!note.trim()) return;
     setSaving(true);
+    setError(null);
     try {
       await addAlertNote(alert.id, note);
     } catch (err) {
-      console.error(err);
+      console.error("Failed to save note:", err);
+      setError("Fehler beim Speichern");
     } finally {
       setSaving(false);
     }
@@ -147,6 +152,9 @@ export function AlertItem({ alert }: { alert: AlertData }) {
                       {saving ? "Speichert…" : "Notiz speichern"}
                     </button>
                   </div>
+                  {error && (
+                    <p className="text-sm text-red-600">{error}</p>
+                  )}
                 </div>
               </div>
             )}

@@ -38,6 +38,10 @@ export async function DELETE(request: Request) {
           });
         } catch (err) {
           console.error("Failed to cancel Stripe subscription:", err);
+          return NextResponse.json(
+            { error: "Das Stripe-Abonnement konnte nicht gekündigt werden. Bitte versuchen Sie es erneut.", code: "STRIPE_CANCEL_FAILED" },
+            { status: 502 }
+          );
         }
       }
 

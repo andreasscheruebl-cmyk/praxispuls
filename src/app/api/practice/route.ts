@@ -8,6 +8,7 @@ import { getGoogleReviewLink, getPlaceDetails } from "@/lib/google";
 import { slugify } from "@/lib/utils";
 import { SURVEY_TEMPLATES } from "@/lib/survey-templates";
 import { logAudit, getRequestMeta } from "@/lib/audit";
+import { ZodError } from "zod";
 import { getActivePracticeForUser, getLocationCountForUser } from "@/lib/practice";
 import { getEffectivePlan } from "@/lib/plans";
 import { PLAN_LIMITS } from "@/types";
@@ -26,7 +27,8 @@ export async function GET() {
     const maxLocations = PLAN_LIMITS[effectivePlan].maxLocations;
 
     return NextResponse.json({ ...practice, locationCount, maxLocations });
-  } catch {
+  } catch (err) {
+    console.error("GET /api/practice error:", err);
     return NextResponse.json({ error: "Interner Fehler", code: "INTERNAL_ERROR" }, { status: 500 });
   }
 }
@@ -70,7 +72,21 @@ export async function POST(request: Request) {
     }
 
     const chosenTemplateId = templateIdParam || "zahnarzt_standard";
-    const template = SURVEY_TEMPLATES.find(t => t.id === chosenTemplateId) || SURVEY_TEMPLATES[0]!;
+    const template = SURVEY_TEMPLATES.find(t => t.id === chosenTemplateId);
+    if (!template) {
+      return NextResponse.json(
+        { error: "Ungültiges Umfrage-Template", code: "INVALID_TEMPLATE" },
+        { status: 400 }
+      );
+    }
+
+    if (!user.email) {
+      return NextResponse.json(
+        { error: "E-Mail-Adresse fehlt in Ihrem Konto", code: "MISSING_EMAIL" },
+        { status: 400 }
+      );
+    }
+    const userEmail = user.email;
 
     // Transaction: check limit + insert atomically to prevent race conditions
     const result = await db.transaction(async (tx) => {
@@ -106,18 +122,22 @@ export async function POST(request: Request) {
         ownerUserId: user.id,
         name: name.trim(),
         slug,
-        email: user.email!,
+        email: userEmail,
         postalCode,
         googlePlaceId,
         googleReviewUrl,
         logoUrl: logoUrl || null,
-        alertEmail: user.email!,
+        alertEmail: userEmail,
         plan: userPlan, // Inherit effective plan from user
       }).returning();
 
+      if (!practice) {
+        return { error: "Praxis konnte nicht erstellt werden", code: "INSERT_FAILED" as const };
+      }
+
       const surveySlug = `${slug}-umfrage`;
       await tx.insert(surveys).values({
-        practiceId: practice!.id,
+        practiceId: practice.id,
         title: "Patientenbefragung",
         slug: surveySlug,
         questions: template.questions,
@@ -206,7 +226,14 @@ export async function PUT(request: Request) {
     });
 
     return NextResponse.json({ success: true });
-  } catch {
-    return NextResponse.json({ error: "Fehler", code: "INTERNAL_ERROR" }, { status: 500 });
+  } catch (err) {
+    if (err instanceof ZodError) {
+      return NextResponse.json(
+        { error: "Ungültige Eingabe", code: "VALIDATION_ERROR" },
+        { status: 400 }
+      );
+    }
+    console.error("PUT /api/practice error:", err);
+    return NextResponse.json({ error: "Fehler beim Aktualisieren", code: "INTERNAL_ERROR" }, { status: 500 });
   }
 }

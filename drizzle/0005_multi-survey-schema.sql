@@ -1,6 +1,8 @@
 -- Multi-Survey + Multi-Branchen Schema Migration
 -- Issue #60 — Clean Break (no production users)
 
+BEGIN;
+
 -- ============================================================
 -- 1. CREATE ENUM
 -- ============================================================
@@ -33,7 +35,7 @@ ALTER TABLE "practices" ADD COLUMN "industry_sub_category" text DEFAULT 'zahnarz
 ALTER TABLE "practices" DROP COLUMN IF EXISTS "survey_template";
 
 -- ============================================================
--- 4. SURVEYS — add new columns, replace isActive with status
+-- 4. SURVEYS — add new columns, replace is_active with status
 -- ============================================================
 ALTER TABLE "surveys" ADD COLUMN "status" "public"."survey_status" DEFAULT 'draft';
 ALTER TABLE "surveys" ADD COLUMN "respondent_type" text DEFAULT 'patient';
@@ -57,12 +59,12 @@ ALTER TABLE "surveys" DROP COLUMN IF EXISTS "is_active";
 ALTER TABLE "responses" ADD COLUMN "answers" jsonb DEFAULT '{}';
 
 -- Backfill: copy old rating columns into answers JSONB
-UPDATE "responses" SET "answers" = jsonb_build_object(
+UPDATE "responses" SET "answers" = jsonb_strip_nulls(jsonb_build_object(
   'wait_time', "rating_wait_time",
   'friendliness', "rating_friendliness",
   'treatment', "rating_treatment",
   'facility', "rating_facility"
-) WHERE "rating_wait_time" IS NOT NULL
+)) WHERE "rating_wait_time" IS NOT NULL
    OR "rating_friendliness" IS NOT NULL
    OR "rating_treatment" IS NOT NULL
    OR "rating_facility" IS NOT NULL;
@@ -84,3 +86,5 @@ CREATE POLICY "surveys_select_active_anon"
   FOR SELECT
   TO anon
   USING ("status" = 'active');
+
+COMMIT;

@@ -21,6 +21,9 @@ export const surveyStatusEnum = pgEnum("survey_status", [
   "archived",
 ]);
 
+// Type hints for JSONB columns (full types in @/types)
+type QuestionJson = { id: string; type: string; label: string; required: boolean; category?: string; options?: string[] };
+
 // ============================================================
 // PRACTICES (Tenants)
 // ============================================================
@@ -71,7 +74,7 @@ export const surveyTemplates = pgTable("survey_templates", {
   industrySubCategory: text("industry_sub_category"),
   respondentType: text("respondent_type").notNull().default("patient"),
   category: text("category").notNull().default("customer"), // 'customer' | 'employee'
-  questions: jsonb("questions").notNull(),
+  questions: jsonb("questions").$type<QuestionJson[]>().notNull(),
   isSystem: boolean("is_system").default(true),
   sortOrder: smallint("sort_order").default(0),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
@@ -89,7 +92,7 @@ export const surveys = pgTable(
       .notNull()
       .references(() => practices.id, { onDelete: "cascade" }),
     title: text("title").notNull().default("Patientenbefragung"),
-    questions: jsonb("questions").notNull(),
+    questions: jsonb("questions").$type<QuestionJson[]>().notNull(),
     status: surveyStatusEnum("status").default("draft"),
     slug: text("slug").unique().notNull(),
     respondentType: text("respondent_type").default("patient"),
@@ -102,7 +105,7 @@ export const surveys = pgTable(
     sourceSurveyId: uuid("source_survey_id"),
     anonymityThreshold: smallint("anonymity_threshold").default(5),
     autoDeleteAfterMonths: smallint("auto_delete_after_months"),
-    config: jsonb("config").default({}),
+    config: jsonb("config").$type<Record<string, unknown>>().default({}),
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow(),
     deletedAt: timestamp("deleted_at", { withTimezone: true }), // Soft delete
@@ -127,7 +130,7 @@ export const responses = pgTable(
       .references(() => practices.id, { onDelete: "cascade" }),
     npsScore: smallint("nps_score").notNull(),
     npsCategory: text("nps_category").notNull(), // promoter | passive | detractor
-    answers: jsonb("answers").default({}),
+    answers: jsonb("answers").$type<Record<string, number | string | boolean>>().default({}),
     freeText: text("free_text"),
     language: text("language").default("de"),
     channel: text("channel").default("qr"), // qr | link | email
@@ -310,4 +313,4 @@ export type LoginEvent = typeof loginEvents.$inferSelect;
 export type NewLoginEvent = typeof loginEvents.$inferInsert;
 export type AuditEvent = typeof auditEvents.$inferSelect;
 export type NewAuditEvent = typeof auditEvents.$inferInsert;
-export type SurveyStatus = "draft" | "active" | "paused" | "archived";
+export type SurveyStatus = (typeof surveyStatusEnum.enumValues)[number];

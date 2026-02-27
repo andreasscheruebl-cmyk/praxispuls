@@ -1,7 +1,7 @@
 // ============================================================
-// Survey Status
+// Survey Status (derived from pgEnum in schema.ts)
 // ============================================================
-export type SurveyStatus = "draft" | "active" | "paused" | "archived";
+export type { SurveyStatus } from "@/lib/db/schema";
 
 // ============================================================
 // Respondent Types
@@ -71,7 +71,7 @@ export type SurveyTemplate = {
 // ============================================================
 // Survey Answers (JSONB format)
 // ============================================================
-export type SurveyAnswers = Record<string, unknown>;
+export type SurveyAnswers = Record<string, number | string | boolean>;
 
 // ============================================================
 // Template Category
