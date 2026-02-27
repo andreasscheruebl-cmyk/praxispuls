@@ -36,6 +36,49 @@ export type IndustryCategory =
   | "individuell";
 
 // ============================================================
+// Industry Sub-Categories (28 total)
+// ============================================================
+export type IndustrySubCategory =
+  // gesundheit
+  | "zahnarzt"
+  | "hausarzt"
+  | "augenarzt"
+  | "dermatologe"
+  | "physiotherapie"
+  | "tierarzt"
+  | "apotheke"
+  // handwerk
+  | "kfz_werkstatt"
+  | "she"
+  | "handwerk_allgemein"
+  // beauty
+  | "friseur"
+  | "kosmetik"
+  // gastronomie
+  | "restaurant"
+  | "hotel"
+  // fitness
+  | "fitnessstudio"
+  | "yoga_wellness"
+  // einzelhandel
+  | "laden"
+  | "optiker"
+  // bildung
+  | "fahrschule"
+  | "nachhilfe"
+  | "schule"
+  | "kindergarten"
+  // vereine
+  | "sportverein"
+  | "verein_allgemein"
+  // beratung
+  | "steuerberater"
+  | "rechtsanwalt"
+  // individuell
+  | "eigene_branche"
+  | "private_umfrage";
+
+// ============================================================
 // Survey Template Types
 // ============================================================
 export type SurveyQuestionType =
@@ -47,6 +90,7 @@ export type SurveyQuestionType =
   | "single-choice"
   | "yes-no";
 
+/** @deprecated Use DB-backed templates (survey_templates table) instead */
 type SurveyTemplateId =
   | "zahnarzt_standard"
   | "zahnarzt_kurz"
@@ -61,11 +105,22 @@ export type SurveyQuestion = {
   options?: string[]; // For single-choice questions
 };
 
+/** @deprecated Use SurveyTemplateRow from db/schema instead */
 export type SurveyTemplate = {
   id: SurveyTemplateId;
   name: string;
   description: string;
   questions: SurveyQuestion[];
+};
+
+// ============================================================
+// Template Customization (Light Customization)
+// ============================================================
+export type TemplateCustomization = {
+  templateId: string;
+  disabledQuestionIds?: string[];
+  labelOverrides?: Record<string, string>;
+  customQuestions?: SurveyQuestion[];
 };
 
 // ============================================================
