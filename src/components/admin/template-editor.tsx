@@ -79,7 +79,7 @@ export function TemplateEditor({ template }: TemplateEditorProps) {
     (template?.category as "customer" | "employee") ?? "customer"
   );
   const [questions, setQuestions] = useState<SurveyQuestion[]>(
-    (template?.questions as SurveyQuestion[]) ?? [
+    (template?.questions) ?? [
       { id: "nps", type: "nps", label: "Wie wahrscheinlich ist es, dass Sie uns weiterempfehlen?", required: true },
     ]
   );
@@ -119,31 +119,35 @@ export function TemplateEditor({ template }: TemplateEditorProps) {
     }
 
     startTransition(async () => {
-      const formData = new FormData();
-      formData.set("name", name);
-      formData.set("description", description);
-      formData.set("industryCategory", industryCategory);
-      if (industrySubCategory) formData.set("industrySubCategory", industrySubCategory);
-      formData.set("respondentType", respondentType);
-      formData.set("category", category);
-      formData.set("questions", JSON.stringify(questions));
+      try {
+        const formData = new FormData();
+        formData.set("name", name);
+        formData.set("description", description);
+        formData.set("industryCategory", industryCategory);
+        if (industrySubCategory) formData.set("industrySubCategory", industrySubCategory);
+        formData.set("respondentType", respondentType);
+        formData.set("category", category);
+        formData.set("questions", JSON.stringify(questions));
 
-      const result = isEdit
-        ? await updateTemplateAction(template.id, formData)
-        : await createTemplateAction(formData);
+        const result = isEdit
+          ? await updateTemplateAction(template.id, formData)
+          : await createTemplateAction(formData);
 
-      if ("error" in result && result.error) {
-        toast.error(result.error);
-      } else {
-        toast.success(isEdit ? "Template aktualisiert" : "Template erstellt");
-        const created = "template" in result
-          ? (result.template as { id: string } | undefined)
-          : undefined;
-        if (!isEdit && created) {
-          router.push(`/admin/templates/${created.id}`);
+        if ("error" in result && result.error) {
+          toast.error(result.error);
         } else {
-          router.push("/admin/templates");
+          toast.success(isEdit ? "Template aktualisiert" : "Template erstellt");
+          const created = "template" in result
+            ? (result.template as { id: string } | undefined)
+            : undefined;
+          if (!isEdit && created) {
+            router.push(`/admin/templates/${created.id}`);
+          } else {
+            router.push("/admin/templates");
+          }
         }
+      } catch {
+        toast.error("Ein unerwarteter Fehler ist aufgetreten");
       }
     });
   }

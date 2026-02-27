@@ -4,36 +4,10 @@
 export type { SurveyStatus } from "@/lib/db/schema";
 
 // ============================================================
-// Respondent Types
+// Derived types (single source of truth: as-const arrays in validations.ts)
 // ============================================================
-export type RespondentType =
-  | "patient"
-  | "tierhalter"
-  | "kunde"
-  | "gast"
-  | "mitglied"
-  | "fahrschueler"
-  | "schueler"
-  | "eltern"
-  | "mandant"
-  | "mitarbeiter"
-  | "individuell"
-  | "teilnehmer";
-
-// ============================================================
-// Industry Categories
-// ============================================================
-export type IndustryCategory =
-  | "gesundheit"
-  | "handwerk"
-  | "beauty"
-  | "gastronomie"
-  | "fitness"
-  | "einzelhandel"
-  | "bildung"
-  | "vereine"
-  | "beratung"
-  | "individuell";
+import type { SurveyQuestionType, RespondentType, IndustryCategory } from "@/lib/validations";
+export type { SurveyQuestionType, RespondentType, IndustryCategory };
 
 // ============================================================
 // Industry Sub-Categories (28 total)
@@ -81,14 +55,6 @@ export type IndustrySubCategory =
 // ============================================================
 // Survey Template Types
 // ============================================================
-export type SurveyQuestionType =
-  | "nps"
-  | "stars"
-  | "freetext"
-  | "enps"
-  | "likert"
-  | "single-choice"
-  | "yes-no";
 
 /** @deprecated Use DB-backed templates (survey_templates table) instead */
 type SurveyTemplateId =

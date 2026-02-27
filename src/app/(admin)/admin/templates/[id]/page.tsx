@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/card";
 import { ArrowLeft, Pencil } from "lucide-react";
 import { TemplateDeleteButton } from "@/components/admin/template-delete-button";
-import type { SurveyQuestion } from "@/types";
+
 
 const QUESTION_TYPE_LABELS: Record<string, string> = {
   nps: "NPS",
@@ -36,7 +36,7 @@ export default async function AdminTemplateDetailPage({
   const template = await getTemplateById(id);
   if (!template) return notFound();
 
-  const questions = (template.questions ?? []) as SurveyQuestion[];
+  const questions = template.questions ?? [];
 
   return (
     <div className="space-y-6">

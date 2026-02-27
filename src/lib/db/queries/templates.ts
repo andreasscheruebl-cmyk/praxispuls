@@ -38,7 +38,8 @@ export async function getTemplates(filter: TemplatesFilter = {}) {
     conditions.push(eq(surveyTemplates.isSystem, isSystem));
   }
   if (search) {
-    const pattern = `%${search}%`;
+    const escaped = search.replace(/[%_\\]/g, "\\$&");
+    const pattern = `%${escaped}%`;
     conditions.push(
       or(
         ilike(surveyTemplates.name, pattern),
@@ -130,6 +131,7 @@ export async function createTemplate(data: NewSurveyTemplate) {
     .insert(surveyTemplates)
     .values(data)
     .returning();
+  if (!result) throw new Error("Template-Insert gab kein Ergebnis zurück");
   return result;
 }
 
@@ -142,6 +144,7 @@ export async function updateTemplate(id: string, data: Partial<NewSurveyTemplate
     .set({ ...data, updatedAt: new Date() })
     .where(eq(surveyTemplates.id, id))
     .returning();
+  if (!result) throw new Error("Template nicht gefunden oder Update fehlgeschlagen");
   return result;
 }
 

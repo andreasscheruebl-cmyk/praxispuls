@@ -38,7 +38,7 @@ const ADDABLE_TYPES: { value: SurveyQuestionType; label: string }[] = [
 ];
 
 // NPS and eNPS are core metrics and cannot be disabled
-function isCorQuestion(q: SurveyQuestion): boolean {
+function isCoreQuestion(q: SurveyQuestion): boolean {
   return q.type === "nps" || q.type === "enps";
 }
 
@@ -51,7 +51,7 @@ export function TemplateCustomizer({
   template,
   onCustomize,
 }: TemplateCustomizerProps) {
-  const templateQuestions = (template.questions ?? []) as SurveyQuestion[];
+  const templateQuestions = template.questions ?? [];
 
   const [disabledIds, setDisabledIds] = useState<Set<string>>(new Set());
   const [labelOverrides, setLabelOverrides] = useState<Record<string, string>>({});
@@ -121,7 +121,7 @@ export function TemplateCustomizer({
     <div className="space-y-4">
       <div className="space-y-2">
         {templateQuestions.map((q) => {
-          const isCore = isCorQuestion(q);
+          const isCore = isCoreQuestion(q);
           const isDisabled = disabledIds.has(q.id);
           const overriddenLabel = labelOverrides[q.id];
 

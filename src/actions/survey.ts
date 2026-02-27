@@ -71,6 +71,7 @@ export async function changeSurveyTemplate(
   await db
     .update(surveys)
     .set({
+      templateId: template.id,
       questions: template.questions,
       updatedAt: new Date(),
     })

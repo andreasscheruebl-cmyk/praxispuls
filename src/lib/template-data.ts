@@ -1,5 +1,5 @@
 import type { NewSurveyTemplate } from "@/lib/db/schema";
-import type { SurveyQuestion } from "@/types";
+import type { SurveyQuestion, IndustryCategory, IndustrySubCategory, RespondentType } from "@/types";
 
 // ============================================================
 // Question Presets per Industry Group
@@ -107,7 +107,7 @@ const INDIVIDUELL_STARS: StarPreset[] = [
 // Star presets by sub-category
 // ============================================================
 
-const STARS_BY_SUB: Record<string, StarPreset[]> = {
+const STARS_BY_SUB: Partial<Record<IndustrySubCategory, StarPreset[]>> = {
   // gesundheit
   zahnarzt: MEDICAL_STARS,
   hausarzt: MEDICAL_STARS,
@@ -153,10 +153,10 @@ const STARS_BY_SUB: Record<string, StarPreset[]> = {
 // ============================================================
 
 type SubConfig = {
-  subId: string;
-  category: string;
+  subId: IndustrySubCategory;
+  category: IndustryCategory;
   label: string;
-  respondentType: string;
+  respondentType: RespondentType;
   npsLabel: string;
 };
 

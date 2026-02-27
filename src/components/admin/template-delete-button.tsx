@@ -17,12 +17,16 @@ export function TemplateDeleteButton({ templateId }: { templateId: string }) {
     }
 
     startTransition(async () => {
-      const result = await deleteTemplateAction(templateId);
-      if (result.error) {
-        toast.error(result.error);
-      } else {
-        toast.success("Template gelöscht");
-        router.push("/admin/templates");
+      try {
+        const result = await deleteTemplateAction(templateId);
+        if (result.error) {
+          toast.error(result.error);
+        } else {
+          toast.success("Template gelöscht");
+          router.push("/admin/templates");
+        }
+      } catch {
+        toast.error("Löschen fehlgeschlagen. Bitte versuchen Sie es erneut.");
       }
     });
   }

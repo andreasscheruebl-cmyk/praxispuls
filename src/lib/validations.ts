@@ -116,16 +116,19 @@ export const adminGoogleUpdateSchema = z.object({
 export const QUESTION_TYPES = [
   "nps", "stars", "freetext", "enps", "likert", "single-choice", "yes-no",
 ] as const;
+export type SurveyQuestionType = (typeof QUESTION_TYPES)[number];
 
 export const INDUSTRY_CATEGORIES = [
   "gesundheit", "handwerk", "beauty", "gastronomie", "fitness",
   "einzelhandel", "bildung", "vereine", "beratung", "individuell",
 ] as const;
+export type IndustryCategory = (typeof INDUSTRY_CATEGORIES)[number];
 
 export const RESPONDENT_TYPES = [
   "patient", "tierhalter", "kunde", "gast", "mitglied", "fahrschueler",
   "schueler", "eltern", "mandant", "mitarbeiter", "individuell", "teilnehmer",
 ] as const;
+export type RespondentType = (typeof RESPONDENT_TYPES)[number];
 
 export const surveyQuestionSchema = z.object({
   id: z.string().min(1).max(50),
