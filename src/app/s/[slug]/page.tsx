@@ -38,7 +38,7 @@ export default async function SurveyPage({ params }: Props) {
   const { slug } = await params;
   const survey = await getSurveyBySlug(slug);
 
-  if (!survey || !survey.isActive || survey.practice.deletedAt) {
+  if (!survey || survey.status !== "active" || survey.practice.deletedAt) {
     notFound();
   }
 

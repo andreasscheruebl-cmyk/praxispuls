@@ -12,11 +12,27 @@ type AlertData = {
   createdAt: Date | null;
   npsScore: number;
   freeText: string | null;
-  ratingWaitTime: number | null;
-  ratingFriendliness: number | null;
-  ratingTreatment: number | null;
-  ratingFacility: number | null;
+  answers: unknown;
 };
+
+function getStarRatings(answers: unknown): { label: string; value: number }[] {
+  if (!answers || typeof answers !== "object") return [];
+  const a = answers as Record<string, unknown>;
+  const mapping: Record<string, string> = {
+    wait_time: "Wartezeit",
+    friendliness: "Freundlichkeit",
+    treatment: "Behandlung",
+    facility: "Ausstattung",
+  };
+  const result: { label: string; value: number }[] = [];
+  for (const [key, label] of Object.entries(mapping)) {
+    const val = a[key];
+    if (typeof val === "number" && val >= 1 && val <= 5) {
+      result.push({ label, value: val });
+    }
+  }
+  return result;
+}
 
 export function AlertItem({ alert }: { alert: AlertData }) {
   const [note, setNote] = useState(alert.note || "");
@@ -46,12 +62,7 @@ export function AlertItem({ alert }: { alert: AlertData }) {
     }
   }
 
-  const ratings = [
-    { label: "Wartezeit", value: alert.ratingWaitTime },
-    { label: "Freundlichkeit", value: alert.ratingFriendliness },
-    { label: "Behandlung", value: alert.ratingTreatment },
-    { label: "Ausstattung", value: alert.ratingFacility },
-  ].filter((r) => r.value !== null);
+  const ratings = getStarRatings(alert.answers);
 
   return (
     <Card className={!alert.isRead ? "border-red-200 bg-red-50/50" : ""}>
@@ -95,14 +106,14 @@ export function AlertItem({ alert }: { alert: AlertData }) {
                   </div>
                 )}
 
-                {/* Ratings */}
+                {/* Ratings from answers JSONB */}
                 {ratings.length > 0 && (
                   <div className="flex flex-wrap gap-4 text-sm">
                     {ratings.map((r) => (
                       <span key={r.label} className="text-muted-foreground">
                         {r.label}:{" "}
                         <span className="text-yellow-500">
-                          {"★".repeat(r.value!)}{"☆".repeat(5 - r.value!)}
+                          {"★".repeat(r.value)}{"☆".repeat(5 - r.value)}
                         </span>
                       </span>
                     ))}

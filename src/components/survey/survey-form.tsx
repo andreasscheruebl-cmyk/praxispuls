@@ -48,10 +48,12 @@ export function SurveyForm({ surveyId, practiceName, practiceColor }: Props) {
         body: JSON.stringify({
           surveyId,
           npsScore,
-          ratingWaitTime: ratings.waitTime || undefined,
-          ratingFriendliness: ratings.friendliness || undefined,
-          ratingTreatment: ratings.treatment || undefined,
-          ratingFacility: ratings.facility || undefined,
+          answers: {
+            ...(ratings.waitTime ? { wait_time: ratings.waitTime } : {}),
+            ...(ratings.friendliness ? { friendliness: ratings.friendliness } : {}),
+            ...(ratings.treatment ? { treatment: ratings.treatment } : {}),
+            ...(ratings.facility ? { facility: ratings.facility } : {}),
+          },
           freeText: freeText || undefined,
           deviceType: /Mobi/.test(navigator.userAgent) ? "mobile" : "desktop",
           sessionHash,

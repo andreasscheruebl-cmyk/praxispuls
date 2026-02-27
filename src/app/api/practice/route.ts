@@ -38,7 +38,7 @@ export async function POST(request: Request) {
     const user = auth.user;
 
     const body = await request.json();
-    const { name, postalCode, googlePlaceId, surveyTemplate, logoUrl } = body;
+    const { name, postalCode, googlePlaceId, templateId: templateIdParam, logoUrl } = body;
 
     if (!name?.trim()) {
       return NextResponse.json({ error: "Name fehlt", code: "BAD_REQUEST" }, { status: 400 });
@@ -69,8 +69,8 @@ export async function POST(request: Request) {
       }
     }
 
-    const templateId = surveyTemplate || "zahnarzt_standard";
-    const template = SURVEY_TEMPLATES.find(t => t.id === templateId) || SURVEY_TEMPLATES[0]!;
+    const chosenTemplateId = templateIdParam || "zahnarzt_standard";
+    const template = SURVEY_TEMPLATES.find(t => t.id === chosenTemplateId) || SURVEY_TEMPLATES[0]!;
 
     // Transaction: check limit + insert atomically to prevent race conditions
     const result = await db.transaction(async (tx) => {
@@ -112,7 +112,6 @@ export async function POST(request: Request) {
         googleReviewUrl,
         logoUrl: logoUrl || null,
         alertEmail: user.email!,
-        surveyTemplate: templateId,
         plan: userPlan, // Inherit effective plan from user
       }).returning();
 
@@ -122,7 +121,7 @@ export async function POST(request: Request) {
         title: "Patientenbefragung",
         slug: surveySlug,
         questions: template.questions,
-        isActive: true,
+        status: "active",
       });
 
       return { practice };

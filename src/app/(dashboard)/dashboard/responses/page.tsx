@@ -24,6 +24,29 @@ function NpsBadge({ category }: { category: string }) {
   );
 }
 
+const STAR_LABELS: Record<string, string> = {
+  wait_time: "Wartezeit",
+  friendliness: "Freundlichkeit",
+  treatment: "Behandlung",
+  facility: "Ausstattung",
+};
+
+function AnswerStars({ answers }: { answers: unknown }) {
+  if (!answers || typeof answers !== "object") return null;
+  const a = answers as Record<string, unknown>;
+  const entries = Object.entries(STAR_LABELS)
+    .filter(([key]) => typeof a[key] === "number" && (a[key] as number) >= 1 && (a[key] as number) <= 5)
+    .map(([key, label]) => ({ label, value: a[key] as number }));
+  if (entries.length === 0) return null;
+  return (
+    <div className="mt-2 flex flex-wrap gap-4 text-sm text-muted-foreground">
+      {entries.map((e) => (
+        <span key={e.label}>{e.label}: {"★".repeat(e.value)}{"☆".repeat(5 - e.value)}</span>
+      ))}
+    </div>
+  );
+}
+
 export default async function ResponsesPage() {
   const practice = await getActivePractice();
   if (!practice) redirect("/onboarding");
@@ -64,12 +87,7 @@ export default async function ResponsesPage() {
                         })}
                       </span>
                     </div>
-                    <div className="mt-2 flex flex-wrap gap-4 text-sm text-muted-foreground">
-                      {r.ratingWaitTime && <span>Wartezeit: {"★".repeat(r.ratingWaitTime)}{"☆".repeat(5 - r.ratingWaitTime)}</span>}
-                      {r.ratingFriendliness && <span>Freundlichkeit: {"★".repeat(r.ratingFriendliness)}{"☆".repeat(5 - r.ratingFriendliness)}</span>}
-                      {r.ratingTreatment && <span>Behandlung: {"★".repeat(r.ratingTreatment)}{"☆".repeat(5 - r.ratingTreatment)}</span>}
-                      {r.ratingFacility && <span>Ausstattung: {"★".repeat(r.ratingFacility)}{"☆".repeat(5 - r.ratingFacility)}</span>}
-                    </div>
+                    <AnswerStars answers={r.answers} />
                     {r.freeText && (
                       <p className="mt-2 rounded bg-gray-50 p-3 text-sm italic">&ldquo;{r.freeText}&rdquo;</p>
                     )}

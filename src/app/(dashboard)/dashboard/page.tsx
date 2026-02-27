@@ -4,7 +4,6 @@ import { getActivePractice } from "@/actions/practice";
 import { getDashboardOverview, getNpsTrend, getReviewFunnel } from "@/lib/db/queries/dashboard";
 import { NpsChart } from "@/components/dashboard/nps-chart";
 import { ReviewFunnel } from "@/components/dashboard/review-funnel";
-import { CategoryBars } from "@/components/dashboard/category-bars";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
@@ -30,25 +29,7 @@ export default async function DashboardPage() {
         <p className="text-muted-foreground">{practice.name}</p>
       </div>
 
-      {/* 1. Category Scores */}
-      {hasData && (
-        <Card>
-          <CardHeader><CardTitle className="text-lg">Kategorie-Bewertungen (Ø)</CardTitle></CardHeader>
-          <CardContent>
-            <CategoryBars
-              categories={[
-                { label: "Wartezeit", value: overview.categoryScores.waitTime },
-                { label: "Freundlichkeit", value: overview.categoryScores.friendliness },
-                { label: "Behandlung", value: overview.categoryScores.treatment },
-                { label: "Ausstattung", value: overview.categoryScores.facility },
-              ]}
-              color={CHART_COLOR}
-            />
-          </CardContent>
-        </Card>
-      )}
-
-      {/* 2. Key Numbers */}
+      {/* Key Numbers */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">

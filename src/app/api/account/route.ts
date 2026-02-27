@@ -44,7 +44,7 @@ export async function DELETE(request: Request) {
       // Soft-delete surveys
       await db
         .update(surveys)
-        .set({ deletedAt: now, isActive: false })
+        .set({ deletedAt: now, status: "archived" })
         .where(eq(surveys.practiceId, practice.id));
 
       // Soft-delete practice

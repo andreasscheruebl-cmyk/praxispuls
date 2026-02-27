@@ -20,7 +20,7 @@ export async function getSurveys() {
 }
 
 /**
- * Toggle survey active state
+ * Toggle survey between active and paused state
  */
 export async function toggleSurvey(surveyId: string) {
   const practice = await getActivePractice();
@@ -34,9 +34,10 @@ export async function toggleSurvey(surveyId: string) {
     throw new Error("Umfrage nicht gefunden");
   }
 
+  const newStatus = survey.status === "active" ? "paused" : "active";
   await db
     .update(surveys)
-    .set({ isActive: !survey.isActive, updatedAt: new Date() })
+    .set({ status: newStatus, updatedAt: new Date() })
     .where(eq(surveys.id, surveyId));
 
   revalidatePath("/dashboard");

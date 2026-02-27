@@ -117,16 +117,20 @@ describe("practiceUpdateSchema", () => {
     expect(result.success).toBe(false);
   });
 
-  it("accepts valid survey template", () => {
-    const result = practiceUpdateSchema.safeParse({ surveyTemplate: "zahnarzt_kurz" });
+  it("accepts valid industry category", () => {
+    const result = practiceUpdateSchema.safeParse({ industryCategory: "gesundheit" });
     expect(result.success).toBe(true);
   });
 
-  it("rejects invalid survey template", () => {
-    const result = practiceUpdateSchema.safeParse({ surveyTemplate: "invalid_template" });
-    expect(result.success).toBe(false);
+  it("accepts valid industry sub-category", () => {
+    const result = practiceUpdateSchema.safeParse({ industrySubCategory: "zahnarztpraxis" });
+    expect(result.success).toBe(true);
   });
 
+  it("rejects empty industry category", () => {
+    const result = practiceUpdateSchema.safeParse({ industryCategory: "" });
+    expect(result.success).toBe(false);
+  });
 });
 
 describe("surveyResponseSchema", () => {
@@ -140,17 +144,27 @@ describe("surveyResponseSchema", () => {
     expect(result.success).toBe(true);
   });
 
-  it("accepts full valid response", () => {
+  it("accepts full valid response with answers", () => {
     const result = surveyResponseSchema.safeParse({
       ...validResponse,
-      ratingWaitTime: 4,
-      ratingFriendliness: 5,
-      ratingTreatment: 3,
-      ratingFacility: 4,
+      answers: {
+        wait_time: 4,
+        friendliness: 5,
+        treatment: 3,
+        facility: 4,
+      },
       freeText: "Sehr zufrieden!",
       channel: "link",
       deviceType: "mobile",
       sessionHash: "abc123",
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it("accepts response with empty answers", () => {
+    const result = surveyResponseSchema.safeParse({
+      ...validResponse,
+      answers: {},
     });
     expect(result.success).toBe(true);
   });
@@ -183,22 +197,6 @@ describe("surveyResponseSchema", () => {
     const result = surveyResponseSchema.safeParse({
       ...validResponse,
       npsScore: 7.5,
-    });
-    expect(result.success).toBe(false);
-  });
-
-  it("rejects rating below 1", () => {
-    const result = surveyResponseSchema.safeParse({
-      ...validResponse,
-      ratingWaitTime: 0,
-    });
-    expect(result.success).toBe(false);
-  });
-
-  it("rejects rating above 5", () => {
-    const result = surveyResponseSchema.safeParse({
-      ...validResponse,
-      ratingFriendliness: 6,
     });
     expect(result.success).toBe(false);
   });
