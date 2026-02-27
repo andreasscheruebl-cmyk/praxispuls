@@ -1,4 +1,4 @@
-import { Building2, BarChart3, ScrollText, LogIn, Shield } from "lucide-react";
+import { Building2, BarChart3, ScrollText, LogIn, Shield, FileText } from "lucide-react";
 import Link from "next/link";
 
 const adminLinks = [
@@ -25,6 +25,12 @@ const adminLinks = [
     icon: LogIn,
     title: "Login-History",
     description: "Login-Events, IP-Adressen, Browser.",
+  },
+  {
+    href: "/admin/templates",
+    icon: FileText,
+    title: "Templates",
+    description: "Survey-Templates verwalten, Branchen-Templates einsehen.",
   },
 ];
 

@@ -5,7 +5,7 @@ import { surveys } from "@/lib/db/schema";
 import { getActivePractice } from "./practice";
 import { eq, and } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
-import { SURVEY_TEMPLATES } from "@/lib/survey-templates";
+import { getTemplateById } from "@/lib/db/queries/templates";
 
 /**
  * Get all surveys for current practice
@@ -57,7 +57,7 @@ export async function changeSurveyTemplate(
   const practice = await getActivePractice();
   if (!practice) throw new Error("Praxis nicht gefunden");
 
-  const template = SURVEY_TEMPLATES.find((t) => t.id === templateId);
+  const template = await getTemplateById(templateId);
   if (!template) throw new Error("Template nicht gefunden");
 
   // Ownership check: verify survey belongs to active practice
@@ -71,6 +71,7 @@ export async function changeSurveyTemplate(
   await db
     .update(surveys)
     .set({
+      templateId: template.id,
       questions: template.questions,
       updatedAt: new Date(),
     })

@@ -110,3 +110,58 @@ export const adminGoogleUpdateSchema = z.object({
   googleRedirectEnabled: z.boolean().optional(),
 });
 
+// ============================================================
+// SURVEY QUESTION (shared validation for template + survey JSONB)
+// ============================================================
+export const QUESTION_TYPES = [
+  "nps", "stars", "freetext", "enps", "likert", "single-choice", "yes-no",
+] as const;
+export type SurveyQuestionType = (typeof QUESTION_TYPES)[number];
+
+export const INDUSTRY_CATEGORIES = [
+  "gesundheit", "handwerk", "beauty", "gastronomie", "fitness",
+  "einzelhandel", "bildung", "vereine", "beratung", "individuell",
+] as const;
+export type IndustryCategory = (typeof INDUSTRY_CATEGORIES)[number];
+
+export const RESPONDENT_TYPES = [
+  "patient", "tierhalter", "kunde", "gast", "mitglied", "fahrschueler",
+  "schueler", "eltern", "mandant", "mitarbeiter", "individuell", "teilnehmer",
+] as const;
+export type RespondentType = (typeof RESPONDENT_TYPES)[number];
+
+export const surveyQuestionSchema = z.object({
+  id: z.string().min(1).max(50),
+  type: z.enum(QUESTION_TYPES),
+  label: z.string().min(1).max(500),
+  required: z.boolean(),
+  category: z.string().max(50).optional(),
+  options: z.array(z.string().max(200)).max(10).optional(),
+});
+
+// ============================================================
+// TEMPLATE CREATE / UPDATE (Admin CRUD)
+// ============================================================
+export const templateCreateSchema = z.object({
+  name: z.string().min(2).max(100),
+  description: z.string().max(500).optional(),
+  industryCategory: z.enum(INDUSTRY_CATEGORIES),
+  industrySubCategory: z.string().max(50).optional(),
+  respondentType: z.enum(RESPONDENT_TYPES),
+  category: z.enum(["customer", "employee"]),
+  questions: z.array(surveyQuestionSchema).min(1).max(30),
+  sortOrder: z.number().int().min(0).max(999).optional(),
+});
+
+export const templateUpdateSchema = templateCreateSchema.partial();
+
+// ============================================================
+// TEMPLATE CUSTOMIZATION (Light Customization at Survey creation)
+// ============================================================
+export const templateCustomizationSchema = z.object({
+  templateId: z.string().uuid(),
+  disabledQuestionIds: z.array(z.string()).optional(),
+  labelOverrides: z.record(z.string(), z.string().max(500)).optional(),
+  customQuestions: z.array(surveyQuestionSchema).max(3).optional(),
+});
+

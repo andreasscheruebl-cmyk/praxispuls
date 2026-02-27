@@ -22,7 +22,7 @@ export const surveyStatusEnum = pgEnum("survey_status", [
 ]);
 
 // Type hints for JSONB columns (full types in @/types)
-type QuestionJson = { id: string; type: string; label: string; required: boolean; category?: string; options?: string[] };
+type QuestionJson = { id: string; type: "nps" | "stars" | "freetext" | "enps" | "likert" | "single-choice" | "yes-no"; label: string; required: boolean; category?: string; options?: string[] };
 
 // ============================================================
 // PRACTICES (Tenants)
