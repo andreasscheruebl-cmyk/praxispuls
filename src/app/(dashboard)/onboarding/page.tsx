@@ -26,7 +26,7 @@ export default function OnboardingPage() {
     postalCode: "",
     logoUrl: "",
     googlePlaceId: "",
-    surveyTemplate: "zahnarzt_standard",
+    templateId: "zahnarzt_standard",
   });
 
   async function handleComplete() {
@@ -141,8 +141,8 @@ export default function OnboardingPage() {
               <div className="space-y-3">
                 <Label>Umfrage-Template wählen</Label>
                 {TEMPLATES.map(t => (
-                  <button key={t.id} onClick={() => setData({...data, surveyTemplate: t.id})}
-                    className={`w-full rounded-lg border p-4 text-left transition ${data.surveyTemplate === t.id ? "border-primary bg-primary/5" : "hover:bg-gray-50"}`}>
+                  <button key={t.id} onClick={() => setData({...data, templateId: t.id})}
+                    className={`w-full rounded-lg border p-4 text-left transition ${data.templateId === t.id ? "border-primary bg-primary/5" : "hover:bg-gray-50"}`}>
                     <p className="font-medium">{t.name}</p>
                     <p className="text-sm text-muted-foreground">{t.desc}</p>
                   </button>

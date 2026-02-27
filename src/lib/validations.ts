@@ -51,9 +51,11 @@ export const practiceUpdateSchema = z.object({
     .string()
     .regex(/^#[0-9A-Fa-f]{6}$/)
     .optional(),
-  surveyTemplate: z
-    .enum(["zahnarzt_standard", "zahnarzt_kurz", "zahnarzt_prophylaxe"])
-    .optional(),
+  industryCategory: z.enum([
+    "gesundheit", "handwerk", "beauty", "gastronomie", "fitness",
+    "einzelhandel", "bildung", "vereine", "beratung", "individuell",
+  ]).optional(),
+  industrySubCategory: z.string().min(1).max(50).optional(),
   npsThreshold: z.number().int().min(7).max(10).optional(),
   googleRedirectEnabled: z.boolean().optional(),
 });
@@ -64,10 +66,13 @@ export const practiceUpdateSchema = z.object({
 export const surveyResponseSchema = z.object({
   surveyId: z.string().uuid(),
   npsScore: z.number().int().min(0).max(10),
-  ratingWaitTime: z.number().int().min(1).max(5).optional(),
-  ratingFriendliness: z.number().int().min(1).max(5).optional(),
-  ratingTreatment: z.number().int().min(1).max(5).optional(),
-  ratingFacility: z.number().int().min(1).max(5).optional(),
+  answers: z.record(
+    z.string().max(100),
+    z.union([z.number().min(0).max(10), z.string().max(2000), z.boolean()])
+  ).refine(
+    (obj) => Object.keys(obj).length <= 50,
+    "Too many answers"
+  ).optional(),
   freeText: z.string().max(2000).optional(),
   channel: z.enum(["qr", "link", "email"]).default("qr"),
   deviceType: z.enum(["mobile", "tablet", "desktop"]).optional(),

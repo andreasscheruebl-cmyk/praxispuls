@@ -49,7 +49,7 @@ export function AddLocationModal({
     name: "",
     postalCode: "",
     googlePlaceId: "",
-    surveyTemplate: "zahnarzt_standard",
+    templateId: "zahnarzt_standard",
   });
 
   function resetForm() {
@@ -58,7 +58,7 @@ export function AddLocationModal({
       name: "",
       postalCode: "",
       googlePlaceId: "",
-      surveyTemplate: "zahnarzt_standard",
+      templateId: "zahnarzt_standard",
     });
     setError(null);
     setLoading(false);
@@ -195,10 +195,10 @@ export function AddLocationModal({
                   <button
                     key={t.id}
                     onClick={() =>
-                      setData({ ...data, surveyTemplate: t.id })
+                      setData({ ...data, templateId: t.id })
                     }
                     className={`w-full rounded-lg border p-3 text-left transition ${
-                      data.surveyTemplate === t.id
+                      data.templateId === t.id
                         ? "border-primary bg-primary/5"
                         : "hover:bg-gray-50"
                     }`}

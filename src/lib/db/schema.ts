@@ -1,5 +1,6 @@
 import {
   pgTable,
+  pgEnum,
   uuid,
   text,
   boolean,
@@ -9,6 +10,19 @@ import {
   index,
 } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
+
+// ============================================================
+// ENUMS
+// ============================================================
+export const surveyStatusEnum = pgEnum("survey_status", [
+  "draft",
+  "active",
+  "paused",
+  "archived",
+]);
+
+// Type hints for JSONB columns (full types in @/types)
+type QuestionJson = { id: string; type: string; label: string; required: boolean; category?: string; options?: string[] };
 
 // ============================================================
 // PRACTICES (Tenants)
@@ -30,7 +44,8 @@ export const practices = pgTable(
     stripeCustomerId: text("stripe_customer_id"),
     stripeSubscriptionId: text("stripe_subscription_id"),
     alertEmail: text("alert_email"),
-    surveyTemplate: text("survey_template").default("zahnarzt_standard"),
+    industryCategory: text("industry_category").default("gesundheit"),
+    industrySubCategory: text("industry_sub_category").default("zahnarztpraxis"),
     theme: text("theme").default("vertrauen"),
     planOverride: text("plan_override"), // free | starter | professional (admin-set)
     overrideReason: text("override_reason"),
@@ -48,6 +63,25 @@ export const practices = pgTable(
 );
 
 // ============================================================
+// SURVEY TEMPLATES
+// ============================================================
+export const surveyTemplates = pgTable("survey_templates", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  name: text("name").notNull(),
+  slug: text("slug").unique().notNull(),
+  description: text("description"),
+  industryCategory: text("industry_category").notNull(),
+  industrySubCategory: text("industry_sub_category"),
+  respondentType: text("respondent_type").notNull().default("patient"),
+  category: text("category").notNull().default("customer"), // 'customer' | 'employee'
+  questions: jsonb("questions").$type<QuestionJson[]>().notNull(),
+  isSystem: boolean("is_system").default(true),
+  sortOrder: smallint("sort_order").default(0),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow(),
+});
+
+// ============================================================
 // SURVEYS
 // ============================================================
 export const surveys = pgTable(
@@ -58,10 +92,20 @@ export const surveys = pgTable(
       .notNull()
       .references(() => practices.id, { onDelete: "cascade" }),
     title: text("title").notNull().default("Patientenbefragung"),
-    questions: jsonb("questions").notNull(),
-    isActive: boolean("is_active").default(true),
+    questions: jsonb("questions").$type<QuestionJson[]>().notNull(),
+    status: surveyStatusEnum("status").default("draft"),
     slug: text("slug").unique().notNull(),
-    config: jsonb("config").default({}),
+    respondentType: text("respondent_type").default("patient"),
+    templateId: uuid("template_id").references(() => surveyTemplates.id, {
+      onDelete: "set null",
+    }),
+    description: text("description"),
+    startsAt: timestamp("starts_at", { withTimezone: true }),
+    endsAt: timestamp("ends_at", { withTimezone: true }),
+    sourceSurveyId: uuid("source_survey_id"),
+    anonymityThreshold: smallint("anonymity_threshold").default(5),
+    autoDeleteAfterMonths: smallint("auto_delete_after_months"),
+    config: jsonb("config").$type<Record<string, unknown>>().default({}),
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow(),
     deletedAt: timestamp("deleted_at", { withTimezone: true }), // Soft delete
@@ -86,10 +130,7 @@ export const responses = pgTable(
       .references(() => practices.id, { onDelete: "cascade" }),
     npsScore: smallint("nps_score").notNull(),
     npsCategory: text("nps_category").notNull(), // promoter | passive | detractor
-    ratingWaitTime: smallint("rating_wait_time"),
-    ratingFriendliness: smallint("rating_friendliness"),
-    ratingTreatment: smallint("rating_treatment"),
-    ratingFacility: smallint("rating_facility"),
+    answers: jsonb("answers").$type<Record<string, number | string | boolean>>().default({}),
     freeText: text("free_text"),
     language: text("language").default("de"),
     channel: text("channel").default("qr"), // qr | link | email
@@ -195,10 +236,26 @@ export const practicesRelations = relations(practices, ({ many }) => ({
   auditEvents: many(auditEvents),
 }));
 
+export const surveyTemplatesRelations = relations(
+  surveyTemplates,
+  ({ many }) => ({
+    surveys: many(surveys),
+  })
+);
+
 export const surveysRelations = relations(surveys, ({ one, many }) => ({
   practice: one(practices, {
     fields: [surveys.practiceId],
     references: [practices.id],
+  }),
+  template: one(surveyTemplates, {
+    fields: [surveys.templateId],
+    references: [surveyTemplates.id],
+  }),
+  sourceSurvey: one(surveys, {
+    fields: [surveys.sourceSurveyId],
+    references: [surveys.id],
+    relationName: "surveySource",
   }),
   responses: many(responses),
 }));
@@ -246,6 +303,8 @@ export type Practice = typeof practices.$inferSelect;
 export type NewPractice = typeof practices.$inferInsert;
 export type Survey = typeof surveys.$inferSelect;
 export type NewSurvey = typeof surveys.$inferInsert;
+export type SurveyTemplateRow = typeof surveyTemplates.$inferSelect;
+export type NewSurveyTemplate = typeof surveyTemplates.$inferInsert;
 export type Response = typeof responses.$inferSelect;
 export type NewResponse = typeof responses.$inferInsert;
 export type Alert = typeof alerts.$inferSelect;
@@ -254,3 +313,4 @@ export type LoginEvent = typeof loginEvents.$inferSelect;
 export type NewLoginEvent = typeof loginEvents.$inferInsert;
 export type AuditEvent = typeof auditEvents.$inferSelect;
 export type NewAuditEvent = typeof auditEvents.$inferInsert;
+export type SurveyStatus = (typeof surveyStatusEnum.enumValues)[number];

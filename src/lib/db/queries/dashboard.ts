@@ -1,6 +1,6 @@
 import { db } from "@/lib/db";
 import { responses, alerts } from "@/lib/db/schema";
-import { eq, and, gte, count, avg, sql, desc } from "drizzle-orm";
+import { eq, and, gte, count, sql, desc } from "drizzle-orm";
 
 /**
  * Get dashboard overview stats for a practice
@@ -14,7 +14,6 @@ export async function getDashboardOverview(practiceId: string) {
   const [
     [responseCounts],
     [weekCount],
-    [categoryAvgs],
     [unreadAlerts],
   ] = await Promise.all([
     db
@@ -47,20 +46,6 @@ export async function getDashboardOverview(practiceId: string) {
         )
       ),
     db
-      .select({
-        waitTime: avg(responses.ratingWaitTime),
-        friendliness: avg(responses.ratingFriendliness),
-        treatment: avg(responses.ratingTreatment),
-        facility: avg(responses.ratingFacility),
-      })
-      .from(responses)
-      .where(
-        and(
-          eq(responses.practiceId, practiceId),
-          gte(responses.createdAt, thirtyDaysAgo)
-        )
-      ),
-    db
       .select({ count: count() })
       .from(alerts)
       .where(
@@ -87,18 +72,6 @@ export async function getDashboardOverview(practiceId: string) {
     googleConversionRate:
       promoters > 0 ? Math.round((googleClicks / promoters) * 100) : null,
     unreadAlerts: unreadAlerts?.count ?? 0,
-    categoryScores: {
-      waitTime: categoryAvgs?.waitTime ? Number(categoryAvgs.waitTime) : null,
-      friendliness: categoryAvgs?.friendliness
-        ? Number(categoryAvgs.friendliness)
-        : null,
-      treatment: categoryAvgs?.treatment
-        ? Number(categoryAvgs.treatment)
-        : null,
-      facility: categoryAvgs?.facility
-        ? Number(categoryAvgs.facility)
-        : null,
-    },
   };
 }
 

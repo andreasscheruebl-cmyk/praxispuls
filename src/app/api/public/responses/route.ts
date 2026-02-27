@@ -30,7 +30,7 @@ export async function POST(request: Request) {
       with: { practice: true },
     });
 
-    if (!survey || !survey.isActive) {
+    if (!survey || survey.status !== "active") {
       return NextResponse.json(
         { error: "Umfrage nicht gefunden", code: "SURVEY_NOT_FOUND" },
         { status: 404 }
@@ -89,10 +89,7 @@ export async function POST(request: Request) {
         practiceId: practice.id,
         npsScore: data.npsScore,
         npsCategory,
-        ratingWaitTime: data.ratingWaitTime,
-        ratingFriendliness: data.ratingFriendliness,
-        ratingTreatment: data.ratingTreatment,
-        ratingFacility: data.ratingFacility,
+        answers: data.answers || {},
         freeText: data.freeText,
         channel: data.channel,
         deviceType: data.deviceType,

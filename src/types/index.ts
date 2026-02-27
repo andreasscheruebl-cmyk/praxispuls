@@ -1,17 +1,64 @@
 // ============================================================
+// Survey Status (derived from pgEnum in schema.ts)
+// ============================================================
+export type { SurveyStatus } from "@/lib/db/schema";
+
+// ============================================================
+// Respondent Types
+// ============================================================
+export type RespondentType =
+  | "patient"
+  | "tierhalter"
+  | "kunde"
+  | "gast"
+  | "mitglied"
+  | "fahrschueler"
+  | "schueler"
+  | "eltern"
+  | "mandant"
+  | "mitarbeiter"
+  | "individuell"
+  | "teilnehmer";
+
+// ============================================================
+// Industry Categories
+// ============================================================
+export type IndustryCategory =
+  | "gesundheit"
+  | "handwerk"
+  | "beauty"
+  | "gastronomie"
+  | "fitness"
+  | "einzelhandel"
+  | "bildung"
+  | "vereine"
+  | "beratung"
+  | "individuell";
+
+// ============================================================
 // Survey Template Types
 // ============================================================
+export type SurveyQuestionType =
+  | "nps"
+  | "stars"
+  | "freetext"
+  | "enps"
+  | "likert"
+  | "single-choice"
+  | "yes-no";
+
 type SurveyTemplateId =
   | "zahnarzt_standard"
   | "zahnarzt_kurz"
   | "zahnarzt_prophylaxe";
 
-type SurveyQuestion = {
+export type SurveyQuestion = {
   id: string;
-  type: "nps" | "stars" | "freetext";
+  type: SurveyQuestionType;
   label: string;
   required: boolean;
   category?: string;
+  options?: string[]; // For single-choice questions
 };
 
 export type SurveyTemplate = {
@@ -20,6 +67,16 @@ export type SurveyTemplate = {
   description: string;
   questions: SurveyQuestion[];
 };
+
+// ============================================================
+// Survey Answers (JSONB format)
+// ============================================================
+export type SurveyAnswers = Record<string, number | string | boolean>;
+
+// ============================================================
+// Template Category
+// ============================================================
+export type TemplateCategory = "customer" | "employee";
 
 // ============================================================
 // Plan Types

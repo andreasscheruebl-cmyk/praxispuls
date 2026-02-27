@@ -48,23 +48,27 @@ export function SurveyForm({ surveyId, practiceName, practiceColor }: Props) {
         body: JSON.stringify({
           surveyId,
           npsScore,
-          ratingWaitTime: ratings.waitTime || undefined,
-          ratingFriendliness: ratings.friendliness || undefined,
-          ratingTreatment: ratings.treatment || undefined,
-          ratingFacility: ratings.facility || undefined,
+          answers: {
+            ...(ratings.waitTime ? { wait_time: ratings.waitTime } : {}),
+            ...(ratings.friendliness ? { friendliness: ratings.friendliness } : {}),
+            ...(ratings.treatment ? { treatment: ratings.treatment } : {}),
+            ...(ratings.facility ? { facility: ratings.facility } : {}),
+          },
           freeText: freeText || undefined,
           deviceType: /Mobi/.test(navigator.userAgent) ? "mobile" : "desktop",
           sessionHash,
         }),
       });
 
-      if (!res.ok) {
-        setStep("error");
-        return;
-      }
       const data = await res.json();
-      if (data.code === "DUPLICATE_RESPONSE") {
-        setStep("duplicate");
+
+      if (!res.ok) {
+        if (data?.code === "DUPLICATE_RESPONSE") {
+          setStep("duplicate");
+          return;
+        }
+        console.error("Survey submission error:", res.status, data);
+        setStep("error");
         return;
       }
       if (data.routing) {
@@ -72,7 +76,8 @@ export function SurveyForm({ surveyId, practiceName, practiceColor }: Props) {
       }
       trackEvent("Survey Completed", { category: data.routing?.category || "unknown" });
       setStep("done");
-    } catch {
+    } catch (err) {
+      console.error("Survey submission failed:", err);
       setStep("error");
     }
   }

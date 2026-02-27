@@ -256,13 +256,13 @@ export async function updatePracticeEmail(
 }
 
 /**
- * Soft-delete a practice and deactivate all its surveys.
+ * Soft-delete a practice and archive all its surveys.
  */
 export async function softDeletePractice(practiceId: string) {
   const now = new Date();
   await db
     .update(surveys)
-    .set({ isActive: false, updatedAt: now })
+    .set({ status: "archived", updatedAt: now })
     .where(eq(surveys.practiceId, practiceId));
 
   return db

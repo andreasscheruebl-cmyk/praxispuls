@@ -21,10 +21,7 @@ export default async function AlertsPage() {
       createdAt: alerts.createdAt,
       npsScore: responses.npsScore,
       freeText: responses.freeText,
-      ratingWaitTime: responses.ratingWaitTime,
-      ratingFriendliness: responses.ratingFriendliness,
-      ratingTreatment: responses.ratingTreatment,
-      ratingFacility: responses.ratingFacility,
+      answers: responses.answers,
     })
     .from(alerts)
     .innerJoin(responses, eq(alerts.responseId, responses.id))

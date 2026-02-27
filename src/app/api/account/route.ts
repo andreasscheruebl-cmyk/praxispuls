@@ -38,13 +38,17 @@ export async function DELETE(request: Request) {
           });
         } catch (err) {
           console.error("Failed to cancel Stripe subscription:", err);
+          return NextResponse.json(
+            { error: "Das Stripe-Abonnement konnte nicht gekündigt werden. Bitte versuchen Sie es erneut.", code: "STRIPE_CANCEL_FAILED" },
+            { status: 502 }
+          );
         }
       }
 
       // Soft-delete surveys
       await db
         .update(surveys)
-        .set({ deletedAt: now, isActive: false })
+        .set({ deletedAt: now, status: "archived" })
         .where(eq(surveys.practiceId, practice.id));
 
       // Soft-delete practice
