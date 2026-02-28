@@ -37,6 +37,14 @@ export type SurveyTemplate = {
 };
 
 // ============================================================
+// Industry Selection (Onboarding + AddLocation)
+// ============================================================
+export type IndustrySelection = {
+  category: IndustryCategory;
+  subCategory: IndustrySubCategory;
+};
+
+// ============================================================
 // Template Customization (Light Customization)
 // ============================================================
 export type TemplateCustomization = {
@@ -55,6 +63,16 @@ export type SurveyAnswers = Record<string, number | string | boolean>;
 // Template Category
 // ============================================================
 export type TemplateCategory = "customer" | "employee";
+
+// ============================================================
+// Onboarding Template (DTO for client-side rendering)
+// ============================================================
+export type OnboardingTemplate = {
+  id: string;
+  name: string;
+  description: string | null;
+  questionCount: number;
+};
 
 // ============================================================
 // Plan Types

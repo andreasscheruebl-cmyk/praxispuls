@@ -16,7 +16,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { INDUSTRY_CATEGORIES, needsSecondLayer } from "@/lib/industries";
-import type { IndustryCategory, IndustrySubCategory } from "@/types";
+import type { IndustryCategory, IndustrySubCategory, IndustrySelection } from "@/types";
 
 // ============================================================
 // Icon mapping
@@ -38,11 +38,6 @@ const CATEGORY_ICONS: Record<IndustryCategory, LucideIcon> = {
 // ============================================================
 // Props
 // ============================================================
-
-export type IndustrySelection = {
-  category: IndustryCategory;
-  subCategory: IndustrySubCategory;
-};
 
 type IndustryPickerProps = {
   value: IndustrySelection | null;

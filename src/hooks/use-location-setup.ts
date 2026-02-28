@@ -2,10 +2,10 @@
 
 import { useState } from "react";
 import { getOnboardingTemplates } from "@/actions/templates";
-import type { OnboardingTemplate } from "@/actions/templates";
+import type { OnboardingTemplate } from "@/types";
 import { getSubCategory } from "@/lib/industries";
 import { getTerminology } from "@/lib/terminology";
-import type { IndustrySelection } from "@/components/dashboard/industry-picker";
+import type { IndustryCategory, IndustrySubCategory, IndustrySelection } from "@/types";
 
 const STEP_TITLES: Record<1 | 2 | 3, string> = {
   1: "Branche wählen",
@@ -30,7 +30,7 @@ export function useLocationSetup() {
   const terminology = sub ? getTerminology(sub.defaultRespondentType) : null;
   const stepTitle = STEP_TITLES[step];
 
-  async function loadTemplates(category: string, subCategory: string) {
+  async function loadTemplates(category: IndustryCategory, subCategory: IndustrySubCategory) {
     setTemplatesLoading(true);
     try {
       const result = await getOnboardingTemplates(category, subCategory);

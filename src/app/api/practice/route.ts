@@ -9,7 +9,6 @@ import { slugify } from "@/lib/utils";
 import { getTemplateById } from "@/lib/db/queries/templates";
 import { getTerminology } from "@/lib/terminology";
 import { logAudit, getRequestMeta } from "@/lib/audit";
-import { ZodError } from "zod";
 import { getActivePracticeForUser, getLocationCountForUser } from "@/lib/practice";
 import { getEffectivePlan } from "@/lib/plans";
 import { PLAN_LIMITS } from "@/types";
@@ -196,7 +195,7 @@ export async function POST(request: Request) {
       );
     }
 
-    logAudit({
+    await logAudit({
       practiceId: result.practice.id,
       action: "practice.created",
       entity: "practice",
@@ -219,17 +218,33 @@ export async function PUT(request: Request) {
     if (auth.error) return auth.error;
     const user = auth.user;
 
-    const body = await request.json();
-    const parsed = practiceUpdateSchema.parse(body);
+    let body: unknown;
+    try {
+      body = await request.json();
+    } catch {
+      return NextResponse.json(
+        { error: "Ungültiger Request-Body", code: "BAD_REQUEST" },
+        { status: 400 },
+      );
+    }
+
+    const parsed = practiceUpdateSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: parsed.error.errors[0]?.message ?? "Ungültige Eingabe", code: "VALIDATION_ERROR" },
+        { status: 400 },
+      );
+    }
     const meta = getRequestMeta(request);
 
     const practice = await getActivePracticeForUser(user.id);
     if (!practice) return NextResponse.json({ error: "Praxis nicht gefunden", code: "NOT_FOUND" }, { status: 404 });
 
     // Verify Google Place ID if changed
+    const updates = parsed.data;
     let googleReviewUrl = practice.googleReviewUrl;
-    if (parsed.googlePlaceId && parsed.googlePlaceId !== practice.googlePlaceId) {
-      const placeDetails = await getPlaceDetails(parsed.googlePlaceId);
+    if (updates.googlePlaceId && updates.googlePlaceId !== practice.googlePlaceId) {
+      const placeDetails = await getPlaceDetails(updates.googlePlaceId);
       if (!placeDetails) {
         return NextResponse.json(
           { error: "Ungültige Google Place ID. Bitte wählen Sie Ihre Praxis erneut aus.", code: "BAD_REQUEST" },
@@ -240,7 +255,7 @@ export async function PUT(request: Request) {
       // Check if Place ID is already used by another practice
       const existing = await db.query.practices.findFirst({
         where: and(
-          eq(practices.googlePlaceId, parsed.googlePlaceId),
+          eq(practices.googlePlaceId, updates.googlePlaceId),
           ne(practices.id, practice.id)
         ),
         columns: { id: true },
@@ -252,13 +267,13 @@ export async function PUT(request: Request) {
         );
       }
 
-      googleReviewUrl = getGoogleReviewLink(parsed.googlePlaceId);
-    } else if (parsed.googlePlaceId) {
-      googleReviewUrl = getGoogleReviewLink(parsed.googlePlaceId);
+      googleReviewUrl = getGoogleReviewLink(updates.googlePlaceId);
+    } else if (updates.googlePlaceId) {
+      googleReviewUrl = getGoogleReviewLink(updates.googlePlaceId);
     }
 
     await db.update(practices)
-      .set({ ...parsed, googleReviewUrl, updatedAt: new Date() })
+      .set({ ...updates, googleReviewUrl, updatedAt: new Date() })
       .where(eq(practices.id, practice.id));
 
     // Audit log for settings change
@@ -273,18 +288,12 @@ export async function PUT(request: Request) {
         npsThreshold: practice.npsThreshold,
         logoUrl: practice.logoUrl,
       },
-      after: parsed,
+      after: updates,
       ...meta,
     });
 
     return NextResponse.json({ success: true });
   } catch (err) {
-    if (err instanceof ZodError) {
-      return NextResponse.json(
-        { error: "Ungültige Eingabe", code: "VALIDATION_ERROR" },
-        { status: 400 },
-      );
-    }
     console.error("PUT /api/practice error:", err);
     return NextResponse.json({ error: "Fehler beim Aktualisieren", code: "INTERNAL_ERROR" }, { status: 500 });
   }

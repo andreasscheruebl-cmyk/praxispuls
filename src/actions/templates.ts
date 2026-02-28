@@ -2,7 +2,7 @@
 
 import { z } from "zod";
 import { revalidatePath } from "next/cache";
-import { requireAdmin, getUserOptional } from "@/lib/auth";
+import { requireAdmin, requireAuthForAction } from "@/lib/auth";
 import { createTemplate, updateTemplate, deleteTemplate, getTemplateById, getTemplatesForPractice } from "@/lib/db/queries/templates";
 import { templateCreateSchema, templateUpdateSchema, INDUSTRY_CATEGORY_IDS, INDUSTRY_SUB_CATEGORY_IDS } from "@/lib/validations";
 
@@ -144,20 +144,15 @@ const onboardingFilterSchema = z.object({
   industrySubCategory: z.enum(INDUSTRY_SUB_CATEGORY_IDS).optional(),
 });
 
-export type OnboardingTemplate = {
-  id: string;
-  name: string;
-  description: string | null;
-  questionCount: number;
-};
+import type { OnboardingTemplate, IndustryCategory, IndustrySubCategory } from "@/types";
 
 export async function getOnboardingTemplates(
-  industryCategory: string,
-  industrySubCategory?: string,
+  industryCategory: IndustryCategory,
+  industrySubCategory?: IndustrySubCategory,
 ) {
-  const user = await getUserOptional();
-  if (!user) {
-    return { error: "Nicht angemeldet", code: "UNAUTHORIZED" };
+  const auth = await requireAuthForAction();
+  if (auth.error) {
+    return { error: auth.error, code: auth.code };
   }
 
   const parsed = onboardingFilterSchema.safeParse({ industryCategory, industrySubCategory });
