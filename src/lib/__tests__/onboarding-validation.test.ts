@@ -121,4 +121,85 @@ describe("practiceCreateSchema", () => {
       expect(result.success, `${pair.industryCategory}/${pair.industrySubCategory} should be valid`).toBe(true);
     }
   });
+
+  // --- Trim / max-length boundary tests ---
+
+  it("rejects whitespace-only name after trimming", () => {
+    const result = practiceCreateSchema.safeParse({ ...validInput, name: "   " });
+    expect(result.success).toBe(false);
+  });
+
+  it("trims name and returns trimmed value in parsed data", () => {
+    const result = practiceCreateSchema.safeParse({ ...validInput, name: "  Dr. Müller  " });
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.name).toBe("Dr. Müller");
+    }
+  });
+
+  it("accepts name at exactly 200 characters", () => {
+    const result = practiceCreateSchema.safeParse({ ...validInput, name: "A".repeat(200) });
+    expect(result.success).toBe(true);
+  });
+
+  it("rejects name exceeding 200 characters", () => {
+    const result = practiceCreateSchema.safeParse({ ...validInput, name: "A".repeat(201) });
+    expect(result.success).toBe(false);
+  });
+
+  it("accepts googlePlaceId at exactly 200 characters", () => {
+    const result = practiceCreateSchema.safeParse({ ...validInput, googlePlaceId: "x".repeat(200) });
+    expect(result.success).toBe(true);
+  });
+
+  it("rejects googlePlaceId exceeding 200 characters", () => {
+    const result = practiceCreateSchema.safeParse({ ...validInput, googlePlaceId: "x".repeat(201) });
+    expect(result.success).toBe(false);
+  });
+
+  // --- Extra-key stripping ---
+
+  it("strips unknown fields from parsed data", () => {
+    const result = practiceCreateSchema.safeParse({
+      ...validInput,
+      plan: "professional",
+      ownerUserId: "attacker-id",
+      isAdmin: true,
+    });
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect("plan" in result.data).toBe(false);
+      expect("ownerUserId" in result.data).toBe(false);
+      expect("isAdmin" in result.data).toBe(false);
+    }
+  });
+
+  // --- Parsed data shape verification ---
+
+  it("returns correct parsed data shape for valid input", () => {
+    const result = practiceCreateSchema.safeParse({
+      ...validInput,
+      googlePlaceId: "ChIJN1t_tDeuEmsRUsoyG83frY4",
+    });
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data).toEqual({
+        name: "Zahnarztpraxis Dr. Müller",
+        industryCategory: "gesundheit",
+        industrySubCategory: "zahnarzt",
+        templateId: "550e8400-e29b-41d4-a716-446655440000",
+        googlePlaceId: "ChIJN1t_tDeuEmsRUsoyG83frY4",
+      });
+    }
+  });
+
+  it("returns correct parsed data shape without optional fields", () => {
+    const result = practiceCreateSchema.safeParse(validInput);
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.googlePlaceId).toBeUndefined();
+      expect(result.data.name).toBe("Zahnarztpraxis Dr. Müller");
+      expect(result.data.templateId).toBe("550e8400-e29b-41d4-a716-446655440000");
+    }
+  });
 });
