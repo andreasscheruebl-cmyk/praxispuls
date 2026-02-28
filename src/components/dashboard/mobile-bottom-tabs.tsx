@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   LayoutDashboard,
+  ClipboardList,
   MessageSquare,
   Bell,
   QrCode,
@@ -14,6 +15,7 @@ import {
 
 const iconMap: Record<string, typeof LayoutDashboard> = {
   LayoutDashboard,
+  ClipboardList,
   MessageSquare,
   Bell,
   QrCode,
@@ -25,8 +27,8 @@ const iconMap: Record<string, typeof LayoutDashboard> = {
 // Show max 5 tabs on mobile bottom bar
 const PRIMARY_TABS = [
   "LayoutDashboard",
+  "ClipboardList",
   "MessageSquare",
-  "QrCode",
   "Settings",
   "UserCircle",
 ];

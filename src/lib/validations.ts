@@ -163,3 +163,25 @@ export const templateCustomizationSchema = z.object({
   customQuestions: z.array(surveyQuestionSchema).max(3).optional(),
 });
 
+// ============================================================
+// SURVEY CREATE / UPDATE (Dashboard Management)
+// ============================================================
+export const surveyCreateSchema = z.object({
+  templateId: z.string().uuid(),
+  title: z.string().min(2).max(200),
+  disabledQuestionIds: z.array(z.string().max(50)).max(30).optional(),
+  labelOverrides: z.record(z.string().max(50), z.string().max(500)).optional(),
+  customQuestions: z.array(surveyQuestionSchema).max(3).optional(),
+  startsAt: z.string().datetime().optional().nullable(),
+  endsAt: z.string().datetime().optional().nullable(),
+  autoDeleteAfterMonths: z.number().int().min(1).max(36).optional().nullable(),
+});
+
+export const surveyUpdateSchema = z.object({
+  title: z.string().min(2).max(200).optional(),
+  description: z.string().max(500).optional().nullable(),
+  startsAt: z.string().datetime().optional().nullable(),
+  endsAt: z.string().datetime().optional().nullable(),
+  autoDeleteAfterMonths: z.number().int().min(1).max(36).optional().nullable(),
+});
+

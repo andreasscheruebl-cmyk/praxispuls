@@ -9,6 +9,7 @@ import { getEffectivePlan } from "@/lib/plans";
 import { PLAN_LIMITS } from "@/types";
 import {
   LayoutDashboard,
+  ClipboardList,
   MessageSquare,
   QrCode,
   Settings,
@@ -20,6 +21,7 @@ import {
 
 const navItems = [
   { href: "/dashboard", label: "Übersicht", icon: "LayoutDashboard" as const },
+  { href: "/dashboard/surveys", label: "Umfragen", icon: "ClipboardList" as const },
   { href: "/dashboard/responses", label: "Antworten", icon: "MessageSquare" as const },
   { href: "/dashboard/alerts", label: "Alerts", icon: "Bell" as const },
   { href: "/dashboard/qr-codes", label: "QR-Codes", icon: "QrCode" as const },
@@ -28,7 +30,7 @@ const navItems = [
   { href: "/dashboard/profile", label: "Profil", icon: "UserCircle" as const },
 ];
 
-const iconMap = { LayoutDashboard, MessageSquare, Bell, QrCode, Settings, CreditCard, UserCircle };
+const iconMap = { LayoutDashboard, ClipboardList, MessageSquare, Bell, QrCode, Settings, CreditCard, UserCircle };
 
 export default async function DashboardLayout({
   children,
