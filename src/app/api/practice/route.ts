@@ -41,7 +41,16 @@ export async function POST(request: Request) {
     if (auth.error) return auth.error;
     const user = auth.user;
 
-    const body = await request.json();
+    let body: unknown;
+    try {
+      body = await request.json();
+    } catch {
+      return NextResponse.json(
+        { error: "Ungültiger Request-Body", code: "BAD_REQUEST" },
+        { status: 400 },
+      );
+    }
+
     const parsed = practiceCreateSchema.safeParse(body);
     if (!parsed.success) {
       return NextResponse.json(
@@ -57,6 +66,15 @@ export async function POST(request: Request) {
     if (!dbTemplate) {
       return NextResponse.json(
         { error: "Ungültiges Umfrage-Template", code: "INVALID_TEMPLATE" },
+        { status: 400 },
+      );
+    }
+
+    // IDOR protection: template must match the selected industry
+    if (dbTemplate.industrySubCategory !== industrySubCategory ||
+        dbTemplate.category !== "customer") {
+      return NextResponse.json(
+        { error: "Template passt nicht zur gewählten Branche", code: "TEMPLATE_MISMATCH" },
         { status: 400 },
       );
     }
@@ -131,7 +149,7 @@ export async function POST(request: Request) {
 
       const [practice] = await tx.insert(practices).values({
         ownerUserId: user.id,
-        name: name.trim(),
+        name,
         slug,
         email: userEmail,
         industryCategory,
@@ -166,6 +184,16 @@ export async function POST(request: Request) {
         { status: 403 },
       );
     }
+
+    logAudit({
+      practiceId: result.practice.id,
+      action: "practice.created",
+      entity: "practice",
+      entityId: result.practice.id,
+      before: undefined,
+      after: { name, industryCategory, industrySubCategory, templateId },
+      ...getRequestMeta(request),
+    });
 
     return NextResponse.json(result.practice, { status: 201 });
   } catch (err) {

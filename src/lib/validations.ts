@@ -36,6 +36,36 @@ export const registerSchema = z.object({
 });
 
 // ============================================================
+// SHARED CONSTANTS (must be before schemas that reference them)
+// ============================================================
+export const QUESTION_TYPES = [
+  "nps", "stars", "freetext", "enps", "likert", "single-choice", "yes-no",
+] as const;
+export type SurveyQuestionType = (typeof QUESTION_TYPES)[number];
+
+export const INDUSTRY_CATEGORY_IDS = [
+  "gesundheit", "handwerk", "beauty", "gastronomie", "fitness",
+  "einzelhandel", "bildung", "vereine", "beratung", "individuell",
+] as const;
+export type IndustryCategory = (typeof INDUSTRY_CATEGORY_IDS)[number];
+
+export const INDUSTRY_SUB_CATEGORY_IDS = [
+  "zahnarzt", "hausarzt", "augenarzt", "dermatologe", "physiotherapie",
+  "tierarzt", "apotheke", "kfz_werkstatt", "she", "handwerk_allgemein",
+  "friseur", "kosmetik", "restaurant", "hotel", "fitnessstudio",
+  "yoga_wellness", "laden", "optiker", "fahrschule", "nachhilfe",
+  "schule", "kindergarten", "sportverein", "verein_allgemein",
+  "steuerberater", "rechtsanwalt", "eigene_branche", "private_umfrage",
+] as const;
+export type IndustrySubCategory = (typeof INDUSTRY_SUB_CATEGORY_IDS)[number];
+
+export const RESPONDENT_TYPES = [
+  "patient", "tierhalter", "kunde", "gast", "mitglied", "fahrschueler",
+  "schueler", "eltern", "mandant", "mitarbeiter", "individuell", "teilnehmer",
+] as const;
+export type RespondentType = (typeof RESPONDENT_TYPES)[number];
+
+// ============================================================
 // PRACTICE
 // ============================================================
 export const practiceUpdateSchema = z.object({
@@ -51,11 +81,8 @@ export const practiceUpdateSchema = z.object({
     .string()
     .regex(/^#[0-9A-Fa-f]{6}$/)
     .optional(),
-  industryCategory: z.enum([
-    "gesundheit", "handwerk", "beauty", "gastronomie", "fitness",
-    "einzelhandel", "bildung", "vereine", "beratung", "individuell",
-  ]).optional(),
-  industrySubCategory: z.string().min(1).max(50).optional(),
+  industryCategory: z.enum(INDUSTRY_CATEGORY_IDS).optional(),
+  industrySubCategory: z.enum(INDUSTRY_SUB_CATEGORY_IDS).optional(),
   npsThreshold: z.number().int().min(7).max(10).optional(),
   googleRedirectEnabled: z.boolean().optional(),
 });
@@ -109,32 +136,12 @@ export const adminGoogleUpdateSchema = z.object({
 });
 
 // ============================================================
-// SURVEY QUESTION (shared validation for template + survey JSONB)
-// ============================================================
-export const QUESTION_TYPES = [
-  "nps", "stars", "freetext", "enps", "likert", "single-choice", "yes-no",
-] as const;
-export type SurveyQuestionType = (typeof QUESTION_TYPES)[number];
-
-export const INDUSTRY_CATEGORIES = [
-  "gesundheit", "handwerk", "beauty", "gastronomie", "fitness",
-  "einzelhandel", "bildung", "vereine", "beratung", "individuell",
-] as const;
-export type IndustryCategory = (typeof INDUSTRY_CATEGORIES)[number];
-
-export const RESPONDENT_TYPES = [
-  "patient", "tierhalter", "kunde", "gast", "mitglied", "fahrschueler",
-  "schueler", "eltern", "mandant", "mitarbeiter", "individuell", "teilnehmer",
-] as const;
-export type RespondentType = (typeof RESPONDENT_TYPES)[number];
-
-// ============================================================
 // PRACTICE CREATE (Onboarding + AddLocation)
 // ============================================================
 export const practiceCreateSchema = z.object({
-  name: z.string().min(2).max(200),
-  industryCategory: z.enum(INDUSTRY_CATEGORIES),
-  industrySubCategory: z.string().min(1).max(50),
+  name: z.string().trim().min(2).max(200),
+  industryCategory: z.enum(INDUSTRY_CATEGORY_IDS),
+  industrySubCategory: z.enum(INDUSTRY_SUB_CATEGORY_IDS),
   googlePlaceId: z.string().max(200).optional(),
   templateId: z.string().uuid(),
 });
@@ -154,8 +161,8 @@ export const surveyQuestionSchema = z.object({
 export const templateCreateSchema = z.object({
   name: z.string().min(2).max(100),
   description: z.string().max(500).optional(),
-  industryCategory: z.enum(INDUSTRY_CATEGORIES),
-  industrySubCategory: z.string().max(50).optional(),
+  industryCategory: z.enum(INDUSTRY_CATEGORY_IDS),
+  industrySubCategory: z.enum(INDUSTRY_SUB_CATEGORY_IDS).optional(),
   respondentType: z.enum(RESPONDENT_TYPES),
   category: z.enum(["customer", "employee"]),
   questions: z.array(surveyQuestionSchema).min(1).max(30),

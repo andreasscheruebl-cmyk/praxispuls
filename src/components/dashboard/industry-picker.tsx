@@ -39,7 +39,7 @@ const CATEGORY_ICONS: Record<IndustryCategory, LucideIcon> = {
 // Props
 // ============================================================
 
-type IndustrySelection = {
+export type IndustrySelection = {
   category: IndustryCategory;
   subCategory: IndustrySubCategory;
 };

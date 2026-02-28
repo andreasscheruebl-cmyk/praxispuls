@@ -6,51 +6,8 @@ export type { SurveyStatus } from "@/lib/db/schema";
 // ============================================================
 // Derived types (single source of truth: as-const arrays in validations.ts)
 // ============================================================
-import type { SurveyQuestionType, RespondentType, IndustryCategory } from "@/lib/validations";
-export type { SurveyQuestionType, RespondentType, IndustryCategory };
-
-// ============================================================
-// Industry Sub-Categories (28 total)
-// ============================================================
-export type IndustrySubCategory =
-  // gesundheit
-  | "zahnarzt"
-  | "hausarzt"
-  | "augenarzt"
-  | "dermatologe"
-  | "physiotherapie"
-  | "tierarzt"
-  | "apotheke"
-  // handwerk
-  | "kfz_werkstatt"
-  | "she"
-  | "handwerk_allgemein"
-  // beauty
-  | "friseur"
-  | "kosmetik"
-  // gastronomie
-  | "restaurant"
-  | "hotel"
-  // fitness
-  | "fitnessstudio"
-  | "yoga_wellness"
-  // einzelhandel
-  | "laden"
-  | "optiker"
-  // bildung
-  | "fahrschule"
-  | "nachhilfe"
-  | "schule"
-  | "kindergarten"
-  // vereine
-  | "sportverein"
-  | "verein_allgemein"
-  // beratung
-  | "steuerberater"
-  | "rechtsanwalt"
-  // individuell
-  | "eigene_branche"
-  | "private_umfrage";
+import type { SurveyQuestionType, RespondentType, IndustryCategory, IndustrySubCategory } from "@/lib/validations";
+export type { SurveyQuestionType, RespondentType, IndustryCategory, IndustrySubCategory };
 
 // ============================================================
 // Survey Template Types

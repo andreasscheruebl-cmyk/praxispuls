@@ -1,20 +1,14 @@
 "use client";
 
 import { Clock, FileText, Loader2 } from "lucide-react";
+import type { OnboardingTemplate } from "@/actions/templates";
 
 // ============================================================
 // Types
 // ============================================================
 
-type TemplateOption = {
-  id: string;
-  name: string;
-  description: string | null;
-  questionCount: number;
-};
-
 type TemplateQuickSelectProps = {
-  templates: TemplateOption[];
+  templates: OnboardingTemplate[];
   value: string | null;
   onChange: (templateId: string) => void;
   loading?: boolean;

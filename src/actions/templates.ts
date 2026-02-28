@@ -2,9 +2,9 @@
 
 import { z } from "zod";
 import { revalidatePath } from "next/cache";
-import { requireAdmin, getUser } from "@/lib/auth";
+import { requireAdmin, getUserOptional } from "@/lib/auth";
 import { createTemplate, updateTemplate, deleteTemplate, getTemplateById, getTemplatesForPractice } from "@/lib/db/queries/templates";
-import { templateCreateSchema, templateUpdateSchema, INDUSTRY_CATEGORIES } from "@/lib/validations";
+import { templateCreateSchema, templateUpdateSchema, INDUSTRY_CATEGORY_IDS, INDUSTRY_SUB_CATEGORY_IDS } from "@/lib/validations";
 
 function generateSlug(name: string): string {
   return name
@@ -140,15 +140,22 @@ export async function deleteTemplateAction(id: string) {
 // ============================================================
 
 const onboardingFilterSchema = z.object({
-  industryCategory: z.enum(INDUSTRY_CATEGORIES),
-  industrySubCategory: z.string().min(1).max(50).optional(),
+  industryCategory: z.enum(INDUSTRY_CATEGORY_IDS),
+  industrySubCategory: z.enum(INDUSTRY_SUB_CATEGORY_IDS).optional(),
 });
+
+export type OnboardingTemplate = {
+  id: string;
+  name: string;
+  description: string | null;
+  questionCount: number;
+};
 
 export async function getOnboardingTemplates(
   industryCategory: string,
   industrySubCategory?: string,
 ) {
-  const user = await getUser();
+  const user = await getUserOptional();
   if (!user) {
     return { error: "Nicht angemeldet", code: "UNAUTHORIZED" };
   }
@@ -158,21 +165,24 @@ export async function getOnboardingTemplates(
     return { error: "Ungültige Branche", code: "VALIDATION_ERROR" };
   }
 
-  const templates = await getTemplatesForPractice(
-    parsed.data.industryCategory,
-    parsed.data.industrySubCategory,
-  );
+  try {
+    const templates = await getTemplatesForPractice(
+      parsed.data.industryCategory,
+      parsed.data.industrySubCategory,
+    );
 
-  // Only customer templates for onboarding (no employee templates)
-  const customerTemplates = templates
-    .filter((t) => t.category === "customer")
-    .map((t) => ({
-      id: t.id,
-      name: t.name,
-      description: t.description,
-      questionCount: Array.isArray(t.questions) ? t.questions.length : 0,
-      respondentType: t.respondentType,
-    }));
+    const customerTemplates: OnboardingTemplate[] = templates
+      .filter((t) => t.category === "customer")
+      .map((t) => ({
+        id: t.id,
+        name: t.name,
+        description: t.description,
+        questionCount: Array.isArray(t.questions) ? t.questions.length : 0,
+      }));
 
-  return { templates: customerTemplates };
+    return { templates: customerTemplates };
+  } catch (error) {
+    console.error("[getOnboardingTemplates]", error);
+    return { error: "Templates konnten nicht geladen werden", code: "INTERNAL_ERROR" };
+  }
 }

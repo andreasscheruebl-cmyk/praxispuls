@@ -123,7 +123,7 @@ describe("practiceUpdateSchema", () => {
   });
 
   it("accepts valid industry sub-category", () => {
-    const result = practiceUpdateSchema.safeParse({ industrySubCategory: "zahnarztpraxis" });
+    const result = practiceUpdateSchema.safeParse({ industrySubCategory: "zahnarzt" });
     expect(result.success).toBe(true);
   });
 

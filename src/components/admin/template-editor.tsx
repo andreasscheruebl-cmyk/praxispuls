@@ -19,7 +19,7 @@ import { toast } from "sonner";
 import { createTemplateAction, updateTemplateAction } from "@/actions/templates";
 import type { SurveyQuestion, SurveyQuestionType } from "@/types";
 import type { SurveyTemplateRow } from "@/lib/db/schema";
-import { INDUSTRY_CATEGORIES } from "@/lib/validations";
+import { INDUSTRY_CATEGORY_IDS } from "@/lib/validations";
 
 const QUESTION_TYPES: { value: SurveyQuestionType; label: string }[] = [
   { value: "nps", label: "NPS (0–10)" },
@@ -189,7 +189,7 @@ export function TemplateEditor({ template }: TemplateEditorProps) {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {INDUSTRY_CATEGORIES.map((cat) => (
+                  {INDUSTRY_CATEGORY_IDS.map((cat) => (
                     <SelectItem key={cat} value={cat}>
                       {cat}
                     </SelectItem>
