@@ -2,9 +2,9 @@
 
 import { z } from "zod";
 import { revalidatePath } from "next/cache";
-import { requireAdmin } from "@/lib/auth";
-import { createTemplate, updateTemplate, deleteTemplate, getTemplateById } from "@/lib/db/queries/templates";
-import { templateCreateSchema, templateUpdateSchema } from "@/lib/validations";
+import { requireAdmin, getUser } from "@/lib/auth";
+import { createTemplate, updateTemplate, deleteTemplate, getTemplateById, getTemplatesForPractice } from "@/lib/db/queries/templates";
+import { templateCreateSchema, templateUpdateSchema, INDUSTRY_CATEGORIES } from "@/lib/validations";
 
 function generateSlug(name: string): string {
   return name
@@ -133,4 +133,46 @@ export async function deleteTemplateAction(id: string) {
 
   revalidatePath("/admin/templates");
   return { success: true };
+}
+
+// ============================================================
+// ONBOARDING (authenticated, non-admin)
+// ============================================================
+
+const onboardingFilterSchema = z.object({
+  industryCategory: z.enum(INDUSTRY_CATEGORIES),
+  industrySubCategory: z.string().min(1).max(50).optional(),
+});
+
+export async function getOnboardingTemplates(
+  industryCategory: string,
+  industrySubCategory?: string,
+) {
+  const user = await getUser();
+  if (!user) {
+    return { error: "Nicht angemeldet", code: "UNAUTHORIZED" };
+  }
+
+  const parsed = onboardingFilterSchema.safeParse({ industryCategory, industrySubCategory });
+  if (!parsed.success) {
+    return { error: "Ungültige Branche", code: "VALIDATION_ERROR" };
+  }
+
+  const templates = await getTemplatesForPractice(
+    parsed.data.industryCategory,
+    parsed.data.industrySubCategory,
+  );
+
+  // Only customer templates for onboarding (no employee templates)
+  const customerTemplates = templates
+    .filter((t) => t.category === "customer")
+    .map((t) => ({
+      id: t.id,
+      name: t.name,
+      description: t.description,
+      questionCount: Array.isArray(t.questions) ? t.questions.length : 0,
+      respondentType: t.respondentType,
+    }));
+
+  return { templates: customerTemplates };
 }

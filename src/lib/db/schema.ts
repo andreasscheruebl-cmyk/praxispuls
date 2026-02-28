@@ -45,7 +45,7 @@ export const practices = pgTable(
     stripeSubscriptionId: text("stripe_subscription_id"),
     alertEmail: text("alert_email"),
     industryCategory: text("industry_category").default("gesundheit"),
-    industrySubCategory: text("industry_sub_category").default("zahnarztpraxis"),
+    industrySubCategory: text("industry_sub_category").default("zahnarzt"),
     theme: text("theme").default("vertrauen"),
     planOverride: text("plan_override"), // free | starter | professional (admin-set)
     overrideReason: text("override_reason"),

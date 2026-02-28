@@ -128,6 +128,17 @@ export const RESPONDENT_TYPES = [
 ] as const;
 export type RespondentType = (typeof RESPONDENT_TYPES)[number];
 
+// ============================================================
+// PRACTICE CREATE (Onboarding + AddLocation)
+// ============================================================
+export const practiceCreateSchema = z.object({
+  name: z.string().min(2).max(200),
+  industryCategory: z.enum(INDUSTRY_CATEGORIES),
+  industrySubCategory: z.string().min(1).max(50),
+  googlePlaceId: z.string().max(200).optional(),
+  templateId: z.string().uuid(),
+});
+
 export const surveyQuestionSchema = z.object({
   id: z.string().min(1).max(50),
   type: z.enum(QUESTION_TYPES),

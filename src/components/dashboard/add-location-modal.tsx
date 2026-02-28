@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import {
   Dialog,
   DialogContent,
@@ -12,24 +12,20 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { GooglePlacesSearch } from "@/components/dashboard/google-places-search";
+import { IndustryPicker } from "@/components/dashboard/industry-picker";
+import { TemplateQuickSelect } from "@/components/dashboard/template-quick-select";
+import { getOnboardingTemplates } from "@/actions/templates";
+import { getSubCategory } from "@/lib/industries";
+import { getTerminology } from "@/lib/terminology";
+import type { IndustryCategory, IndustrySubCategory } from "@/types";
 
-const TEMPLATES = [
-  {
-    id: "zahnarzt_standard",
-    name: "Standard",
-    desc: "Empfehlung + 4 Kategorien + Freitext (empfohlen)",
-  },
-  {
-    id: "zahnarzt_kurz",
-    name: "Kurz",
-    desc: "Nur Empfehlung + Freitext (30 Sekunden)",
-  },
-  {
-    id: "zahnarzt_prophylaxe",
-    name: "Prophylaxe",
-    desc: "Empfehlung + PZR-spezifische Fragen",
-  },
-];
+type TemplateData = {
+  id: string;
+  name: string;
+  description: string | null;
+  questionCount: number;
+  respondentType: string | null;
+};
 
 type AddLocationModalProps = {
   open: boolean;
@@ -44,24 +40,28 @@ export function AddLocationModal({
 }: AddLocationModalProps) {
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
+  const [templatesLoading, setTemplatesLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [data, setData] = useState({
-    name: "",
-    postalCode: "",
-    googlePlaceId: "",
-    templateId: "zahnarzt_standard",
-  });
+
+  const [industry, setIndustry] = useState<{
+    category: IndustryCategory;
+    subCategory: IndustrySubCategory;
+  } | null>(null);
+  const [name, setName] = useState("");
+  const [googlePlaceId, setGooglePlaceId] = useState("");
+  const [templateId, setTemplateId] = useState<string | null>(null);
+  const [templates, setTemplates] = useState<TemplateData[]>([]);
 
   function resetForm() {
     setStep(1);
-    setData({
-      name: "",
-      postalCode: "",
-      googlePlaceId: "",
-      templateId: "zahnarzt_standard",
-    });
+    setIndustry(null);
+    setName("");
+    setGooglePlaceId("");
+    setTemplateId(null);
+    setTemplates([]);
     setError(null);
     setLoading(false);
+    setTemplatesLoading(false);
   }
 
   function handleOpenChange(open: boolean) {
@@ -69,20 +69,60 @@ export function AddLocationModal({
     onOpenChange(open);
   }
 
+  const loadTemplates = useCallback(
+    async (category: IndustryCategory, subCategory: IndustrySubCategory) => {
+      setTemplatesLoading(true);
+      try {
+        const result = await getOnboardingTemplates(category, subCategory);
+        if ("error" in result) {
+          setTemplates([]);
+        } else {
+          setTemplates(result.templates);
+          if (result.templates.length > 0) {
+            setTemplateId(result.templates[0]!.id);
+          }
+        }
+      } catch {
+        setTemplates([]);
+      }
+      setTemplatesLoading(false);
+    },
+    [],
+  );
+
+  function handleIndustryChange(selection: {
+    category: IndustryCategory;
+    subCategory: IndustrySubCategory;
+  }) {
+    setIndustry(selection);
+    setTemplateId(null);
+    loadTemplates(selection.category, selection.subCategory);
+  }
+
+  const sub = industry ? getSubCategory(industry.subCategory) : null;
+  const terminology = sub ? getTerminology(sub.defaultRespondentType) : null;
+
   async function handleComplete() {
+    if (!industry || !templateId) return;
     setLoading(true);
     setError(null);
     try {
       const res = await fetch("/api/practice", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
+        body: JSON.stringify({
+          name,
+          industryCategory: industry.category,
+          industrySubCategory: industry.subCategory,
+          googlePlaceId: googlePlaceId || undefined,
+          templateId,
+        }),
       });
 
       if (!res.ok) {
         const body = await res.json().catch(() => null);
         setError(
-          body?.error || "Fehler beim Erstellen. Bitte versuchen Sie es erneut."
+          body?.error || "Fehler beim Erstellen. Bitte versuchen Sie es erneut.",
         );
         setLoading(false);
         return;
@@ -117,58 +157,44 @@ export function AddLocationModal({
         </DialogHeader>
 
         <div className="space-y-4 py-2">
-          {/* Step 1: Name + PLZ */}
+          {/* Step 1: Industry */}
           {step === 1 && (
             <>
-              <div className="space-y-2">
-                <Label htmlFor="loc-name">Praxisname *</Label>
-                <Input
-                  id="loc-name"
-                  placeholder="Zahnarztpraxis Dr. Müller — Filiale"
-                  value={data.name}
-                  onChange={(e) => setData({ ...data, name: e.target.value })}
-                  autoFocus
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="loc-plz">PLZ</Label>
-                <Input
-                  id="loc-plz"
-                  placeholder="80331"
-                  value={data.postalCode}
-                  maxLength={5}
-                  onChange={(e) =>
-                    setData({ ...data, postalCode: e.target.value })
-                  }
-                />
-              </div>
+              <IndustryPicker value={industry} onChange={handleIndustryChange} />
               <Button
                 onClick={() => setStep(2)}
                 className="w-full"
-                disabled={!data.name.trim()}
+                disabled={!industry}
               >
                 Weiter
               </Button>
             </>
           )}
 
-          {/* Step 2: Google Places */}
+          {/* Step 2: Name + Google Places */}
           {step === 2 && (
             <>
               <div className="space-y-2">
-                <Label>Google-Eintrag des Standorts</Label>
+                <Label htmlFor="loc-name">Name *</Label>
+                <Input
+                  id="loc-name"
+                  placeholder="Name des Standorts"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  autoFocus
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Google-Eintrag</Label>
                 <p className="text-sm text-muted-foreground">
-                  Damit zufriedene Patienten direkt zu Ihrer
-                  Google-Bewertungsseite weitergeleitet werden.
+                  Damit zufriedene {terminology?.plural ?? "Kunden"} direkt zu
+                  Ihrer Google-Bewertungsseite weitergeleitet werden.
                 </p>
                 <GooglePlacesSearch
-                  value={data.googlePlaceId}
-                  onChange={(placeId) =>
-                    setData({ ...data, googlePlaceId: placeId })
-                  }
+                  value={googlePlaceId}
+                  onChange={setGooglePlaceId}
                   selectedName=""
-                  initialQuery={data.name || undefined}
-                  postalCode={data.postalCode || undefined}
+                  initialQuery={name || undefined}
                 />
               </div>
               <div className="flex gap-3">
@@ -179,8 +205,12 @@ export function AddLocationModal({
                 >
                   Zurück
                 </Button>
-                <Button onClick={() => setStep(3)} className="flex-1">
-                  {data.googlePlaceId ? "Weiter" : "Überspringen"}
+                <Button
+                  onClick={() => setStep(3)}
+                  className="flex-1"
+                  disabled={!name.trim()}
+                >
+                  {googlePlaceId ? "Weiter" : "Überspringen"}
                 </Button>
               </div>
             </>
@@ -191,22 +221,12 @@ export function AddLocationModal({
             <>
               <div className="space-y-3">
                 <Label>Umfrage-Template wählen</Label>
-                {TEMPLATES.map((t) => (
-                  <button
-                    key={t.id}
-                    onClick={() =>
-                      setData({ ...data, templateId: t.id })
-                    }
-                    className={`w-full rounded-lg border p-3 text-left transition ${
-                      data.templateId === t.id
-                        ? "border-primary bg-primary/5"
-                        : "hover:bg-gray-50"
-                    }`}
-                  >
-                    <p className="text-sm font-medium">{t.name}</p>
-                    <p className="text-xs text-muted-foreground">{t.desc}</p>
-                  </button>
-                ))}
+                <TemplateQuickSelect
+                  templates={templates}
+                  value={templateId}
+                  onChange={setTemplateId}
+                  loading={templatesLoading}
+                />
               </div>
               {error && (
                 <p
@@ -227,9 +247,9 @@ export function AddLocationModal({
                 <Button
                   onClick={handleComplete}
                   className="flex-1"
-                  disabled={loading}
+                  disabled={loading || !templateId}
                 >
-                  {loading ? "Wird erstellt..." : "Standort erstellen"}
+                  {loading ? "Wird erstellt…" : "Standort erstellen"}
                 </Button>
               </div>
             </>

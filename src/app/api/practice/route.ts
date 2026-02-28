@@ -3,15 +3,17 @@ import { requireAuthForApi } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { practices, surveys } from "@/lib/db/schema";
 import { eq, and, ne, isNull } from "drizzle-orm";
-import { practiceUpdateSchema } from "@/lib/validations";
+import { practiceUpdateSchema, practiceCreateSchema } from "@/lib/validations";
 import { getGoogleReviewLink, getPlaceDetails } from "@/lib/google";
 import { slugify } from "@/lib/utils";
-import { SURVEY_TEMPLATES } from "@/lib/survey-templates";
+import { getTemplateById } from "@/lib/db/queries/templates";
+import { getTerminology } from "@/lib/terminology";
 import { logAudit, getRequestMeta } from "@/lib/audit";
 import { ZodError } from "zod";
 import { getActivePracticeForUser, getLocationCountForUser } from "@/lib/practice";
 import { getEffectivePlan } from "@/lib/plans";
 import { PLAN_LIMITS } from "@/types";
+import type { RespondentType } from "@/types";
 
 export async function GET() {
   try {
@@ -40,10 +42,23 @@ export async function POST(request: Request) {
     const user = auth.user;
 
     const body = await request.json();
-    const { name, postalCode, googlePlaceId, templateId: templateIdParam, logoUrl } = body;
+    const parsed = practiceCreateSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: parsed.error.errors[0]?.message ?? "Ungültige Eingabe", code: "VALIDATION_ERROR" },
+        { status: 400 },
+      );
+    }
 
-    if (!name?.trim()) {
-      return NextResponse.json({ error: "Name fehlt", code: "BAD_REQUEST" }, { status: 400 });
+    const { name, industryCategory, industrySubCategory, googlePlaceId, templateId } = parsed.data;
+
+    // Load template from DB
+    const dbTemplate = await getTemplateById(templateId);
+    if (!dbTemplate) {
+      return NextResponse.json(
+        { error: "Ungültiges Umfrage-Template", code: "INVALID_TEMPLATE" },
+        { status: 400 },
+      );
     }
 
     // Validate external data before transaction
@@ -53,7 +68,7 @@ export async function POST(request: Request) {
       if (!placeDetails) {
         return NextResponse.json(
           { error: "Ungültige Google Place ID. Bitte wählen Sie Ihre Praxis erneut aus.", code: "BAD_REQUEST" },
-          { status: 400 }
+          { status: 400 },
         );
       }
       googleReviewUrl = getGoogleReviewLink(googlePlaceId);
@@ -66,27 +81,23 @@ export async function POST(request: Request) {
       if (existing) {
         return NextResponse.json(
           { error: "Diese Google-Praxis ist bereits mit einem anderen Konto verknüpft.", code: "PLACE_ID_TAKEN", warning: true },
-          { status: 409 }
+          { status: 409 },
         );
       }
-    }
-
-    const chosenTemplateId = templateIdParam || "zahnarzt_standard";
-    const template = SURVEY_TEMPLATES.find(t => t.id === chosenTemplateId);
-    if (!template) {
-      return NextResponse.json(
-        { error: "Ungültiges Umfrage-Template", code: "INVALID_TEMPLATE" },
-        { status: 400 }
-      );
     }
 
     if (!user.email) {
       return NextResponse.json(
         { error: "E-Mail-Adresse fehlt in Ihrem Konto", code: "MISSING_EMAIL" },
-        { status: 400 }
+        { status: 400 },
       );
     }
     const userEmail = user.email;
+
+    // Dynamic survey title via terminology
+    const terminology = getTerminology(
+      (dbTemplate.respondentType as RespondentType) ?? "kunde",
+    );
 
     // Transaction: check limit + insert atomically to prevent race conditions
     const result = await db.transaction(async (tx) => {
@@ -123,10 +134,10 @@ export async function POST(request: Request) {
         name: name.trim(),
         slug,
         email: userEmail,
-        postalCode,
+        industryCategory,
+        industrySubCategory,
         googlePlaceId,
         googleReviewUrl,
-        logoUrl: logoUrl || null,
         alertEmail: userEmail,
         plan: userPlan, // Inherit effective plan from user
       }).returning();
@@ -138,10 +149,12 @@ export async function POST(request: Request) {
       const surveySlug = `${slug}-umfrage`;
       await tx.insert(surveys).values({
         practiceId: practice.id,
-        title: "Patientenbefragung",
+        title: terminology.surveyTitle,
         slug: surveySlug,
-        questions: template.questions,
+        questions: dbTemplate.questions,
         status: "active",
+        respondentType: dbTemplate.respondentType,
+        templateId: dbTemplate.id,
       });
 
       return { practice };
@@ -150,7 +163,7 @@ export async function POST(request: Request) {
     if ("error" in result) {
       return NextResponse.json(
         { error: result.error, code: result.code },
-        { status: 403 }
+        { status: 403 },
       );
     }
 
@@ -181,7 +194,7 @@ export async function PUT(request: Request) {
       if (!placeDetails) {
         return NextResponse.json(
           { error: "Ungültige Google Place ID. Bitte wählen Sie Ihre Praxis erneut aus.", code: "BAD_REQUEST" },
-          { status: 400 }
+          { status: 400 },
         );
       }
 
@@ -196,7 +209,7 @@ export async function PUT(request: Request) {
       if (existing) {
         return NextResponse.json(
           { error: "Diese Google-Praxis ist bereits mit einem anderen Konto verknüpft.", code: "PLACE_ID_TAKEN", warning: true },
-          { status: 409 }
+          { status: 409 },
         );
       }
 
@@ -230,7 +243,7 @@ export async function PUT(request: Request) {
     if (err instanceof ZodError) {
       return NextResponse.json(
         { error: "Ungültige Eingabe", code: "VALIDATION_ERROR" },
-        { status: 400 }
+        { status: 400 },
       );
     }
     console.error("PUT /api/practice error:", err);
