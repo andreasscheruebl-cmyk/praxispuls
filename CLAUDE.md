@@ -201,6 +201,12 @@ Ein PR ist bereit für Review wenn:
 - ❌ Mehrsprachigkeit (nur Deutsch)
 - ❌ Mobile App
 
+**Im MVP seit Multi-Survey-Redesign (#59):**
+- ✅ Multi-Branchen (10 Kategorien, 26 Sub-Branchen)
+- ✅ Multi-Standort
+- ✅ Mitarbeiterbefragung (Employee Templates + eNPS)
+- ✅ 7 Frage-Typen (NPS, Stars, Likert, Freetext, SingleChoice, YesNo, eNPS)
+
 Wenn Andi eines davon anfragt: "⚠️ Das ist v2. Soll ich es trotzdem machen?"
 
 ## Warnungen – Proaktiv ansprechen bei:
@@ -216,9 +222,10 @@ Wenn Andi eines davon anfragt: "⚠️ Das ist v2. Soll ich es trotzdem machen?"
 Siehe GitHub Issues (`gh issue list`) und GitHub Projects für den aktuellen Projektstatus.
 
 ## DB Schema
-Siehe `src/lib/db/schema.ts` – 6 Tabellen:
+Siehe `src/lib/db/schema.ts` – 7 Tabellen:
 - practices (Tenants)
-- surveys (Umfragen)
+- survey_templates (Branchen-Templates, Admin-CRUD)
+- surveys (Umfragen, Status-Lifecycle)
 - responses (Antworten, kein PII!)
 - alerts (Detractor-Notifications)
 - loginEvents (Login-Audit-Log)
@@ -282,9 +289,11 @@ praxispuls/
 
 ## Claude Code Automations
 - **Hooks** (`.claude/settings.json`): Auto-Lint nach Edit/Write (.ts/.tsx), Block .env Edits
-- **Skills**: `/fix-issue <nr>` (Issue bearbeiten), `/create-pr` (PR erstellen), `/review-checklist` (Pre-Review Checks)
+- **Skills**: `/fix-issue <nr>` (Issue bearbeiten), `/create-pr` (PR erstellen), `/review-checklist` (Pre-Review Checks), `/db-migrate <generate|push|studio|status>` (Drizzle Workflow)
 - **Agents**: `security-reviewer` (Stripe, RLS, DSGVO, OWASP)
 - Hooks empfangen JSON via stdin – `node -e` als Parser (`jq` nicht verfügbar)
+- **`settings.json`** = Hooks (git-tracked) · **`settings.local.json`** = Permissions (local-only, nicht committen)
+- **Security-Hook Gotcha**: `execFileSync` statt `execSync` in Hook-Commands verwenden — Security-Plugin flaggt `execSync` auch in Config-Dateien
 
 ## Environment Variables
 Siehe `.env.example` für alle benötigten Variablen.
