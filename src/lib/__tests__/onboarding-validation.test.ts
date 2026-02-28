@@ -46,17 +46,26 @@ describe("practiceCreateSchema", () => {
     expect(result.success).toBe(false);
   });
 
-  it("accepts all 10 valid industry categories", () => {
-    const categories = [
-      "gesundheit", "handwerk", "beauty", "gastronomie", "fitness",
-      "einzelhandel", "bildung", "vereine", "beratung", "individuell",
+  it("accepts all 10 valid industry categories with matching sub-categories", () => {
+    const pairs: [string, string][] = [
+      ["gesundheit", "zahnarzt"],
+      ["handwerk", "kfz_werkstatt"],
+      ["beauty", "friseur"],
+      ["gastronomie", "restaurant"],
+      ["fitness", "fitnessstudio"],
+      ["einzelhandel", "laden"],
+      ["bildung", "fahrschule"],
+      ["vereine", "sportverein"],
+      ["beratung", "steuerberater"],
+      ["individuell", "eigene_branche"],
     ];
-    for (const cat of categories) {
+    for (const [cat, sub] of pairs) {
       const result = practiceCreateSchema.safeParse({
         ...validInput,
         industryCategory: cat,
+        industrySubCategory: sub,
       });
-      expect(result.success, `${cat} should be valid`).toBe(true);
+      expect(result.success, `${cat}/${sub} should be valid`).toBe(true);
     }
   });
 
@@ -86,5 +95,30 @@ describe("practiceCreateSchema", () => {
     const { industryCategory: _, ...noCategory } = validInput;
     const result = practiceCreateSchema.safeParse(noCategory);
     expect(result.success).toBe(false);
+  });
+
+  it("rejects mismatched category and sub-category", () => {
+    const result = practiceCreateSchema.safeParse({
+      ...validInput,
+      industryCategory: "beauty",
+      industrySubCategory: "zahnarzt", // belongs to "gesundheit"
+    });
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error.issues[0]?.path).toContain("industrySubCategory");
+    }
+  });
+
+  it("accepts matching category and sub-category pairs", () => {
+    const pairs = [
+      { industryCategory: "gesundheit", industrySubCategory: "zahnarzt" },
+      { industryCategory: "handwerk", industrySubCategory: "kfz_werkstatt" },
+      { industryCategory: "beauty", industrySubCategory: "friseur" },
+      { industryCategory: "individuell", industrySubCategory: "eigene_branche" },
+    ];
+    for (const pair of pairs) {
+      const result = practiceCreateSchema.safeParse({ ...validInput, ...pair });
+      expect(result.success, `${pair.industryCategory}/${pair.industrySubCategory} should be valid`).toBe(true);
+    }
   });
 });

@@ -46,7 +46,7 @@ export default function OnboardingPage() {
           {step === 1 && (
             <>
               <IndustryPicker value={industry} onChange={handleIndustryChange} />
-              <Button onClick={() => setStep(2)} className="w-full" disabled={!industry}>
+              <Button onClick={() => setStep(2)} className="w-full" disabled={!industry || templatesLoading || !!error}>
                 Weiter
               </Button>
             </>
@@ -89,11 +89,17 @@ export default function OnboardingPage() {
                 <Button variant="outline" onClick={() => setStep(1)} className="flex-1">
                   Zurück
                 </Button>
-                <Button onClick={() => setStep(3)} className="flex-1" disabled={!name.trim()}>
+                <Button onClick={() => setStep(3)} className="flex-1" disabled={name.trim().length < 2}>
                   {googlePlaceId ? "Weiter" : "Überspringen"}
                 </Button>
               </div>
             </>
+          )}
+
+          {error && (
+            <p className="rounded-md bg-destructive/10 p-3 text-sm text-destructive" role="alert">
+              {error}
+            </p>
           )}
 
           {step === 3 && (
@@ -107,11 +113,6 @@ export default function OnboardingPage() {
                   loading={templatesLoading}
                 />
               </div>
-              {error && (
-                <p className="rounded-md bg-destructive/10 p-3 text-sm text-destructive" role="alert">
-                  {error}
-                </p>
-              )}
               <div className="flex gap-3">
                 <Button variant="outline" onClick={() => setStep(2)} className="flex-1">
                   Zurück

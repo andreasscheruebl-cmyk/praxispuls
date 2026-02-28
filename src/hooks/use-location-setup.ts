@@ -56,10 +56,13 @@ export function useLocationSetup() {
     setIndustry(selection);
     setTemplateId(null);
     setError(null);
-    loadTemplates(selection.category, selection.subCategory);
+    loadTemplates(selection.category, selection.subCategory).catch(() => {
+      // Error already handled in loadTemplates via setError
+    });
   }
 
   async function handleComplete(onSuccess: () => void) {
+    if (loading) return;
     if (!industry || !templateId) {
       setError("Bitte wählen Sie eine Branche und ein Template.");
       return;

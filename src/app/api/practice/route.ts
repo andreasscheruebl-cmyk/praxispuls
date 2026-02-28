@@ -90,18 +90,6 @@ export async function POST(request: Request) {
         );
       }
       googleReviewUrl = getGoogleReviewLink(googlePlaceId);
-
-      // Check if Place ID is already used by another practice
-      const existing = await db.query.practices.findFirst({
-        where: eq(practices.googlePlaceId, googlePlaceId),
-        columns: { id: true },
-      });
-      if (existing) {
-        return NextResponse.json(
-          { error: "Diese Google-Praxis ist bereits mit einem anderen Konto verknüpft.", code: "PLACE_ID_TAKEN", warning: true },
-          { status: 409 },
-        );
-      }
     }
 
     if (!user.email) {
@@ -137,6 +125,20 @@ export async function POST(request: Request) {
         };
       }
 
+      // Check Google Place ID uniqueness inside transaction to prevent TOCTOU race
+      if (googlePlaceId) {
+        const existingPlace = await tx.query.practices.findFirst({
+          where: eq(practices.googlePlaceId, googlePlaceId),
+          columns: { id: true },
+        });
+        if (existingPlace) {
+          return {
+            error: "Diese Google-Praxis ist bereits mit einem anderen Konto verknüpft.",
+            code: "PLACE_ID_TAKEN" as const,
+          };
+        }
+      }
+
       // Generate unique slug
       let slug = slugify(name);
       const existingSlug = await tx.query.practices.findFirst({
@@ -164,7 +166,15 @@ export async function POST(request: Request) {
         return { error: "Praxis konnte nicht erstellt werden", code: "INSERT_FAILED" as const };
       }
 
-      const surveySlug = `${slug}-umfrage`;
+      let surveySlug = `${slug}-umfrage`;
+      const existingSurveySlug = await tx.query.surveys.findFirst({
+        where: eq(surveys.slug, surveySlug),
+        columns: { id: true },
+      });
+      if (existingSurveySlug) {
+        surveySlug = `${surveySlug}-${Math.random().toString(36).slice(2, 6)}`;
+      }
+
       await tx.insert(surveys).values({
         practiceId: practice.id,
         title: terminology.surveyTitle,
@@ -179,9 +189,10 @@ export async function POST(request: Request) {
     });
 
     if ("error" in result) {
+      const status = result.code === "PLACE_ID_TAKEN" ? 409 : 403;
       return NextResponse.json(
         { error: result.error, code: result.code },
-        { status: 403 },
+        { status },
       );
     }
 

@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { INDUSTRY_CATEGORIES } from "@/lib/industries";
 
 // ============================================================
 // ENV VALIDATION
@@ -144,6 +145,15 @@ export const practiceCreateSchema = z.object({
   industrySubCategory: z.enum(INDUSTRY_SUB_CATEGORY_IDS),
   googlePlaceId: z.string().max(200).optional(),
   templateId: z.string().uuid(),
+}).superRefine((data, ctx) => {
+  const category = INDUSTRY_CATEGORIES.find((c) => c.id === data.industryCategory);
+  if (!category || !category.subCategories.some((s) => s.id === data.industrySubCategory)) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["industrySubCategory"],
+      message: "Sub-Kategorie passt nicht zur gewählten Branche",
+    });
+  }
 });
 
 export const surveyQuestionSchema = z.object({
