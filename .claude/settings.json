@@ -1,0 +1,26 @@
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node -e \"const f=JSON.parse(require('fs').readFileSync('/dev/stdin','utf8')); const p=f.tool_input?.file_path||''; if(/\\.(ts|tsx)$/.test(p)){const{execFileSync}=require('child_process'); try{execFileSync('npx',['eslint','--fix',p.replace(/\\\\\\\\/g,'/')],{stdio:'pipe',timeout:15000})}catch(e){const out=(e.stderr||e.stdout||'').toString(); if(out.includes('error')){console.error('ESLint errors in '+p); process.exit(1)}}}\"",
+            "timeout": 20000
+          }
+        ]
+      },
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node -e \"const f=JSON.parse(require('fs').readFileSync('/dev/stdin','utf8')); const p=f.tool_input?.file_path||''; if(/\\.env/.test(p)){console.error('Warning: .env files should be edited manually, not via Claude.'); process.exit(1)}\"",
+            "timeout": 5000
+          }
+        ]
+      }
+    ]
+  }
+}
