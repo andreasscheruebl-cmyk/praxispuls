@@ -96,7 +96,6 @@ export default async function SurveyPage({ params }: Props) {
           <div className="mx-auto max-w-lg">
             <SurveyForm
               surveyId={survey.id}
-              practiceName={survey.practice.name}
               practiceColor={survey.practice.primaryColor || "#0D9488"}
               questions={questions}
               respondentType={survey.respondentType ?? "patient"}

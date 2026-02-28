@@ -67,7 +67,7 @@ export const surveyResponseSchema = z.object({
   surveyId: z.string().uuid(),
   answers: z.record(
     z.string().max(100),
-    z.union([z.number().min(0).max(10), z.string().max(2000), z.boolean()])
+    z.union([z.number().int().min(0).max(10), z.string().max(2000), z.boolean()])
   ).refine(
     (obj) => Object.keys(obj).length <= 50,
     "Too many answers"

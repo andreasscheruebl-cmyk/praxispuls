@@ -11,6 +11,14 @@ export function validateAnswers(
 ): string[] {
   const errors: string[] = [];
 
+  // Reject unknown answer keys (prevents arbitrary data injection)
+  const questionIds = new Set(questions.map((q) => q.id));
+  for (const key of Object.keys(answers)) {
+    if (!questionIds.has(key)) {
+      errors.push(`Unbekanntes Feld: "${key}"`);
+    }
+  }
+
   for (const q of questions) {
     const value = answers[q.id];
     const hasValue = value !== undefined && value !== null && value !== "";
@@ -58,6 +66,10 @@ export function validateAnswers(
         }
         break;
       }
+      default: {
+        const _exhaustive: never = q.type;
+        errors.push(`Unbekannter Fragetyp: ${String(_exhaustive)}`);
+      }
     }
   }
 
@@ -92,11 +104,15 @@ export function canProceedStep(
         if (typeof value !== "string" || value.length === 0) return false;
         break;
       case "single-choice":
-        if (typeof value !== "string" || value.length === 0) return false;
+        if (typeof value !== "string" || value.length === 0 || !q.options?.includes(value)) return false;
         break;
       case "yes-no":
         if (typeof value !== "boolean") return false;
         break;
+      default: {
+        const _exhaustive: never = q.type;
+        throw new Error(`Unknown question type: ${String(_exhaustive)}`);
+      }
     }
   }
 

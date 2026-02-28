@@ -1,9 +1,10 @@
 import { NextResponse } from "next/server";
+import * as Sentry from "@sentry/nextjs";
 import { db } from "@/lib/db";
 import { responses, alerts, surveys } from "@/lib/db/schema";
 import { surveyResponseSchema } from "@/lib/validations";
 import { getNpsCategory } from "@/lib/utils";
-import { routeByNps } from "@/lib/review-router";
+import { routeByNps, noRouting } from "@/lib/review-router";
 import { validateAnswers } from "@/lib/survey-validation";
 import { eq, and } from "drizzle-orm";
 import { getMonthlyResponseCount } from "@/lib/db/queries/dashboard";
@@ -23,7 +24,11 @@ function extractNpsScore(
   const npsQuestion = questions.find((q) => q.type === "nps" || q.type === "enps");
   if (!npsQuestion) return 0;
   const value = answers[npsQuestion.id];
-  return typeof value === "number" ? value : 0;
+  if (typeof value !== "number") {
+    console.warn(`NPS question "${npsQuestion.id}" has non-numeric answer: ${typeof value}`);
+    return 0;
+  }
+  return value;
 }
 
 /**
@@ -70,15 +75,22 @@ export async function POST(request: Request) {
     const questions = (survey.questions ?? []) as SurveyQuestion[];
     const isEmployee = survey.respondentType === "mitarbeiter";
 
+    // Reject submissions for surveys without question definitions
+    if (questions.length === 0) {
+      console.error(`Survey ${survey.id} has no question definitions but received a submission`);
+      return NextResponse.json(
+        { error: "Umfrage ist nicht konfiguriert.", code: "BAD_REQUEST" },
+        { status: 400 }
+      );
+    }
+
     // Server-side answer validation against question definitions
-    if (questions.length > 0) {
-      const validationErrors = validateAnswers(questions, data.answers);
-      if (validationErrors.length > 0) {
-        return NextResponse.json(
-          { error: validationErrors[0], code: "VALIDATION_ERROR" },
-          { status: 400 }
-        );
-      }
+    const validationErrors = validateAnswers(questions, data.answers);
+    if (validationErrors.length > 0) {
+      return NextResponse.json(
+        { error: validationErrors[0], code: "VALIDATION_ERROR", details: validationErrors },
+        { status: 400 }
+      );
     }
 
     // Session deduplication (same device + survey within 24h)
@@ -122,13 +134,7 @@ export async function POST(request: Request) {
 
     // Employee surveys: no Google routing, no detractor alerts
     const routeResult = isEmployee
-      ? {
-          category: npsCategory as "promoter" | "passive" | "detractor",
-          routedTo: null as "google" | "internal" | null,
-          googleReviewUrl: null as string | null,
-          showGooglePrompt: false,
-          alertRequired: false,
-        }
+      ? noRouting(npsScore)
       : routeByNps(
           npsScore,
           practice.googlePlaceId,
@@ -173,6 +179,10 @@ export async function POST(request: Request) {
           responseDate: new Date(),
         }).catch((err) => {
           console.error("Failed to send detractor alert email:", err);
+          Sentry.captureException(err, {
+            tags: { feature: "detractor-alert" },
+            extra: { practiceId: practice.id, responseId: response.id },
+          });
         });
       }
     }
@@ -192,6 +202,7 @@ export async function POST(request: Request) {
         limit: limits.maxResponsesPerMonth,
       }).catch((err) => {
         console.error("Failed to send upgrade reminder:", err);
+        Sentry.captureException(err, { tags: { feature: "upgrade-reminder" } });
       });
     }
 
@@ -205,6 +216,7 @@ export async function POST(request: Request) {
     });
   } catch (error) {
     console.error("Error submitting response:", error);
+    Sentry.captureException(error, { tags: { endpoint: "public-responses" } });
     return NextResponse.json(
       { error: "Interner Fehler", code: "INTERNAL_ERROR" },
       { status: 500 }

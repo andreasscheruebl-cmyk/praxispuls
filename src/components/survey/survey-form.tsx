@@ -10,7 +10,6 @@ import type { SurveyQuestion, SurveyAnswers } from "@/types";
 
 type Props = {
   surveyId: string;
-  practiceName: string;
   practiceColor: string;
   questions: SurveyQuestion[];
   respondentType: string;
@@ -19,7 +18,7 @@ type Props = {
 type Status = "filling" | "submitting" | "done" | "duplicate" | "error";
 
 type RoutingResult = {
-  category: string;
+  category: "promoter" | "passive" | "detractor";
   showGooglePrompt: boolean;
   googleReviewUrl: string | null;
 };
@@ -41,6 +40,7 @@ export function SurveyForm({
   const isFreetextOnly =
     currentStep?.questions.length === 1 &&
     currentStep.questions[0]?.type === "freetext";
+  const isOptionalFreetextOnly = isFreetextOnly && !currentStep?.questions[0]?.required;
   const canProceed = currentStep ? canProceedStep(currentStep, answers) : false;
 
   function handleAnswer(questionId: string, value: number | string | boolean) {
@@ -50,15 +50,20 @@ export function SurveyForm({
   async function submitSurvey() {
     setStatus("submitting");
 
-    // Generate session hash for deduplication (surveyId + date, no PII)
-    const dateKey = new Date().toISOString().slice(0, 10);
-    const raw = `${surveyId}-${dateKey}-${navigator.userAgent}`;
-    const encoder = new TextEncoder();
-    const hashBuffer = await crypto.subtle.digest("SHA-256", encoder.encode(raw));
-    const hashArray = Array.from(new Uint8Array(hashBuffer));
-    const sessionHash = hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
-
     try {
+      // Generate session hash for deduplication (surveyId + date, no PII)
+      let sessionHash: string | undefined;
+      try {
+        const dateKey = new Date().toISOString().slice(0, 10);
+        const raw = `${surveyId}-${dateKey}-${navigator.userAgent}`;
+        const encoder = new TextEncoder();
+        const hashBuffer = await crypto.subtle.digest("SHA-256", encoder.encode(raw));
+        const hashArray = Array.from(new Uint8Array(hashBuffer));
+        sessionHash = hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
+      } catch {
+        // crypto.subtle unavailable (non-secure context) — proceed without dedup hash
+      }
+
       const res = await fetch("/api/public/responses", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -71,7 +76,16 @@ export function SurveyForm({
         }),
       });
 
-      const data = await res.json();
+      // Safe JSON parsing (server may return non-JSON on 502/504)
+      let data: Record<string, unknown> | null = null;
+      try {
+        const contentType = res.headers.get("content-type");
+        if (contentType?.includes("application/json")) {
+          data = await res.json();
+        }
+      } catch {
+        // Response body is not valid JSON — fall through to error handling
+      }
 
       if (!res.ok) {
         if (data?.code === "DUPLICATE_RESPONSE") {
@@ -82,10 +96,12 @@ export function SurveyForm({
         setStatus("error");
         return;
       }
-      if (data.routing) {
-        setRoutingResult(data.routing);
+
+      const routing = data?.routing as RoutingResult | undefined;
+      if (routing) {
+        setRoutingResult(routing);
       }
-      trackEvent("Survey Completed", { category: data.routing?.category || "unknown" });
+      trackEvent("Survey Completed", { category: routing?.category || "unknown" });
       setStatus("done");
     } catch (err) {
       console.error("Survey submission failed:", err);
@@ -130,7 +146,7 @@ export function SurveyForm({
             ⭐ Ja, gerne bewerten!
           </a>
           <button
-            onClick={() => {}}
+            onClick={() => setRoutingResult((prev) => prev ? { ...prev, showGooglePrompt: false } : prev)}
             className="block w-full text-sm text-muted-foreground hover:underline"
           >
             Nein, danke
@@ -181,7 +197,7 @@ export function SurveyForm({
         </p>
         <Button
           onClick={() => {
-            setStepIndex(steps.length - 1);
+            setStepIndex(Math.max(0, steps.length - 1));
             setStatus("filling");
           }}
           variant="outline"
@@ -209,9 +225,21 @@ export function SurveyForm({
 
   // ============ FILLING: Dynamic Step Rendering ============
 
-  if (!currentStep) return null;
+  if (!currentStep) {
+    return (
+      <div className="space-y-6 text-center">
+        <div className="text-4xl">⚠️</div>
+        <h2 className="text-xl font-semibold">
+          Diese Umfrage kann nicht geladen werden.
+        </h2>
+        <p className="text-muted-foreground">
+          Bitte versuchen Sie es später erneut oder kontaktieren Sie die Praxis.
+        </p>
+      </div>
+    );
+  }
 
-  const progress = steps.length > 0 ? ((stepIndex + 1) / steps.length) * 100 : 0;
+  const progress = ((stepIndex + 1) / steps.length) * 100;
 
   return (
     <div className="space-y-6">
@@ -247,31 +275,51 @@ export function SurveyForm({
       {/* Navigation buttons */}
       {isLastStep ? (
         <div className="flex gap-3">
+          {stepIndex > 0 && (
+            <Button
+              onClick={() => setStepIndex((i) => i - 1)}
+              variant="ghost"
+              size="lg"
+            >
+              Zurück
+            </Button>
+          )}
           <Button
             onClick={submitSurvey}
-            disabled={!canProceed && !isFreetextOnly}
+            disabled={!canProceed && !isOptionalFreetextOnly}
             className="flex-1"
             size="lg"
             style={{ backgroundColor: practiceColor }}
           >
             Absenden
           </Button>
-          {isFreetextOnly && (
+          {isOptionalFreetextOnly && (
             <Button onClick={submitSurvey} variant="ghost" size="lg">
               Überspringen
             </Button>
           )}
         </div>
       ) : (
-        <Button
-          onClick={() => setStepIndex((i) => i + 1)}
-          disabled={!canProceed}
-          className="w-full"
-          size="lg"
-          style={{ backgroundColor: practiceColor }}
-        >
-          Weiter
-        </Button>
+        <div className="flex gap-3">
+          {stepIndex > 0 && (
+            <Button
+              onClick={() => setStepIndex((i) => i - 1)}
+              variant="ghost"
+              size="lg"
+            >
+              Zurück
+            </Button>
+          )}
+          <Button
+            onClick={() => setStepIndex((i) => i + 1)}
+            disabled={!canProceed}
+            className="flex-1"
+            size="lg"
+            style={{ backgroundColor: practiceColor }}
+          >
+            Weiter
+          </Button>
+        </div>
       )}
     </div>
   );
