@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { getOnboardingTemplates } from "@/actions/templates";
 import type { OnboardingTemplate } from "@/types";
 import { getSubCategory } from "@/lib/industries";
@@ -48,8 +48,9 @@ export function useLocationSetup() {
       console.error("[loadTemplates]", err);
       setError("Templates konnten nicht geladen werden");
       setTemplates([]);
+    } finally {
+      setTemplatesLoading(false);
     }
-    setTemplatesLoading(false);
   }
 
   function handleIndustryChange(selection: IndustrySelection) {
@@ -61,10 +62,14 @@ export function useLocationSetup() {
     });
   }
 
+  const submittingRef = useRef(false);
+
   async function handleComplete(onSuccess: () => void) {
-    if (loading) return;
-    if (!industry || !templateId) {
-      setError("Bitte wählen Sie eine Branche und ein Template.");
+    if (loading || submittingRef.current) return;
+    submittingRef.current = true;
+    if (!industry || !templateId || name.trim().length < 2) {
+      setError("Bitte füllen Sie alle Pflichtfelder aus.");
+      submittingRef.current = false;
       return;
     }
 
@@ -94,6 +99,7 @@ export function useLocationSetup() {
       setError("Netzwerkfehler. Bitte versuchen Sie es erneut.");
     } finally {
       setLoading(false);
+      submittingRef.current = false;
     }
   }
 

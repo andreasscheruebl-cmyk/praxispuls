@@ -19,8 +19,8 @@ export default function OnboardingPage() {
     handleIndustryChange, handleComplete,
   } = useLocationSetup();
 
-  function onComplete() {
-    handleComplete(() => {
+  async function onComplete() {
+    await handleComplete(() => {
       router.push("/dashboard/qr-codes");
       router.refresh();
     });

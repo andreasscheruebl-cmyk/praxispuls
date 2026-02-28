@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { requireAdmin, requireAuthForAction } from "@/lib/auth";
 import { createTemplate, updateTemplate, deleteTemplate, getTemplateById, getTemplatesForPractice } from "@/lib/db/queries/templates";
 import { templateCreateSchema, templateUpdateSchema, INDUSTRY_CATEGORY_IDS, INDUSTRY_SUB_CATEGORY_IDS } from "@/lib/validations";
+import type { OnboardingTemplate, IndustryCategory, IndustrySubCategory } from "@/types";
 
 function generateSlug(name: string): string {
   return name
@@ -143,8 +144,6 @@ const onboardingFilterSchema = z.object({
   industryCategory: z.enum(INDUSTRY_CATEGORY_IDS),
   industrySubCategory: z.enum(INDUSTRY_SUB_CATEGORY_IDS).optional(),
 });
-
-import type { OnboardingTemplate, IndustryCategory, IndustrySubCategory } from "@/types";
 
 export async function getOnboardingTemplates(
   industryCategory: IndustryCategory,

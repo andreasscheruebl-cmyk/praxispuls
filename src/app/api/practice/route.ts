@@ -69,8 +69,9 @@ export async function POST(request: Request) {
       );
     }
 
-    // IDOR protection: template must match the selected industry
-    if (dbTemplate.industrySubCategory !== industrySubCategory ||
+    // IDOR protection: template must match the selected industry + category
+    if (dbTemplate.industryCategory !== industryCategory ||
+        dbTemplate.industrySubCategory !== industrySubCategory ||
         dbTemplate.category !== "customer") {
       return NextResponse.json(
         { error: "Template passt nicht zur gewählten Branche", code: "TEMPLATE_MISMATCH" },
@@ -138,14 +139,15 @@ export async function POST(request: Request) {
         }
       }
 
-      // Generate unique slug
+      // Generate unique slug with retry
       let slug = slugify(name);
-      const existingSlug = await tx.query.practices.findFirst({
-        where: eq(practices.slug, slug),
-        columns: { id: true },
-      });
-      if (existingSlug) {
-        slug = `${slug}-${Math.random().toString(36).slice(2, 6)}`;
+      for (let i = 0; i < 5; i++) {
+        const existingSlug = await tx.query.practices.findFirst({
+          where: eq(practices.slug, slug),
+          columns: { id: true },
+        });
+        if (!existingSlug) break;
+        slug = `${slugify(name)}-${Math.random().toString(36).slice(2, 8)}`;
       }
 
       const [practice] = await tx.insert(practices).values({
@@ -166,12 +168,13 @@ export async function POST(request: Request) {
       }
 
       let surveySlug = `${slug}-umfrage`;
-      const existingSurveySlug = await tx.query.surveys.findFirst({
-        where: eq(surveys.slug, surveySlug),
-        columns: { id: true },
-      });
-      if (existingSurveySlug) {
-        surveySlug = `${surveySlug}-${Math.random().toString(36).slice(2, 6)}`;
+      for (let i = 0; i < 5; i++) {
+        const existingSurveySlug = await tx.query.surveys.findFirst({
+          where: eq(surveys.slug, surveySlug),
+          columns: { id: true },
+        });
+        if (!existingSurveySlug) break;
+        surveySlug = `${slug}-umfrage-${Math.random().toString(36).slice(2, 8)}`;
       }
 
       await tx.insert(surveys).values({
@@ -188,7 +191,10 @@ export async function POST(request: Request) {
     });
 
     if ("error" in result) {
-      const status = result.code === "PLACE_ID_TAKEN" ? 409 : 403;
+      const status =
+        result.code === "PLACE_ID_TAKEN" ? 409 :
+        result.code === "LOCATION_LIMIT_REACHED" ? 403 :
+        500; // INSERT_FAILED
       return NextResponse.json(
         { error: result.error, code: result.code },
         { status },
@@ -277,7 +283,7 @@ export async function PUT(request: Request) {
       .where(eq(practices.id, practice.id));
 
     // Audit log for settings change
-    logAudit({
+    await logAudit({
       practiceId: practice.id,
       action: "practice.updated",
       entity: "practice",
