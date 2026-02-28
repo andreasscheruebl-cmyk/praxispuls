@@ -136,7 +136,7 @@ describe("practiceUpdateSchema", () => {
 describe("surveyResponseSchema", () => {
   const validResponse = {
     surveyId: "550e8400-e29b-41d4-a716-446655440000",
-    npsScore: 8,
+    answers: { nps: 8 },
   };
 
   it("accepts minimal valid response", () => {
@@ -148,12 +148,13 @@ describe("surveyResponseSchema", () => {
     const result = surveyResponseSchema.safeParse({
       ...validResponse,
       answers: {
+        nps: 8,
         wait_time: 4,
         friendliness: 5,
         treatment: 3,
         facility: 4,
+        feedback: "Sehr zufrieden!",
       },
-      freeText: "Sehr zufrieden!",
       channel: "link",
       deviceType: "mobile",
       sessionHash: "abc123",
@@ -177,34 +178,25 @@ describe("surveyResponseSchema", () => {
     expect(result.success).toBe(false);
   });
 
-  it("rejects npsScore below 0", () => {
+  it("rejects missing answers field", () => {
     const result = surveyResponseSchema.safeParse({
-      ...validResponse,
-      npsScore: -1,
+      surveyId: "550e8400-e29b-41d4-a716-446655440000",
     });
     expect(result.success).toBe(false);
   });
 
-  it("rejects npsScore above 10", () => {
+  it("rejects answer value out of number range", () => {
     const result = surveyResponseSchema.safeParse({
       ...validResponse,
-      npsScore: 11,
+      answers: { nps: 11 },
     });
     expect(result.success).toBe(false);
   });
 
-  it("rejects float npsScore", () => {
+  it("rejects answer string over 2000 chars", () => {
     const result = surveyResponseSchema.safeParse({
       ...validResponse,
-      npsScore: 7.5,
-    });
-    expect(result.success).toBe(false);
-  });
-
-  it("rejects freeText over 2000 chars", () => {
-    const result = surveyResponseSchema.safeParse({
-      ...validResponse,
-      freeText: "x".repeat(2001),
+      answers: { feedback: "x".repeat(2001) },
     });
     expect(result.success).toBe(false);
   });

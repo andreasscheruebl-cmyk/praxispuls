@@ -1,7 +1,7 @@
 import { getNpsCategory } from "./utils";
 import { getGoogleReviewLink } from "./google";
 
-type RouteResult = {
+export type RouteResult = {
   category: "promoter" | "passive" | "detractor";
   routedTo: "google" | "internal" | null;
   googleReviewUrl: string | null;
@@ -47,6 +47,19 @@ export function routeByNps(
   // Passive or Promoter without Google Place ID
   return {
     category,
+    routedTo: null,
+    googleReviewUrl: null,
+    showGooglePrompt: false,
+    alertRequired: false,
+  };
+}
+
+/**
+ * No routing — used for employee surveys where Google routing and alerts are disabled.
+ */
+export function noRouting(npsScore: number): RouteResult {
+  return {
+    category: getNpsCategory(npsScore),
     routedTo: null,
     googleReviewUrl: null,
     showGooglePrompt: false,

@@ -62,4 +62,9 @@ nul
 # Personal notes
 todo.txt
 
+# Reference screenshots
+*.png
+!src/**/*.png
+!public/**/*.png
+
 .vercel

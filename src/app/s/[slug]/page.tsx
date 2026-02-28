@@ -6,6 +6,8 @@ import { db } from "@/lib/db";
 import { surveys } from "@/lib/db/schema";
 import { eq, and, isNull } from "drizzle-orm";
 import { SurveyForm } from "@/components/survey/survey-form";
+import { SurveyUnavailable } from "@/components/survey/survey-unavailable";
+import type { SurveyQuestion } from "@/types";
 
 type Props = {
   params: Promise<{ slug: string }>;
@@ -28,8 +30,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   }
 
   return {
-    title: `Patientenbefragung – ${survey.practice.name}`,
-    description: `Ihre Meinung ist uns wichtig! Nehmen Sie an der anonymen Patientenbefragung von ${survey.practice.name} teil.`,
+    title: `${survey.title} – ${survey.practice.name}`,
+    description: `Ihre Meinung ist uns wichtig! Nehmen Sie an der anonymen Befragung von ${survey.practice.name} teil.`,
     robots: { index: false, follow: false },
   };
 }
@@ -44,23 +46,28 @@ export default async function SurveyPage({ params }: Props) {
 
   // Suspended practices cannot serve surveys
   if (survey.practice.suspendedAt) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-gray-50 p-4">
-        <div className="max-w-md rounded-lg border bg-white p-8 text-center shadow-sm">
-          <h2 className="mb-2 text-xl font-semibold">Nicht verfügbar</h2>
-          <p className="text-muted-foreground">
-            Diese Umfrage ist derzeit nicht verfügbar.
-          </p>
-        </div>
-      </div>
-    );
+    return <SurveyUnavailable />;
+  }
+
+  // On-access time checks
+  const now = new Date();
+  if (survey.startsAt && now < survey.startsAt) {
+    return <SurveyUnavailable />;
+  }
+  if (survey.endsAt && now > survey.endsAt) {
+    return <SurveyUnavailable />;
+  }
+
+  // Defensive: no questions → not found
+  const questions = (survey.questions ?? []) as SurveyQuestion[];
+  if (questions.length === 0) {
+    notFound();
   }
 
   return (
       <div
         className="flex min-h-screen flex-col bg-paper-texture"
         style={{
-          // Apply practice branding color
           ["--practice-color" as string]: survey.practice.primaryColor || "#0D9488",
         }}
       >
@@ -89,8 +96,9 @@ export default async function SurveyPage({ params }: Props) {
           <div className="mx-auto max-w-lg">
             <SurveyForm
               surveyId={survey.id}
-              practiceName={survey.practice.name}
               practiceColor={survey.practice.primaryColor || "#0D9488"}
+              questions={questions}
+              respondentType={survey.respondentType ?? "patient"}
             />
           </div>
         </main>
