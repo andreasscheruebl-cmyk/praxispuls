@@ -80,10 +80,14 @@ export function SurveyCard({ survey }: SurveyCardProps) {
     });
   }
 
-  function handleCopyLink() {
+  async function handleCopyLink() {
     const url = `${window.location.origin}/s/${survey.slug}`;
-    navigator.clipboard.writeText(url);
-    toast.success("Link kopiert");
+    try {
+      await navigator.clipboard.writeText(url);
+      toast.success("Link kopiert");
+    } catch {
+      toast.error("Link konnte nicht kopiert werden");
+    }
   }
 
   const npsColor =

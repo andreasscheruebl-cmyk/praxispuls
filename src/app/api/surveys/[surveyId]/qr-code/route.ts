@@ -44,9 +44,10 @@ export async function GET(
       surveyUrl: getSurveyUrl(survey.slug),
       surveySlug: survey.slug,
     });
-  } catch {
+  } catch (error) {
+    console.error("[QR-Code API]", error);
     return NextResponse.json(
-      { error: "Interner Fehler", code: "INTERNAL_ERROR" },
+      { error: "QR-Code konnte nicht generiert werden", code: "INTERNAL_ERROR" },
       { status: 500 }
     );
   }

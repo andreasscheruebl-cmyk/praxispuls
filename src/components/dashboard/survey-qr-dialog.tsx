@@ -49,10 +49,14 @@ export function SurveyQrDialog({
       .finally(() => setLoading(false));
   }, [open, surveyId]);
 
-  function handleCopyLink() {
+  async function handleCopyLink() {
     if (!qrData) return;
-    navigator.clipboard.writeText(qrData.surveyUrl);
-    toast.success("Link kopiert");
+    try {
+      await navigator.clipboard.writeText(qrData.surveyUrl);
+      toast.success("Link kopiert");
+    } catch {
+      toast.error("Link konnte nicht kopiert werden");
+    }
   }
 
   function handleDownload() {
