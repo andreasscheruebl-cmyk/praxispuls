@@ -4,11 +4,40 @@ import { responses, alerts, surveys } from "@/lib/db/schema";
 import { surveyResponseSchema } from "@/lib/validations";
 import { getNpsCategory } from "@/lib/utils";
 import { routeByNps } from "@/lib/review-router";
+import { validateAnswers } from "@/lib/survey-validation";
 import { eq, and } from "drizzle-orm";
 import { getMonthlyResponseCount } from "@/lib/db/queries/dashboard";
 import { PLAN_LIMITS } from "@/types";
+import type { SurveyQuestion } from "@/types";
 import { getEffectivePlan } from "@/lib/plans";
 import { sendDetractorAlert } from "@/lib/email";
+
+/**
+ * Extract NPS/eNPS score from answers based on survey question definitions.
+ * Returns 0 if no NPS/eNPS question is defined (DB column is NOT NULL).
+ */
+function extractNpsScore(
+  questions: SurveyQuestion[],
+  answers: Record<string, number | string | boolean>
+): number {
+  const npsQuestion = questions.find((q) => q.type === "nps" || q.type === "enps");
+  if (!npsQuestion) return 0;
+  const value = answers[npsQuestion.id];
+  return typeof value === "number" ? value : 0;
+}
+
+/**
+ * Extract first freetext answer from answers based on survey question definitions.
+ */
+function extractFreeText(
+  questions: SurveyQuestion[],
+  answers: Record<string, number | string | boolean>
+): string | undefined {
+  const ftQuestion = questions.find((q) => q.type === "freetext");
+  if (!ftQuestion) return undefined;
+  const value = answers[ftQuestion.id];
+  return typeof value === "string" && value.length > 0 ? value : undefined;
+}
 
 export async function POST(request: Request) {
   try {
@@ -38,6 +67,19 @@ export async function POST(request: Request) {
     }
 
     const practice = survey.practice;
+    const questions = (survey.questions ?? []) as SurveyQuestion[];
+    const isEmployee = survey.respondentType === "mitarbeiter";
+
+    // Server-side answer validation against question definitions
+    if (questions.length > 0) {
+      const validationErrors = validateAnswers(questions, data.answers);
+      if (validationErrors.length > 0) {
+        return NextResponse.json(
+          { error: validationErrors[0], code: "VALIDATION_ERROR" },
+          { status: 400 }
+        );
+      }
+    }
 
     // Session deduplication (same device + survey within 24h)
     if (data.sessionHash) {
@@ -73,13 +115,26 @@ export async function POST(request: Request) {
       );
     }
 
-    const npsCategory = getNpsCategory(data.npsScore);
-    const routeResult = routeByNps(
-      data.npsScore,
-      practice.googlePlaceId,
-      practice.npsThreshold ?? 9,
-      practice.googleRedirectEnabled ?? true
-    );
+    // Extract NPS + freeText from answers (Clean Break)
+    const npsScore = extractNpsScore(questions, data.answers);
+    const freeText = extractFreeText(questions, data.answers);
+    const npsCategory = getNpsCategory(npsScore);
+
+    // Employee surveys: no Google routing, no detractor alerts
+    const routeResult = isEmployee
+      ? {
+          category: npsCategory as "promoter" | "passive" | "detractor",
+          routedTo: null as "google" | "internal" | null,
+          googleReviewUrl: null as string | null,
+          showGooglePrompt: false,
+          alertRequired: false,
+        }
+      : routeByNps(
+          npsScore,
+          practice.googlePlaceId,
+          practice.npsThreshold ?? 9,
+          practice.googleRedirectEnabled ?? true
+        );
 
     // Insert response
     const [response] = await db
@@ -87,10 +142,10 @@ export async function POST(request: Request) {
       .values({
         surveyId: data.surveyId,
         practiceId: practice.id,
-        npsScore: data.npsScore,
+        npsScore,
         npsCategory,
-        answers: data.answers || {},
-        freeText: data.freeText,
+        answers: data.answers,
+        freeText,
         channel: data.channel,
         deviceType: data.deviceType,
         sessionHash: data.sessionHash,
@@ -99,7 +154,7 @@ export async function POST(request: Request) {
       })
       .returning();
 
-    // Create alert + send email for detractors
+    // Create alert + send email for detractors (not for employees)
     if (routeResult.alertRequired && response) {
       await db.insert(alerts).values({
         practiceId: practice.id,
@@ -113,8 +168,8 @@ export async function POST(request: Request) {
         sendDetractorAlert({
           to: alertEmail,
           practiceName: practice.name,
-          npsScore: data.npsScore,
-          freeText: data.freeText,
+          npsScore,
+          freeText,
           responseDate: new Date(),
         }).catch((err) => {
           console.error("Failed to send detractor alert email:", err);

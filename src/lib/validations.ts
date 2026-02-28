@@ -61,19 +61,17 @@ export const practiceUpdateSchema = z.object({
 });
 
 // ============================================================
-// SURVEY RESPONSE (Public – from patient)
+// SURVEY RESPONSE (Public – from patient/employee)
 // ============================================================
 export const surveyResponseSchema = z.object({
   surveyId: z.string().uuid(),
-  npsScore: z.number().int().min(0).max(10),
   answers: z.record(
     z.string().max(100),
     z.union([z.number().min(0).max(10), z.string().max(2000), z.boolean()])
   ).refine(
     (obj) => Object.keys(obj).length <= 50,
     "Too many answers"
-  ).optional(),
-  freeText: z.string().max(2000).optional(),
+  ),
   channel: z.enum(["qr", "link", "email"]).default("qr"),
   deviceType: z.enum(["mobile", "tablet", "desktop"]).optional(),
   sessionHash: z.string().optional(),
