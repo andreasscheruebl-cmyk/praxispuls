@@ -25,6 +25,7 @@ import { createSurvey } from "@/actions/survey";
 import { toast } from "sonner";
 import { ArrowLeft, Loader2, Plus, X, FileText } from "lucide-react";
 import type { SurveyQuestionType } from "@/lib/validations";
+import type { TemplateCategory } from "@/types";
 
 interface TemplateData {
   id: string;
@@ -75,7 +76,7 @@ export function CreateSurveyDialog({
 
   // Step 1: Template selection
   const [selectedTemplate, setSelectedTemplate] = useState<TemplateData | null>(null);
-  const [categoryFilter, setCategoryFilter] = useState<"customer" | "employee">("customer");
+  const [categoryFilter, setCategoryFilter] = useState<TemplateCategory>("customer");
 
   // Step 2: Customization
   const [title, setTitle] = useState("");

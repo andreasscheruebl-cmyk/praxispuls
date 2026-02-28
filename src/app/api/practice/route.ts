@@ -100,14 +100,12 @@ export async function POST(request: Request) {
     }
     const userEmail = user.email;
 
-    // Dynamic survey title via terminology
     const terminology = getTerminology(
       (dbTemplate.respondentType as RespondentType) ?? "kunde",
     );
 
     // Transaction: check limit + insert atomically to prevent race conditions
     const result = await db.transaction(async (tx) => {
-      // Check location limit against user's effective plan
       const userPractices = await tx.query.practices.findMany({
         where: and(eq(practices.ownerUserId, user.id), isNull(practices.deletedAt)),
         columns: { id: true, plan: true, planOverride: true, overrideExpiresAt: true },
@@ -125,7 +123,6 @@ export async function POST(request: Request) {
         };
       }
 
-      // Check Google Place ID uniqueness inside transaction to prevent TOCTOU race
       if (googlePlaceId) {
         const existingPlace = await tx.query.practices.findFirst({
           where: eq(practices.googlePlaceId, googlePlaceId),
@@ -139,7 +136,6 @@ export async function POST(request: Request) {
         }
       }
 
-      // Generate unique slug with retry
       let slug = slugify(name);
       for (let i = 0; i < 5; i++) {
         const existingSlug = await tx.query.practices.findFirst({
@@ -160,7 +156,7 @@ export async function POST(request: Request) {
         googlePlaceId,
         googleReviewUrl,
         alertEmail: userEmail,
-        plan: userPlan, // Inherit effective plan from user
+        plan: userPlan,
       }).returning();
 
       if (!practice) {
@@ -191,10 +187,12 @@ export async function POST(request: Request) {
     });
 
     if ("error" in result) {
-      const status =
-        result.code === "PLACE_ID_TAKEN" ? 409 :
-        result.code === "LOCATION_LIMIT_REACHED" ? 403 :
-        500; // INSERT_FAILED
+      let status: number;
+      switch (result.code) {
+        case "PLACE_ID_TAKEN": status = 409; break;
+        case "LOCATION_LIMIT_REACHED": status = 403; break;
+        default: status = 500; break;
+      }
       return NextResponse.json(
         { error: result.error, code: result.code },
         { status },
@@ -246,9 +244,8 @@ export async function PUT(request: Request) {
     const practice = await getActivePracticeForUser(user.id);
     if (!practice) return NextResponse.json({ error: "Praxis nicht gefunden", code: "NOT_FOUND" }, { status: 404 });
 
-    // Verify Google Place ID if changed
     const updates = parsed.data;
-    let googleReviewUrl = practice.googleReviewUrl;
+
     if (updates.googlePlaceId && updates.googlePlaceId !== practice.googlePlaceId) {
       const placeDetails = await getPlaceDetails(updates.googlePlaceId);
       if (!placeDetails) {
@@ -258,7 +255,6 @@ export async function PUT(request: Request) {
         );
       }
 
-      // Check if Place ID is already used by another practice
       const existing = await db.query.practices.findFirst({
         where: and(
           eq(practices.googlePlaceId, updates.googlePlaceId),
@@ -272,11 +268,11 @@ export async function PUT(request: Request) {
           { status: 409 },
         );
       }
-
-      googleReviewUrl = getGoogleReviewLink(updates.googlePlaceId);
-    } else if (updates.googlePlaceId) {
-      googleReviewUrl = getGoogleReviewLink(updates.googlePlaceId);
     }
+
+    const googleReviewUrl = updates.googlePlaceId
+      ? getGoogleReviewLink(updates.googlePlaceId)
+      : practice.googleReviewUrl;
 
     await db.update(practices)
       .set({ ...updates, googleReviewUrl, updatedAt: new Date() })

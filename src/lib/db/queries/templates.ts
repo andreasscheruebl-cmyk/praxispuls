@@ -2,13 +2,14 @@ import { db } from "@/lib/db";
 import { surveyTemplates } from "@/lib/db/schema";
 import type { NewSurveyTemplate } from "@/lib/db/schema";
 import { eq, and, ilike, or, count } from "drizzle-orm";
+import type { TemplateCategory } from "@/types";
 
 // ============================================================
 // FILTER
 // ============================================================
 
 interface TemplatesFilter {
-  category?: "customer" | "employee";
+  category?: TemplateCategory;
   industryCategory?: string;
   industrySubCategory?: string;
   isSystem?: boolean;

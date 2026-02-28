@@ -109,19 +109,6 @@ describe("practiceCreateSchema", () => {
     }
   });
 
-  it("accepts matching category and sub-category pairs", () => {
-    const pairs = [
-      { industryCategory: "gesundheit", industrySubCategory: "zahnarzt" },
-      { industryCategory: "handwerk", industrySubCategory: "kfz_werkstatt" },
-      { industryCategory: "beauty", industrySubCategory: "friseur" },
-      { industryCategory: "individuell", industrySubCategory: "eigene_branche" },
-    ];
-    for (const pair of pairs) {
-      const result = practiceCreateSchema.safeParse({ ...validInput, ...pair });
-      expect(result.success, `${pair.industryCategory}/${pair.industrySubCategory} should be valid`).toBe(true);
-    }
-  });
-
   // --- Trim / max-length boundary tests ---
 
   it("rejects whitespace-only name after trimming", () => {

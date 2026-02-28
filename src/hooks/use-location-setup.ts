@@ -2,10 +2,9 @@
 
 import { useState, useRef } from "react";
 import { getOnboardingTemplates } from "@/actions/templates";
-import type { OnboardingTemplate } from "@/types";
 import { getSubCategory } from "@/lib/industries";
 import { getTerminology } from "@/lib/terminology";
-import type { IndustryCategory, IndustrySubCategory, IndustrySelection } from "@/types";
+import type { OnboardingTemplate, IndustryCategory, IndustrySubCategory, IndustrySelection } from "@/types";
 
 const STEP_TITLES: Record<1 | 2 | 3, string> = {
   1: "Branche wählen",
@@ -24,6 +23,7 @@ export function useLocationSetup() {
   const [googlePlaceId, setGooglePlaceId] = useState("");
   const [templateId, setTemplateId] = useState<string | null>(null);
   const [templates, setTemplates] = useState<OnboardingTemplate[]>([]);
+  const submittingRef = useRef(false);
 
   // Terminology derived from selected sub-category
   const sub = industry ? getSubCategory(industry.subCategory) : null;
@@ -57,12 +57,8 @@ export function useLocationSetup() {
     setIndustry(selection);
     setTemplateId(null);
     setError(null);
-    loadTemplates(selection.category, selection.subCategory).catch(() => {
-      // Error already handled in loadTemplates via setError
-    });
+    loadTemplates(selection.category, selection.subCategory).catch(() => {});
   }
-
-  const submittingRef = useRef(false);
 
   async function handleComplete(onSuccess: () => void) {
     if (loading || submittingRef.current) return;

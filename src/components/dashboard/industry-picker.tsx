@@ -84,8 +84,8 @@ export function IndustryPicker({ value, onChange }: IndustryPickerProps) {
     ? INDUSTRY_CATEGORIES.find((c) => c.id === expandedCategory)
     : null;
 
-  if (expandedCategoryData && needsSecondLayer(expandedCategory!)) {
-    const Icon = CATEGORY_ICONS[expandedCategory!];
+  if (expandedCategory && expandedCategoryData && needsSecondLayer(expandedCategory)) {
+    const Icon = CATEGORY_ICONS[expandedCategory];
     return (
       <div className="space-y-4">
         <button
@@ -106,7 +106,7 @@ export function IndustryPicker({ value, onChange }: IndustryPickerProps) {
             return (
               <button
                 key={sub.id}
-                onClick={() => handleSubCategoryClick(expandedCategory!, sub.id)}
+                onClick={() => handleSubCategoryClick(expandedCategory, sub.id)}
                 className={`w-full rounded-lg border p-3 text-left transition-colors ${
                   isSelected
                     ? "border-primary bg-primary/5 ring-1 ring-primary"

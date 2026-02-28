@@ -76,14 +76,11 @@ export default function OnboardingPage() {
                   selectedName=""
                   initialQuery={name || undefined}
                 />
-                {googlePlaceId && (
-                  <p className="text-xs text-green-600">Google-Eintrag verknüpft</p>
-                )}
-                {!googlePlaceId && (
-                  <p className="text-xs text-muted-foreground">
-                    Sie können das auch später unter Einstellungen ergänzen.
-                  </p>
-                )}
+                <p className={`text-xs ${googlePlaceId ? "text-green-600" : "text-muted-foreground"}`}>
+                  {googlePlaceId
+                    ? "Google-Eintrag verknüpft"
+                    : "Sie können das auch später unter Einstellungen ergänzen."}
+                </p>
               </div>
               <div className="flex gap-3">
                 <Button variant="outline" onClick={() => setStep(1)} className="flex-1">

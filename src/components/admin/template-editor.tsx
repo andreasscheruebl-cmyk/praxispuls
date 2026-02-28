@@ -17,7 +17,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Plus, ArrowUp, ArrowDown, X, Save } from "lucide-react";
 import { toast } from "sonner";
 import { createTemplateAction, updateTemplateAction } from "@/actions/templates";
-import type { SurveyQuestion, SurveyQuestionType } from "@/types";
+import type { SurveyQuestion, SurveyQuestionType, TemplateCategory } from "@/types";
 import type { SurveyTemplateRow } from "@/lib/db/schema";
 import { INDUSTRY_CATEGORY_IDS } from "@/lib/validations";
 
@@ -75,8 +75,8 @@ export function TemplateEditor({ template }: TemplateEditorProps) {
   const [respondentType, setRespondentType] = useState(
     template?.respondentType ?? "kunde"
   );
-  const [category, setCategory] = useState<"customer" | "employee">(
-    (template?.category as "customer" | "employee") ?? "customer"
+  const [category, setCategory] = useState<TemplateCategory>(
+    (template?.category as TemplateCategory) ?? "customer"
   );
   const [questions, setQuestions] = useState<SurveyQuestion[]>(
     (template?.questions) ?? [
@@ -227,7 +227,7 @@ export function TemplateEditor({ template }: TemplateEditorProps) {
               <Select
                 value={category}
                 onValueChange={(v) =>
-                  setCategory(v as "customer" | "employee")
+                  setCategory(v as TemplateCategory)
                 }
               >
                 <SelectTrigger>
