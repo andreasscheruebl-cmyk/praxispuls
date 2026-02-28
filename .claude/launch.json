@@ -1,0 +1,21 @@
+[
+  {
+    "name": "Next.js Dev Server",
+    "type": "node",
+    "runtimeExecutable": "node",
+    "command": "node_modules/next/dist/bin/next",
+    "args": ["dev", "--turbopack"],
+    "port": 3000,
+    "env": {
+      "NODE_OPTIONS": "--dns-result-order=ipv4first"
+    }
+  },
+  {
+    "name": "Drizzle Studio",
+    "type": "node",
+    "runtimeExecutable": "node",
+    "command": "node_modules/drizzle-kit/bin.cjs",
+    "args": ["studio"],
+    "port": 4983
+  }
+]
