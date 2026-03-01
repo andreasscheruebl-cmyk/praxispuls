@@ -78,7 +78,7 @@ export const practiceUpdateSchema = z.object({
     .string()
     .regex(/^\d{5}$/, "Bitte geben Sie eine gültige PLZ ein.")
     .optional(),
-  googlePlaceId: z.string().trim().max(200).regex(/^[A-Za-z0-9_-]+$/, "Ungültige Google Place ID").optional(),
+  googlePlaceId: z.string().trim().min(1, "Google Place ID darf nicht leer sein").max(200).regex(/^[A-Za-z0-9_-]+$/, "Ungültige Google Place ID").optional(),
   alertEmail: z.string().email().optional(),
   logoUrl: z.string().url().optional().nullable(),
   primaryColor: z
@@ -146,7 +146,7 @@ export const practiceCreateSchema = z.object({
   name: z.string().trim().min(2).max(200),
   industryCategory: z.enum(INDUSTRY_CATEGORY_IDS),
   industrySubCategory: z.enum(INDUSTRY_SUB_CATEGORY_IDS),
-  googlePlaceId: z.string().trim().max(200).regex(/^[A-Za-z0-9_-]+$/, "Ungültige Google Place ID").optional(),
+  googlePlaceId: z.string().trim().min(1, "Google Place ID darf nicht leer sein").max(200).regex(/^[A-Za-z0-9_-]+$/, "Ungültige Google Place ID").optional(),
   templateId: z.string().uuid(),
 }).superRefine((data, ctx) => {
   const category = INDUSTRY_CATEGORIES.find((c) => c.id === data.industryCategory);

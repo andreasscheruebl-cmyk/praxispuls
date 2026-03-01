@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { practices, surveys } from "@/lib/db/schema";
 import { eq, and, ne, isNull } from "drizzle-orm";
 import { practiceUpdateSchema, practiceCreateSchema } from "@/lib/validations";
+import { INDUSTRY_CATEGORIES } from "@/lib/industries";
 import { getGoogleReviewLink, getPlaceDetails } from "@/lib/google";
 import { slugify } from "@/lib/utils";
 import { getTemplateById } from "@/lib/db/queries/templates";
@@ -12,8 +13,8 @@ import { logAudit, getRequestMeta } from "@/lib/audit";
 import { getActivePracticeForUser, getLocationCountForUser } from "@/lib/practice";
 import { getEffectivePlan } from "@/lib/plans";
 import { PLAN_LIMITS } from "@/types";
+import { z } from "zod";
 import { RESPONDENT_TYPES } from "@/lib/validations";
-import type { RespondentType } from "@/types";
 
 export async function GET() {
   try {
@@ -107,9 +108,8 @@ export async function POST(request: Request) {
     }
     const userEmail = user.email;
 
-    const respondentType = RESPONDENT_TYPES.includes(dbTemplate.respondentType as RespondentType)
-      ? (dbTemplate.respondentType as RespondentType)
-      : "kunde";
+    const respondentParsed = z.enum(RESPONDENT_TYPES).safeParse(dbTemplate.respondentType);
+    const respondentType = respondentParsed.success ? respondentParsed.data : "kunde";
     const terminology = getTerminology(respondentType);
 
     // Transaction: check limit + insert atomically to prevent race conditions
@@ -222,7 +222,7 @@ export async function POST(request: Request) {
       entity: "practice",
       entityId: result.practice.id,
       before: undefined,
-      after: { name, industryCategory, industrySubCategory, templateId },
+      after: { name, industryCategory, industrySubCategory, templateId, googlePlaceId: googlePlaceId ?? null, respondentType },
       ...getRequestMeta(request),
     });
 
@@ -262,6 +262,19 @@ export async function PUT(request: Request) {
     if (!practice) return NextResponse.json({ error: "Praxis nicht gefunden", code: "NOT_FOUND" }, { status: 404 });
 
     const updates = parsed.data;
+
+    // Cross-validate category ↔ subcategory consistency
+    const effectiveCategory = updates.industryCategory ?? practice.industryCategory;
+    const effectiveSubCategory = updates.industrySubCategory ?? practice.industrySubCategory;
+    if (effectiveCategory && effectiveSubCategory) {
+      const category = INDUSTRY_CATEGORIES.find((c) => c.id === effectiveCategory);
+      if (!category || !category.subCategories.some((s) => s.id === effectiveSubCategory)) {
+        return NextResponse.json(
+          { error: "Sub-Kategorie passt nicht zur gewählten Branche", code: "VALIDATION_ERROR" },
+          { status: 400 },
+        );
+      }
+    }
 
     if (updates.googlePlaceId && updates.googlePlaceId !== practice.googlePlaceId) {
       const placeResult = await getPlaceDetails(updates.googlePlaceId);

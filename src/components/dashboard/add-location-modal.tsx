@@ -34,6 +34,7 @@ export function AddLocationModal({
   } = useLocationSetup();
 
   function handleOpenChange(nextOpen: boolean) {
+    if (loading) return;
     if (!nextOpen) resetForm();
     onOpenChange(nextOpen);
   }
@@ -47,7 +48,11 @@ export function AddLocationModal({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent
+        className="sm:max-w-lg"
+        onInteractOutside={(e) => { if (loading) e.preventDefault(); }}
+        onEscapeKeyDown={(e) => { if (loading) e.preventDefault(); }}
+      >
         <DialogHeader>
           <DialogTitle>Neuen Standort hinzufügen</DialogTitle>
           <DialogDescription>
@@ -111,15 +116,6 @@ export function AddLocationModal({
             </>
           )}
 
-          {error && (
-            <p
-              className="rounded-md bg-destructive/10 p-3 text-sm text-destructive"
-              role="alert"
-            >
-              {error}
-            </p>
-          )}
-
           {step === 3 && (
             <>
               <div className="space-y-3">
@@ -140,6 +136,15 @@ export function AddLocationModal({
                 </Button>
               </div>
             </>
+          )}
+
+          {error && (
+            <p
+              className="rounded-md bg-destructive/10 p-3 text-sm text-destructive"
+              role="alert"
+            >
+              {error}
+            </p>
           )}
         </div>
       </DialogContent>

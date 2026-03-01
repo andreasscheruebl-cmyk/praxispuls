@@ -155,6 +155,14 @@ describe("practiceUpdateSchema", () => {
       expect(result.data.googlePlaceId).toBe("ChIJ2V-Mo_l1nkcRV3D3EO9VxmE");
     }
   });
+
+  it("rejects empty string googlePlaceId", () => {
+    expect(practiceUpdateSchema.safeParse({ googlePlaceId: "" }).success).toBe(false);
+  });
+
+  it("rejects whitespace-only googlePlaceId (trimmed to empty)", () => {
+    expect(practiceUpdateSchema.safeParse({ googlePlaceId: "   " }).success).toBe(false);
+  });
 });
 
 describe("surveyResponseSchema", () => {
@@ -285,6 +293,14 @@ describe("practiceCreateSchema", () => {
       industryCategory: "beauty",
       industrySubCategory: "zahnarzt",
     }).success).toBe(false);
+  });
+
+  it("rejects empty string googlePlaceId", () => {
+    expect(practiceCreateSchema.safeParse({ ...validData, googlePlaceId: "" }).success).toBe(false);
+  });
+
+  it("rejects whitespace-only googlePlaceId", () => {
+    expect(practiceCreateSchema.safeParse({ ...validData, googlePlaceId: "   " }).success).toBe(false);
   });
 });
 
