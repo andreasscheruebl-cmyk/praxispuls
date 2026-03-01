@@ -92,7 +92,8 @@ export function useLocationSetup() {
       }
 
       onSuccess();
-    } catch {
+    } catch (err) {
+      console.error("[handleComplete] submit failed:", err);
       setError("Netzwerkfehler. Bitte versuchen Sie es erneut.");
     } finally {
       setLoading(false);

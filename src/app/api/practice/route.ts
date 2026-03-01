@@ -12,6 +12,7 @@ import { logAudit, getRequestMeta } from "@/lib/audit";
 import { getActivePracticeForUser, getLocationCountForUser } from "@/lib/practice";
 import { getEffectivePlan } from "@/lib/plans";
 import { PLAN_LIMITS } from "@/types";
+import { RESPONDENT_TYPES } from "@/lib/validations";
 import type { RespondentType } from "@/types";
 
 export async function GET() {
@@ -69,7 +70,7 @@ export async function POST(request: Request) {
       );
     }
 
-    // IDOR protection: template must match the selected industry + category
+    // Consistency check: template must match selected industry + be customer template
     if (dbTemplate.industryCategory !== industryCategory ||
         dbTemplate.industrySubCategory !== industrySubCategory ||
         dbTemplate.category !== "customer") {
@@ -106,9 +107,10 @@ export async function POST(request: Request) {
     }
     const userEmail = user.email;
 
-    const terminology = getTerminology(
-      (dbTemplate.respondentType as RespondentType) ?? "kunde",
-    );
+    const respondentType = RESPONDENT_TYPES.includes(dbTemplate.respondentType as RespondentType)
+      ? (dbTemplate.respondentType as RespondentType)
+      : "kunde";
+    const terminology = getTerminology(respondentType);
 
     // Transaction: check limit + insert atomically to prevent race conditions
     const result = await db.transaction(async (tx) => {

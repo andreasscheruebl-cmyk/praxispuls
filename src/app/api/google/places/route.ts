@@ -38,7 +38,8 @@ export async function GET(request: Request) {
     const postalCode = searchParams.get("postalCode") || undefined;
     const results = await searchPlaces(query, postalCode);
     return NextResponse.json(results);
-  } catch {
+  } catch (err) {
+    console.error("GET /api/google/places error:", err);
     return NextResponse.json({ error: "Interner Fehler", code: "INTERNAL_ERROR" }, { status: 500 });
   }
 }

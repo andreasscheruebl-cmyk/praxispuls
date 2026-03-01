@@ -93,12 +93,6 @@ export default function OnboardingPage() {
             </>
           )}
 
-          {error && (
-            <p className="rounded-md bg-destructive/10 p-3 text-sm text-destructive" role="alert">
-              {error}
-            </p>
-          )}
-
           {step === 3 && (
             <>
               <div className="space-y-3">
@@ -119,6 +113,12 @@ export default function OnboardingPage() {
                 </Button>
               </div>
             </>
+          )}
+
+          {error && (
+            <p className="rounded-md bg-destructive/10 p-3 text-sm text-destructive" role="alert">
+              {error}
+            </p>
           )}
         </CardContent>
       </Card>

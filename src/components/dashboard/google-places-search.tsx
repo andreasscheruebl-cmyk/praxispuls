@@ -97,10 +97,12 @@ export function GooglePlacesSearch({
         setResults([]);
         return;
       }
-      const data: PlaceResult[] = await response.json();
-      setResults(data);
-      setIsOpen(data.length > 0);
-    } catch {
+      const data: unknown = await response.json();
+      const places = Array.isArray(data) ? (data as PlaceResult[]) : [];
+      setResults(places);
+      setIsOpen(places.length > 0);
+    } catch (err) {
+      console.error("[GooglePlacesSearch] fetchPlaces failed:", err);
       setResults([]);
     } finally {
       setIsLoading(false);
@@ -121,11 +123,13 @@ export function GooglePlacesSearch({
         `/api/google/places?placeId=${encodeURIComponent(place.placeId)}`
       );
       if (res.ok) {
-        const details: PlaceDetails = await res.json();
-        setPlaceDetails(details);
+        const data: unknown = await res.json().catch(() => null);
+        if (data && typeof data === "object" && "placeId" in data) {
+          setPlaceDetails(data as PlaceDetails);
+        }
       }
-    } catch {
-      // Details couldn't be loaded – still show basic info
+    } catch (err) {
+      console.error("[GooglePlacesSearch] verifyPlace failed:", err);
     } finally {
       setVerifying(false);
     }

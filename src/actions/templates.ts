@@ -22,7 +22,11 @@ function generateSlug(name: string): string {
 function parseJsonField(formData: FormData, key: string): unknown {
   const raw = formData.get(key);
   if (typeof raw !== "string") return undefined;
-  return JSON.parse(raw);
+  try {
+    return JSON.parse(raw);
+  } catch {
+    return undefined;
+  }
 }
 
 export async function createTemplateAction(formData: FormData) {
@@ -145,10 +149,14 @@ const onboardingFilterSchema = z.object({
   industrySubCategory: z.enum(INDUSTRY_SUB_CATEGORY_IDS).optional(),
 });
 
+type OnboardingTemplatesResult =
+  | { templates: OnboardingTemplate[] }
+  | { error: string; code: string };
+
 export async function getOnboardingTemplates(
   industryCategory: IndustryCategory,
   industrySubCategory?: IndustrySubCategory,
-) {
+): Promise<OnboardingTemplatesResult> {
   const auth = await requireAuthForAction();
   if (auth.error) {
     return { error: auth.error, code: auth.code };

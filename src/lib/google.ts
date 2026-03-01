@@ -20,7 +20,7 @@ interface PlaceDetails {
 }
 
 /**
- * Search for a dental practice via Google Places Autocomplete.
+ * Search for a business via Google Places Autocomplete.
  * If postalCode is provided, appends it to the query for better local results.
  */
 export async function searchPlaces(query: string, postalCode?: string): Promise<PlacePrediction[]> {
@@ -54,7 +54,12 @@ export async function searchPlaces(query: string, postalCode?: string): Promise<
     }
     const data = await res.json();
 
-    if (data.status !== "OK") return [];
+    if (data.status !== "OK") {
+      if (data.status !== "ZERO_RESULTS") {
+        console.error(`Google Places Autocomplete API status: ${data.status}`, data.error_message);
+      }
+      return [];
+    }
 
     return data.predictions.map(
       (p: {

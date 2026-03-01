@@ -3,10 +3,14 @@ import {
   loginSchema,
   registerSchema,
   practiceUpdateSchema,
+  practiceCreateSchema,
   surveyResponseSchema,
   alertNoteSchema,
   envSchema,
+  INDUSTRY_CATEGORY_IDS,
+  INDUSTRY_SUB_CATEGORY_IDS,
 } from "../validations";
+import { INDUSTRY_CATEGORIES } from "../industries";
 
 describe("loginSchema", () => {
   it("accepts valid input", () => {
@@ -131,6 +135,26 @@ describe("practiceUpdateSchema", () => {
     const result = practiceUpdateSchema.safeParse({ industryCategory: "" });
     expect(result.success).toBe(false);
   });
+
+  it("rejects invalid industrySubCategory", () => {
+    expect(practiceUpdateSchema.safeParse({ industrySubCategory: "zahnarztpraxis" }).success).toBe(false);
+  });
+
+  it("rejects googlePlaceId with invalid characters", () => {
+    expect(practiceUpdateSchema.safeParse({ googlePlaceId: "place<script>" }).success).toBe(false);
+  });
+
+  it("accepts valid googlePlaceId format", () => {
+    expect(practiceUpdateSchema.safeParse({ googlePlaceId: "ChIJ2V-Mo_l1nkcRV3D3EO9VxmE" }).success).toBe(true);
+  });
+
+  it("trims googlePlaceId whitespace", () => {
+    const result = practiceUpdateSchema.safeParse({ googlePlaceId: " ChIJ2V-Mo_l1nkcRV3D3EO9VxmE " });
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.googlePlaceId).toBe("ChIJ2V-Mo_l1nkcRV3D3EO9VxmE");
+    }
+  });
 });
 
 describe("surveyResponseSchema", () => {
@@ -232,6 +256,54 @@ describe("alertNoteSchema", () => {
   it("accepts empty note", () => {
     const result = alertNoteSchema.safeParse({ note: "" });
     expect(result.success).toBe(true);
+  });
+});
+
+describe("practiceCreateSchema", () => {
+  const validData = {
+    name: "Praxis Müller",
+    industryCategory: "gesundheit" as const,
+    industrySubCategory: "zahnarzt" as const,
+    templateId: "550e8400-e29b-41d4-a716-446655440000",
+  };
+
+  it("accepts valid input", () => {
+    expect(practiceCreateSchema.safeParse(validData).success).toBe(true);
+  });
+
+  it("rejects googlePlaceId with special characters", () => {
+    expect(practiceCreateSchema.safeParse({ ...validData, googlePlaceId: "place<script>" }).success).toBe(false);
+  });
+
+  it("accepts valid googlePlaceId", () => {
+    expect(practiceCreateSchema.safeParse({ ...validData, googlePlaceId: "ChIJ2V-Mo_l1nkcRV3D3EO9VxmE" }).success).toBe(true);
+  });
+
+  it("rejects mismatched sub-category for category", () => {
+    expect(practiceCreateSchema.safeParse({
+      ...validData,
+      industryCategory: "beauty",
+      industrySubCategory: "zahnarzt",
+    }).success).toBe(false);
+  });
+});
+
+describe("INDUSTRY_CATEGORY_IDS / INDUSTRY_CATEGORIES sync", () => {
+  it("INDUSTRY_CATEGORY_IDS matches INDUSTRY_CATEGORIES ids", () => {
+    const richIds = INDUSTRY_CATEGORIES.map((c) => c.id).sort();
+    const flatIds = [...INDUSTRY_CATEGORY_IDS].sort();
+    expect(flatIds).toEqual(richIds);
+  });
+
+  it("INDUSTRY_SUB_CATEGORY_IDS contains all sub-category ids from INDUSTRY_CATEGORIES", () => {
+    const richSubIds = INDUSTRY_CATEGORIES.flatMap((c) =>
+      c.subCategories.map((s) => s.id)
+    ).sort();
+    const flatSubIds = [...INDUSTRY_SUB_CATEGORY_IDS].sort();
+    // Every sub-category from INDUSTRY_CATEGORIES must be in the flat tuple
+    for (const id of richSubIds) {
+      expect(flatSubIds).toContain(id);
+    }
   });
 });
 
