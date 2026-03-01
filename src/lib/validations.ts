@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { INDUSTRY_CATEGORIES } from "@/lib/industries";
 
 // ============================================================
 // ENV VALIDATION
@@ -36,6 +37,44 @@ export const registerSchema = z.object({
 });
 
 // ============================================================
+// SHARED CONSTANTS (must be before schemas that reference them)
+// ============================================================
+export const QUESTION_TYPES = [
+  "nps", "stars", "freetext", "enps", "likert", "single-choice", "yes-no",
+] as const;
+export type SurveyQuestionType = (typeof QUESTION_TYPES)[number];
+
+export const INDUSTRY_CATEGORY_IDS = [
+  "gesundheit", "handwerk", "beauty", "gastronomie", "fitness",
+  "einzelhandel", "bildung", "vereine", "beratung", "individuell",
+] as const;
+export type IndustryCategory = (typeof INDUSTRY_CATEGORY_IDS)[number];
+
+export const INDUSTRY_SUB_CATEGORY_IDS = [
+  "zahnarzt", "hausarzt", "augenarzt", "dermatologe", "physiotherapie",
+  "tierarzt", "apotheke", "kfz_werkstatt", "she", "handwerk_allgemein",
+  "friseur", "kosmetik", "restaurant", "hotel", "fitnessstudio",
+  "yoga_wellness", "laden", "optiker", "fahrschule", "nachhilfe",
+  "schule", "kindergarten", "sportverein", "verein_allgemein",
+  "steuerberater", "rechtsanwalt", "eigene_branche", "private_umfrage",
+] as const;
+export type IndustrySubCategory = (typeof INDUSTRY_SUB_CATEGORY_IDS)[number];
+
+export const RESPONDENT_TYPES = [
+  "patient", "tierhalter", "kunde", "gast", "mitglied", "fahrschueler",
+  "schueler", "eltern", "mandant", "mitarbeiter", "individuell", "teilnehmer",
+] as const;
+export type RespondentType = (typeof RESPONDENT_TYPES)[number];
+
+export const TEMPLATE_CATEGORIES = ["customer", "employee"] as const;
+export type TemplateCategory = (typeof TEMPLATE_CATEGORIES)[number];
+
+// ============================================================
+// SHARED FIELD SCHEMAS
+// ============================================================
+const googlePlaceIdSchema = z.string().trim().min(1, "Google Place ID darf nicht leer sein").max(200).regex(/^[A-Za-z0-9_-]+$/, "Ungültige Google Place ID");
+
+// ============================================================
 // PRACTICE
 // ============================================================
 export const practiceUpdateSchema = z.object({
@@ -44,18 +83,15 @@ export const practiceUpdateSchema = z.object({
     .string()
     .regex(/^\d{5}$/, "Bitte geben Sie eine gültige PLZ ein.")
     .optional(),
-  googlePlaceId: z.string().optional(),
+  googlePlaceId: googlePlaceIdSchema.optional(),
   alertEmail: z.string().email().optional(),
   logoUrl: z.string().url().optional().nullable(),
   primaryColor: z
     .string()
     .regex(/^#[0-9A-Fa-f]{6}$/)
     .optional(),
-  industryCategory: z.enum([
-    "gesundheit", "handwerk", "beauty", "gastronomie", "fitness",
-    "einzelhandel", "bildung", "vereine", "beratung", "individuell",
-  ]).optional(),
-  industrySubCategory: z.string().min(1).max(50).optional(),
+  industryCategory: z.enum(INDUSTRY_CATEGORY_IDS).optional(),
+  industrySubCategory: z.enum(INDUSTRY_SUB_CATEGORY_IDS).optional(),
   npsThreshold: z.number().int().min(7).max(10).optional(),
   googleRedirectEnabled: z.boolean().optional(),
 });
@@ -109,24 +145,24 @@ export const adminGoogleUpdateSchema = z.object({
 });
 
 // ============================================================
-// SURVEY QUESTION (shared validation for template + survey JSONB)
+// PRACTICE CREATE (Onboarding + AddLocation)
 // ============================================================
-export const QUESTION_TYPES = [
-  "nps", "stars", "freetext", "enps", "likert", "single-choice", "yes-no",
-] as const;
-export type SurveyQuestionType = (typeof QUESTION_TYPES)[number];
-
-export const INDUSTRY_CATEGORIES = [
-  "gesundheit", "handwerk", "beauty", "gastronomie", "fitness",
-  "einzelhandel", "bildung", "vereine", "beratung", "individuell",
-] as const;
-export type IndustryCategory = (typeof INDUSTRY_CATEGORIES)[number];
-
-export const RESPONDENT_TYPES = [
-  "patient", "tierhalter", "kunde", "gast", "mitglied", "fahrschueler",
-  "schueler", "eltern", "mandant", "mitarbeiter", "individuell", "teilnehmer",
-] as const;
-export type RespondentType = (typeof RESPONDENT_TYPES)[number];
+export const practiceCreateSchema = z.object({
+  name: z.string().trim().min(2).max(200),
+  industryCategory: z.enum(INDUSTRY_CATEGORY_IDS),
+  industrySubCategory: z.enum(INDUSTRY_SUB_CATEGORY_IDS),
+  googlePlaceId: googlePlaceIdSchema.optional(),
+  templateId: z.string().uuid(),
+}).superRefine((data, ctx) => {
+  const category = INDUSTRY_CATEGORIES.find((c) => c.id === data.industryCategory);
+  if (!category || !category.subCategories.some((s) => s.id === data.industrySubCategory)) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["industrySubCategory"],
+      message: "Sub-Kategorie passt nicht zur gewählten Branche",
+    });
+  }
+});
 
 export const surveyQuestionSchema = z.object({
   id: z.string().min(1).max(50),
@@ -143,10 +179,10 @@ export const surveyQuestionSchema = z.object({
 export const templateCreateSchema = z.object({
   name: z.string().min(2).max(100),
   description: z.string().max(500).optional(),
-  industryCategory: z.enum(INDUSTRY_CATEGORIES),
-  industrySubCategory: z.string().max(50).optional(),
+  industryCategory: z.enum(INDUSTRY_CATEGORY_IDS),
+  industrySubCategory: z.enum(INDUSTRY_SUB_CATEGORY_IDS).optional(),
   respondentType: z.enum(RESPONDENT_TYPES),
-  category: z.enum(["customer", "employee"]),
+  category: z.enum(TEMPLATE_CATEGORIES),
   questions: z.array(surveyQuestionSchema).min(1).max(30),
   sortOrder: z.number().int().min(0).max(999).optional(),
 });

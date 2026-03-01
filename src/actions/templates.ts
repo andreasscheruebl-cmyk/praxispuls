@@ -2,9 +2,10 @@
 
 import { z } from "zod";
 import { revalidatePath } from "next/cache";
-import { requireAdmin } from "@/lib/auth";
-import { createTemplate, updateTemplate, deleteTemplate, getTemplateById } from "@/lib/db/queries/templates";
-import { templateCreateSchema, templateUpdateSchema } from "@/lib/validations";
+import { requireAdmin, requireAuthForAction } from "@/lib/auth";
+import { createTemplate, updateTemplate, deleteTemplate, getTemplateById, getTemplatesForPractice } from "@/lib/db/queries/templates";
+import { templateCreateSchema, templateUpdateSchema, INDUSTRY_CATEGORY_IDS, INDUSTRY_SUB_CATEGORY_IDS } from "@/lib/validations";
+import type { OnboardingTemplate, IndustryCategory, IndustrySubCategory } from "@/types";
 
 function generateSlug(name: string): string {
   return name
@@ -21,7 +22,11 @@ function generateSlug(name: string): string {
 function parseJsonField(formData: FormData, key: string): unknown {
   const raw = formData.get(key);
   if (typeof raw !== "string") return undefined;
-  return JSON.parse(raw);
+  try {
+    return JSON.parse(raw);
+  } catch {
+    return undefined;
+  }
 }
 
 export async function createTemplateAction(formData: FormData) {
@@ -55,9 +60,6 @@ export async function createTemplateAction(formData: FormData) {
     revalidatePath("/admin/templates");
     return { success: true, template };
   } catch (error) {
-    if (error instanceof SyntaxError) {
-      return { error: "Ungültige JSON-Daten in Fragen", code: "VALIDATION_ERROR" };
-    }
     console.error("[createTemplateAction]", error);
     return { error: "Template konnte nicht erstellt werden", code: "INTERNAL_ERROR" };
   }
@@ -102,9 +104,6 @@ export async function updateTemplateAction(id: string, formData: FormData) {
     revalidatePath(`/admin/templates/${id}`);
     return { success: true };
   } catch (error) {
-    if (error instanceof SyntaxError) {
-      return { error: "Ungültige JSON-Daten in Fragen", code: "VALIDATION_ERROR" };
-    }
     console.error("[updateTemplateAction]", error);
     return { error: "Aktualisierung fehlgeschlagen", code: "INTERNAL_ERROR" };
   }
@@ -133,4 +132,53 @@ export async function deleteTemplateAction(id: string) {
 
   revalidatePath("/admin/templates");
   return { success: true };
+}
+
+// ============================================================
+// ONBOARDING (authenticated, non-admin)
+// ============================================================
+
+const onboardingFilterSchema = z.object({
+  industryCategory: z.enum(INDUSTRY_CATEGORY_IDS),
+  industrySubCategory: z.enum(INDUSTRY_SUB_CATEGORY_IDS).optional(),
+});
+
+type OnboardingTemplatesResult =
+  | { templates: OnboardingTemplate[] }
+  | { error: string; code: string };
+
+export async function getOnboardingTemplates(
+  industryCategory: IndustryCategory,
+  industrySubCategory?: IndustrySubCategory,
+): Promise<OnboardingTemplatesResult> {
+  const auth = await requireAuthForAction();
+  if (auth.error) {
+    return { error: auth.error, code: auth.code };
+  }
+
+  const parsed = onboardingFilterSchema.safeParse({ industryCategory, industrySubCategory });
+  if (!parsed.success) {
+    return { error: "Ungültige Branche", code: "VALIDATION_ERROR" };
+  }
+
+  try {
+    const templates = await getTemplatesForPractice(
+      parsed.data.industryCategory,
+      parsed.data.industrySubCategory,
+    );
+
+    const customerTemplates: OnboardingTemplate[] = templates
+      .filter((t) => t.category === "customer")
+      .map((t) => ({
+        id: t.id,
+        name: t.name,
+        description: t.description,
+        questionCount: Array.isArray(t.questions) ? t.questions.length : 0,
+      }));
+
+    return { templates: customerTemplates };
+  } catch (error) {
+    console.error("[getOnboardingTemplates]", error);
+    return { error: "Templates konnten nicht geladen werden", code: "INTERNAL_ERROR" };
+  }
 }

@@ -54,6 +54,21 @@ export async function requireAuthForApi(): Promise<
 }
 
 /**
+ * Require authentication for Server Actions.
+ * Returns a discriminated union: either { user } or { error, code } (plain objects).
+ */
+export async function requireAuthForAction(): Promise<
+  | { user: User; error?: never }
+  | { user?: never; error: string; code: string }
+> {
+  const user = await getUserOptional();
+  if (!user) {
+    return { error: "Nicht angemeldet", code: "UNAUTHORIZED" };
+  }
+  return { user };
+}
+
+/**
  * Parse ADMIN_EMAILS env var into a normalized array.
  */
 export function getAdminEmails(): string[] {

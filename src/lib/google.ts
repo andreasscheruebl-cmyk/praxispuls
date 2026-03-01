@@ -19,14 +19,19 @@ interface PlaceDetails {
   website?: string;
 }
 
+export type SearchPlacesResult =
+  | { data: PlacePrediction[] }
+  | { error: "NO_API_KEY" | "API_ERROR" };
+
 /**
- * Search for a dental practice via Google Places Autocomplete.
- * If postalCode is provided, appends it to the query for better local results.
+ * Search for a business via Google Places Autocomplete.
+ * Returns discriminated union so callers can distinguish
+ * "no results" (empty data array) from "API not available".
  */
-export async function searchPlaces(query: string, postalCode?: string): Promise<PlacePrediction[]> {
+export async function searchPlaces(query: string, postalCode?: string): Promise<SearchPlacesResult> {
   if (!GOOGLE_API_KEY) {
     console.warn("GOOGLE_PLACES_API_KEY not set");
-    return [];
+    return { error: "NO_API_KEY" };
   }
 
   // Append postal code to query for better local relevance
@@ -41,35 +46,63 @@ export async function searchPlaces(query: string, postalCode?: string): Promise<
   url.searchParams.set("language", "de");
   url.searchParams.set("key", GOOGLE_API_KEY);
 
-  const res = await fetch(url.toString());
-  const data = await res.json();
+  try {
+    const res = await fetch(url.toString());
+    if (!res.ok) {
+      console.error(`Google Places Autocomplete HTTP ${res.status}`);
+      return { error: "API_ERROR" };
+    }
+    const contentType = res.headers.get("content-type") ?? "";
+    if (!contentType.includes("application/json")) {
+      console.error(`Google Places Autocomplete non-JSON response: ${contentType}`);
+      return { error: "API_ERROR" };
+    }
+    const data = await res.json();
 
-  if (data.status !== "OK") return [];
+    if (data.status !== "OK") {
+      if (data.status !== "ZERO_RESULTS") {
+        console.error(`Google Places Autocomplete API status: ${data.status}`, data.error_message);
+        return { error: "API_ERROR" };
+      }
+      return { data: [] };
+    }
 
-  return data.predictions.map(
-    (p: {
-      place_id: string;
-      description: string;
-      structured_formatting: {
-        main_text: string;
-        secondary_text: string;
-      };
-    }) => ({
-      placeId: p.place_id,
-      description: p.description,
-      mainText: p.structured_formatting.main_text,
-      secondaryText: p.structured_formatting.secondary_text,
-    })
-  );
+    return {
+      data: data.predictions.map(
+        (p: {
+          place_id: string;
+          description: string;
+          structured_formatting: {
+            main_text: string;
+            secondary_text: string;
+          };
+        }) => ({
+          placeId: p.place_id,
+          description: p.description,
+          mainText: p.structured_formatting.main_text,
+          secondaryText: p.structured_formatting.secondary_text,
+        })
+      ),
+    };
+  } catch (err) {
+    console.error("Google Places Autocomplete error:", err);
+    return { error: "API_ERROR" };
+  }
 }
 
+export type PlaceDetailsResult =
+  | { data: PlaceDetails }
+  | { error: "NO_API_KEY" | "API_ERROR" | "NOT_FOUND" };
+
 /**
- * Get details for a specific Place ID
+ * Get details for a specific Place ID.
+ * Returns discriminated union so callers can distinguish between
+ * "no API key configured" vs "place not found" vs "API error".
  */
 export async function getPlaceDetails(
   placeId: string
-): Promise<PlaceDetails | null> {
-  if (!GOOGLE_API_KEY) return null;
+): Promise<PlaceDetailsResult> {
+  if (!GOOGLE_API_KEY) return { error: "NO_API_KEY" };
 
   const url = new URL(
     "https://maps.googleapis.com/maps/api/place/details/json"
@@ -79,26 +112,48 @@ export async function getPlaceDetails(
   url.searchParams.set("language", "de");
   url.searchParams.set("key", GOOGLE_API_KEY);
 
-  const res = await fetch(url.toString());
-  const data = await res.json();
+  try {
+    const res = await fetch(url.toString());
+    if (!res.ok) {
+      console.error(`Google Places Details HTTP ${res.status} for placeId ${placeId}`);
+      return { error: "API_ERROR" };
+    }
+    const contentType = res.headers.get("content-type") ?? "";
+    if (!contentType.includes("application/json")) {
+      console.error(`Google Places Details non-JSON response: ${contentType}`);
+      return { error: "API_ERROR" };
+    }
+    const data = await res.json();
 
-  if (data.status !== "OK") return null;
+    if (data.status === "NOT_FOUND" || data.status === "INVALID_REQUEST") {
+      return { error: "NOT_FOUND" };
+    }
+    if (data.status !== "OK") {
+      console.error(`Google Places Details API status: ${data.status}`, data.error_message);
+      return { error: "API_ERROR" };
+    }
 
-  const result = data.result;
-  const allPhotoRefs = (result.photos ?? [])
-    .map((p: { photo_reference: string }) => p.photo_reference)
-    .slice(0, 6) as string[];
-  return {
-    placeId,
-    name: result.name,
-    address: result.formatted_address,
-    rating: result.rating,
-    totalRatings: result.user_ratings_total,
-    googleMapsUrl: result.url,
-    photoReference: allPhotoRefs[0],
-    photoReferences: allPhotoRefs,
-    website: result.website,
-  };
+    const result = data.result;
+    const allPhotoRefs = (result.photos ?? [])
+      .map((p: { photo_reference: string }) => p.photo_reference)
+      .slice(0, 6) as string[];
+    return {
+      data: {
+        placeId,
+        name: result.name,
+        address: result.formatted_address,
+        rating: result.rating,
+        totalRatings: result.user_ratings_total,
+        googleMapsUrl: result.url,
+        photoReference: allPhotoRefs[0],
+        photoReferences: allPhotoRefs,
+        website: result.website,
+      },
+    };
+  } catch (err) {
+    console.error(`Google Places Details error for placeId ${placeId}:`, err);
+    return { error: "API_ERROR" };
+  }
 }
 
 /**

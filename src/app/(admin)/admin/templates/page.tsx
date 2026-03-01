@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/table";
 import { ChevronLeft, ChevronRight, FileText, Plus } from "lucide-react";
 import { TemplatesFilters } from "@/components/admin/templates-filters";
+import type { TemplateCategory } from "@/types";
 
 interface PageProps {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
@@ -26,7 +27,7 @@ export default async function AdminTemplatesPage({ searchParams }: PageProps) {
   const params = await searchParams;
 
   const search = typeof params.search === "string" ? params.search : undefined;
-  const category = typeof params.category === "string" ? params.category as "customer" | "employee" : undefined;
+  const category = typeof params.category === "string" ? params.category as TemplateCategory : undefined;
   const industryCategory = typeof params.industry === "string" ? params.industry : undefined;
   const systemParam = typeof params.system === "string" ? params.system : undefined;
   const isSystem = systemParam === "yes" ? true : systemParam === "no" ? false : undefined;

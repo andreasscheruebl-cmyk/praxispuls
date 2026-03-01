@@ -3,15 +3,18 @@ import { requireAuthForApi } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { practices, surveys } from "@/lib/db/schema";
 import { eq, and, ne, isNull } from "drizzle-orm";
-import { practiceUpdateSchema } from "@/lib/validations";
+import { practiceUpdateSchema, practiceCreateSchema } from "@/lib/validations";
+import { INDUSTRY_CATEGORIES } from "@/lib/industries";
 import { getGoogleReviewLink, getPlaceDetails } from "@/lib/google";
 import { slugify } from "@/lib/utils";
-import { SURVEY_TEMPLATES } from "@/lib/survey-templates";
+import { getTemplateById } from "@/lib/db/queries/templates";
+import { getTerminology } from "@/lib/terminology";
 import { logAudit, getRequestMeta } from "@/lib/audit";
-import { ZodError } from "zod";
 import { getActivePracticeForUser, getLocationCountForUser } from "@/lib/practice";
 import { getEffectivePlan } from "@/lib/plans";
 import { PLAN_LIMITS } from "@/types";
+import { z } from "zod";
+import { RESPONDENT_TYPES } from "@/lib/validations";
 
 export async function GET() {
   try {
@@ -39,58 +42,81 @@ export async function POST(request: Request) {
     if (auth.error) return auth.error;
     const user = auth.user;
 
-    const body = await request.json();
-    const { name, postalCode, googlePlaceId, templateId: templateIdParam, logoUrl } = body;
+    let body: unknown;
+    try {
+      body = await request.json();
+    } catch {
+      return NextResponse.json(
+        { error: "Ungültiger Request-Body", code: "BAD_REQUEST" },
+        { status: 400 },
+      );
+    }
 
-    if (!name?.trim()) {
-      return NextResponse.json({ error: "Name fehlt", code: "BAD_REQUEST" }, { status: 400 });
+    const parsed = practiceCreateSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: parsed.error.errors[0]?.message ?? "Ungültige Eingabe", code: "VALIDATION_ERROR" },
+        { status: 400 },
+      );
+    }
+
+    const { name, industryCategory, industrySubCategory, googlePlaceId, templateId } = parsed.data;
+
+    // Load template from DB
+    const dbTemplate = await getTemplateById(templateId);
+    if (!dbTemplate) {
+      return NextResponse.json(
+        { error: "Ungültiges Umfrage-Template", code: "INVALID_TEMPLATE" },
+        { status: 400 },
+      );
+    }
+
+    // Consistency check: template must match selected industry + be customer template
+    if (dbTemplate.industryCategory !== industryCategory ||
+        dbTemplate.industrySubCategory !== industrySubCategory ||
+        dbTemplate.category !== "customer") {
+      return NextResponse.json(
+        { error: "Template passt nicht zur gewählten Branche", code: "TEMPLATE_MISMATCH" },
+        { status: 400 },
+      );
     }
 
     // Validate external data before transaction
     let googleReviewUrl: string | null = null;
     if (googlePlaceId) {
-      const placeDetails = await getPlaceDetails(googlePlaceId);
-      if (!placeDetails) {
-        return NextResponse.json(
-          { error: "Ungültige Google Place ID. Bitte wählen Sie Ihre Praxis erneut aus.", code: "BAD_REQUEST" },
-          { status: 400 }
-        );
+      const placeResult = await getPlaceDetails(googlePlaceId);
+      if ("error" in placeResult) {
+        // Skip validation if API key not configured — don't block onboarding
+        if (placeResult.error !== "NO_API_KEY") {
+          const msg = placeResult.error === "NOT_FOUND"
+            ? "Ungültige Google Place ID. Bitte wählen Sie Ihre Praxis erneut aus."
+            : "Google Places API ist derzeit nicht erreichbar. Bitte versuchen Sie es später erneut.";
+          return NextResponse.json(
+            { error: msg, code: placeResult.error === "NOT_FOUND" ? "BAD_REQUEST" : "EXTERNAL_API_ERROR" },
+            { status: placeResult.error === "NOT_FOUND" ? 400 : 502 },
+          );
+        }
       }
       googleReviewUrl = getGoogleReviewLink(googlePlaceId);
-
-      // Check if Place ID is already used by another practice
-      const existing = await db.query.practices.findFirst({
-        where: eq(practices.googlePlaceId, googlePlaceId),
-        columns: { id: true },
-      });
-      if (existing) {
-        return NextResponse.json(
-          { error: "Diese Google-Praxis ist bereits mit einem anderen Konto verknüpft.", code: "PLACE_ID_TAKEN", warning: true },
-          { status: 409 }
-        );
-      }
-    }
-
-    const chosenTemplateId = templateIdParam || "zahnarzt_standard";
-    const template = SURVEY_TEMPLATES.find(t => t.id === chosenTemplateId);
-    if (!template) {
-      return NextResponse.json(
-        { error: "Ungültiges Umfrage-Template", code: "INVALID_TEMPLATE" },
-        { status: 400 }
-      );
     }
 
     if (!user.email) {
       return NextResponse.json(
         { error: "E-Mail-Adresse fehlt in Ihrem Konto", code: "MISSING_EMAIL" },
-        { status: 400 }
+        { status: 400 },
       );
     }
     const userEmail = user.email;
 
-    // Transaction: check limit + insert atomically to prevent race conditions
+    const respondentParsed = z.enum(RESPONDENT_TYPES).safeParse(dbTemplate.respondentType);
+    if (!respondentParsed.success) {
+      console.error(`[POST /api/practice] Invalid respondentType "${dbTemplate.respondentType}" in template ${templateId}, falling back to "kunde"`);
+    }
+    const respondentType = respondentParsed.success ? respondentParsed.data : "kunde";
+    const terminology = getTerminology(respondentType);
+
+    // Transaction: limit check, place-id uniqueness, slug generation, practice insert, survey slug, survey insert
     const result = await db.transaction(async (tx) => {
-      // Check location limit against user's effective plan
       const userPractices = await tx.query.practices.findMany({
         where: and(eq(practices.ownerUserId, user.id), isNull(practices.deletedAt)),
         columns: { id: true, plan: true, planOverride: true, overrideExpiresAt: true },
@@ -108,50 +134,103 @@ export async function POST(request: Request) {
         };
       }
 
-      // Generate unique slug
+      if (googlePlaceId) {
+        const existingPlace = await tx.query.practices.findFirst({
+          where: and(eq(practices.googlePlaceId, googlePlaceId), isNull(practices.deletedAt)),
+          columns: { id: true },
+        });
+        if (existingPlace) {
+          return {
+            error: "Dieser Google-Eintrag ist bereits mit einem Standort verknüpft.",
+            code: "PLACE_ID_TAKEN" as const,
+          };
+        }
+      }
+
       let slug = slugify(name);
-      const existingSlug = await tx.query.practices.findFirst({
-        where: eq(practices.slug, slug),
-        columns: { id: true },
-      });
-      if (existingSlug) {
-        slug = `${slug}-${Math.random().toString(36).slice(2, 6)}`;
+      let slugAvailable = false;
+      for (let i = 0; i < 5; i++) {
+        const existingSlug = await tx.query.practices.findFirst({
+          where: eq(practices.slug, slug),
+          columns: { id: true },
+        });
+        if (!existingSlug) { slugAvailable = true; break; }
+        slug = `${slugify(name)}-${Math.random().toString(36).slice(2, 8)}`;
+      }
+      if (!slugAvailable) {
+        return { error: "Ein eindeutiger Name konnte nicht generiert werden. Bitte wählen Sie einen anderen Namen.", code: "SLUG_COLLISION" as const };
       }
 
       const [practice] = await tx.insert(practices).values({
         ownerUserId: user.id,
-        name: name.trim(),
+        name,
         slug,
         email: userEmail,
-        postalCode,
+        industryCategory,
+        industrySubCategory,
         googlePlaceId,
         googleReviewUrl,
-        logoUrl: logoUrl || null,
         alertEmail: userEmail,
-        plan: userPlan, // Inherit effective plan from user
+        plan: userPlan,
       }).returning();
 
       if (!practice) {
         return { error: "Praxis konnte nicht erstellt werden", code: "INSERT_FAILED" as const };
       }
 
-      const surveySlug = `${slug}-umfrage`;
+      let surveySlug = `${slug}-umfrage`;
+      let surveySlugAvailable = false;
+      for (let i = 0; i < 5; i++) {
+        const existingSurveySlug = await tx.query.surveys.findFirst({
+          where: eq(surveys.slug, surveySlug),
+          columns: { id: true },
+        });
+        if (!existingSurveySlug) { surveySlugAvailable = true; break; }
+        surveySlug = `${slug}-umfrage-${Math.random().toString(36).slice(2, 8)}`;
+      }
+      if (!surveySlugAvailable) {
+        return { error: "Ein eindeutiger Name konnte nicht generiert werden. Bitte wählen Sie einen anderen Namen.", code: "SLUG_COLLISION" as const };
+      }
+
       await tx.insert(surveys).values({
         practiceId: practice.id,
-        title: "Patientenbefragung",
+        title: terminology.surveyTitle,
         slug: surveySlug,
-        questions: template.questions,
+        questions: dbTemplate.questions,
         status: "active",
+        respondentType: dbTemplate.respondentType,
+        templateId: dbTemplate.id,
       });
 
       return { practice };
     });
 
     if ("error" in result) {
+      let status: number;
+      switch (result.code) {
+        case "PLACE_ID_TAKEN": status = 409; break;
+        case "LOCATION_LIMIT_REACHED": status = 403; break;
+        case "SLUG_COLLISION": status = 409; break;
+        default: status = 500; break;
+      }
       return NextResponse.json(
         { error: result.error, code: result.code },
-        { status: 403 }
+        { status },
       );
+    }
+
+    try {
+      await logAudit({
+        practiceId: result.practice.id,
+        action: "practice.created",
+        entity: "practice",
+        entityId: result.practice.id,
+        before: undefined,
+        after: { name, industryCategory, industrySubCategory, templateId, googlePlaceId: googlePlaceId ?? null, respondentType },
+        ...getRequestMeta(request),
+      });
+    } catch (auditErr) {
+      console.error("[POST /api/practice] Audit log failed (practice created successfully):", auditErr);
     }
 
     return NextResponse.json(result.practice, { status: 201 });
@@ -167,72 +246,100 @@ export async function PUT(request: Request) {
     if (auth.error) return auth.error;
     const user = auth.user;
 
-    const body = await request.json();
-    const parsed = practiceUpdateSchema.parse(body);
+    let body: unknown;
+    try {
+      body = await request.json();
+    } catch {
+      return NextResponse.json(
+        { error: "Ungültiger Request-Body", code: "BAD_REQUEST" },
+        { status: 400 },
+      );
+    }
+
+    const parsed = practiceUpdateSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: parsed.error.errors[0]?.message ?? "Ungültige Eingabe", code: "VALIDATION_ERROR" },
+        { status: 400 },
+      );
+    }
     const meta = getRequestMeta(request);
 
     const practice = await getActivePracticeForUser(user.id);
     if (!practice) return NextResponse.json({ error: "Praxis nicht gefunden", code: "NOT_FOUND" }, { status: 404 });
 
-    // Verify Google Place ID if changed
-    let googleReviewUrl = practice.googleReviewUrl;
-    if (parsed.googlePlaceId && parsed.googlePlaceId !== practice.googlePlaceId) {
-      const placeDetails = await getPlaceDetails(parsed.googlePlaceId);
-      if (!placeDetails) {
+    const updates = parsed.data;
+
+    // Cross-validate category ↔ subcategory consistency
+    const effectiveCategory = updates.industryCategory ?? practice.industryCategory;
+    const effectiveSubCategory = updates.industrySubCategory ?? practice.industrySubCategory;
+    if (effectiveCategory && effectiveSubCategory) {
+      const category = INDUSTRY_CATEGORIES.find((c) => c.id === effectiveCategory);
+      if (!category || !category.subCategories.some((s) => s.id === effectiveSubCategory)) {
         return NextResponse.json(
-          { error: "Ungültige Google Place ID. Bitte wählen Sie Ihre Praxis erneut aus.", code: "BAD_REQUEST" },
-          { status: 400 }
+          { error: "Sub-Kategorie passt nicht zur gewählten Branche", code: "VALIDATION_ERROR" },
+          { status: 400 },
+        );
+      }
+    }
+
+    if (updates.googlePlaceId && updates.googlePlaceId !== practice.googlePlaceId) {
+      const placeResult = await getPlaceDetails(updates.googlePlaceId);
+      if ("error" in placeResult && placeResult.error !== "NO_API_KEY") {
+        const msg = placeResult.error === "NOT_FOUND"
+          ? "Ungültige Google Place ID. Bitte wählen Sie Ihre Praxis erneut aus."
+          : "Google Places API ist derzeit nicht erreichbar. Bitte versuchen Sie es später erneut.";
+        return NextResponse.json(
+          { error: msg, code: placeResult.error === "NOT_FOUND" ? "BAD_REQUEST" : "EXTERNAL_API_ERROR" },
+          { status: placeResult.error === "NOT_FOUND" ? 400 : 502 },
         );
       }
 
-      // Check if Place ID is already used by another practice
       const existing = await db.query.practices.findFirst({
         where: and(
-          eq(practices.googlePlaceId, parsed.googlePlaceId),
-          ne(practices.id, practice.id)
+          eq(practices.googlePlaceId, updates.googlePlaceId),
+          ne(practices.id, practice.id),
+          isNull(practices.deletedAt),
         ),
         columns: { id: true },
       });
       if (existing) {
         return NextResponse.json(
-          { error: "Diese Google-Praxis ist bereits mit einem anderen Konto verknüpft.", code: "PLACE_ID_TAKEN", warning: true },
-          { status: 409 }
+          { error: "Dieser Google-Eintrag ist bereits mit einem Standort verknüpft.", code: "PLACE_ID_TAKEN", warning: true },
+          { status: 409 },
         );
       }
-
-      googleReviewUrl = getGoogleReviewLink(parsed.googlePlaceId);
-    } else if (parsed.googlePlaceId) {
-      googleReviewUrl = getGoogleReviewLink(parsed.googlePlaceId);
     }
 
+    const googleReviewUrl = updates.googlePlaceId
+      ? getGoogleReviewLink(updates.googlePlaceId)
+      : practice.googleReviewUrl;
+
     await db.update(practices)
-      .set({ ...parsed, googleReviewUrl, updatedAt: new Date() })
+      .set({ ...updates, googleReviewUrl, updatedAt: new Date() })
       .where(eq(practices.id, practice.id));
 
-    // Audit log for settings change
-    logAudit({
-      practiceId: practice.id,
-      action: "practice.updated",
-      entity: "practice",
-      entityId: practice.id,
-      before: {
-        name: practice.name,
-        googlePlaceId: practice.googlePlaceId,
-        npsThreshold: practice.npsThreshold,
-        logoUrl: practice.logoUrl,
-      },
-      after: parsed,
-      ...meta,
-    });
+    try {
+      await logAudit({
+        practiceId: practice.id,
+        action: "practice.updated",
+        entity: "practice",
+        entityId: practice.id,
+        before: {
+          name: practice.name,
+          googlePlaceId: practice.googlePlaceId,
+          npsThreshold: practice.npsThreshold,
+          logoUrl: practice.logoUrl,
+        },
+        after: updates,
+        ...meta,
+      });
+    } catch (auditErr) {
+      console.error("[PUT /api/practice] Audit log failed:", auditErr);
+    }
 
     return NextResponse.json({ success: true });
   } catch (err) {
-    if (err instanceof ZodError) {
-      return NextResponse.json(
-        { error: "Ungültige Eingabe", code: "VALIDATION_ERROR" },
-        { status: 400 }
-      );
-    }
     console.error("PUT /api/practice error:", err);
     return NextResponse.json({ error: "Fehler beim Aktualisieren", code: "INTERNAL_ERROR" }, { status: 500 });
   }

@@ -19,6 +19,23 @@ type PlaceDetails = {
   googleMapsUrl?: string;
 };
 
+function isPlaceResult(v: unknown): v is PlaceResult {
+  return (
+    typeof v === "object" && v !== null &&
+    "placeId" in v && typeof (v as PlaceResult).placeId === "string" &&
+    "mainText" in v && typeof (v as PlaceResult).mainText === "string"
+  );
+}
+
+function isPlaceDetails(v: unknown): v is PlaceDetails {
+  return (
+    typeof v === "object" && v !== null &&
+    "placeId" in v && typeof (v as PlaceDetails).placeId === "string" &&
+    "name" in v && typeof (v as PlaceDetails).name === "string" &&
+    "address" in v && typeof (v as PlaceDetails).address === "string"
+  );
+}
+
 type GooglePlacesSearchProps = {
   value: string;
   onChange: (placeId: string) => void;
@@ -52,6 +69,7 @@ export function GooglePlacesSearch({
   const [pendingPlace, setPendingPlace] = useState<PlaceResult | null>(null);
   const [placeDetails, setPlaceDetails] = useState<PlaceDetails | null>(null);
   const [verifying, setVerifying] = useState(false);
+  const [verifyError, setVerifyError] = useState(false);
   const [confirmed, setConfirmed] = useState(!!value);
 
   const containerRef = useRef<HTMLDivElement>(null);
@@ -94,13 +112,16 @@ export function GooglePlacesSearch({
       if (postalCode) params.set("postalCode", postalCode);
       const response = await fetch(`/api/google/places?${params}`);
       if (!response.ok) {
+        console.error(`[GooglePlacesSearch] fetchPlaces HTTP ${response.status}`);
         setResults([]);
         return;
       }
-      const data: PlaceResult[] = await response.json();
-      setResults(data);
-      setIsOpen(data.length > 0);
-    } catch {
+      const data: unknown = await response.json();
+      const places = Array.isArray(data) ? data.filter(isPlaceResult) : [];
+      setResults(places);
+      setIsOpen(places.length > 0);
+    } catch (err) {
+      console.error("[GooglePlacesSearch] fetchPlaces failed:", err);
       setResults([]);
     } finally {
       setIsLoading(false);
@@ -110,6 +131,7 @@ export function GooglePlacesSearch({
   // Fetch place details for verification
   async function verifyPlace(place: PlaceResult) {
     setVerifying(true);
+    setVerifyError(false);
     setPendingPlace(place);
     setPlaceDetails(null);
     setIsOpen(false);
@@ -121,11 +143,19 @@ export function GooglePlacesSearch({
         `/api/google/places?placeId=${encodeURIComponent(place.placeId)}`
       );
       if (res.ok) {
-        const details: PlaceDetails = await res.json();
-        setPlaceDetails(details);
+        const data: unknown = await res.json().catch(() => null);
+        if (isPlaceDetails(data)) {
+          setPlaceDetails(data);
+        } else {
+          setVerifyError(true);
+        }
+      } else {
+        console.error(`[GooglePlacesSearch] verifyPlace HTTP ${res.status}`);
+        setVerifyError(true);
       }
-    } catch {
-      // Details couldn't be loaded – still show basic info
+    } catch (err) {
+      console.error("[GooglePlacesSearch] verifyPlace failed:", err);
+      setVerifyError(true);
     } finally {
       setVerifying(false);
     }
@@ -144,6 +174,7 @@ export function GooglePlacesSearch({
   function handleReject() {
     setPendingPlace(null);
     setPlaceDetails(null);
+    setVerifyError(false);
     setConfirmed(false);
     setDisplayValue("");
     onChange("");
@@ -179,6 +210,7 @@ export function GooglePlacesSearch({
     setIsOpen(false);
     setPendingPlace(null);
     setPlaceDetails(null);
+    setVerifyError(false);
     setConfirmed(false);
   }
 
@@ -292,6 +324,12 @@ export function GooglePlacesSearch({
           </p>
           {verifying ? (
             <p className="text-sm text-muted-foreground">Wird überprüft...</p>
+          ) : verifyError ? (
+            <div className="space-y-1">
+              <p className="text-sm font-medium">{pendingPlace.mainText}</p>
+              <p className="text-xs text-muted-foreground">{pendingPlace.secondaryText}</p>
+              <p className="text-xs text-red-600">Details konnten nicht geladen werden. Sie können den Eintrag trotzdem bestätigen.</p>
+            </div>
           ) : placeDetails ? (
             <div className="space-y-1">
               <p className="text-sm font-medium">{placeDetails.name}</p>

@@ -6,51 +6,8 @@ export type { SurveyStatus } from "@/lib/db/schema";
 // ============================================================
 // Derived types (single source of truth: as-const arrays in validations.ts)
 // ============================================================
-import type { SurveyQuestionType, RespondentType, IndustryCategory } from "@/lib/validations";
-export type { SurveyQuestionType, RespondentType, IndustryCategory };
-
-// ============================================================
-// Industry Sub-Categories (28 total)
-// ============================================================
-export type IndustrySubCategory =
-  // gesundheit
-  | "zahnarzt"
-  | "hausarzt"
-  | "augenarzt"
-  | "dermatologe"
-  | "physiotherapie"
-  | "tierarzt"
-  | "apotheke"
-  // handwerk
-  | "kfz_werkstatt"
-  | "she"
-  | "handwerk_allgemein"
-  // beauty
-  | "friseur"
-  | "kosmetik"
-  // gastronomie
-  | "restaurant"
-  | "hotel"
-  // fitness
-  | "fitnessstudio"
-  | "yoga_wellness"
-  // einzelhandel
-  | "laden"
-  | "optiker"
-  // bildung
-  | "fahrschule"
-  | "nachhilfe"
-  | "schule"
-  | "kindergarten"
-  // vereine
-  | "sportverein"
-  | "verein_allgemein"
-  // beratung
-  | "steuerberater"
-  | "rechtsanwalt"
-  // individuell
-  | "eigene_branche"
-  | "private_umfrage";
+import type { SurveyQuestionType, RespondentType, IndustryCategory, IndustrySubCategory, TemplateCategory } from "@/lib/validations";
+export type { SurveyQuestionType, RespondentType, IndustryCategory, IndustrySubCategory, TemplateCategory };
 
 // ============================================================
 // Survey Template Types
@@ -80,6 +37,14 @@ export type SurveyTemplate = {
 };
 
 // ============================================================
+// Industry Selection (Onboarding + AddLocation)
+// ============================================================
+export type IndustrySelection = {
+  category: IndustryCategory;
+  subCategory: IndustrySubCategory;
+};
+
+// ============================================================
 // Template Customization (Light Customization)
 // ============================================================
 export type TemplateCustomization = {
@@ -95,9 +60,18 @@ export type TemplateCustomization = {
 export type SurveyAnswers = Record<string, number | string | boolean>;
 
 // ============================================================
-// Template Category
+// Template Category (re-exported from validations.ts above)
 // ============================================================
-export type TemplateCategory = "customer" | "employee";
+
+// ============================================================
+// Onboarding Template (DTO for client-side rendering)
+// ============================================================
+export type OnboardingTemplate = {
+  id: string;
+  name: string;
+  description: string | null;
+  questionCount: number;
+};
 
 // ============================================================
 // Plan Types
