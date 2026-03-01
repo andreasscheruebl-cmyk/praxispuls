@@ -19,9 +19,12 @@ Bearbeite GitHub Issue #$ARGUMENTS:
    - `npx next lint` — keine Errors
    - `npm run test` — Tests grün
    - `npm run build` — Build sauber
-6. Erstelle einen Commit mit Conventional Commits Format:
+6. Führe `/pre-flight` Self-Check gegen alle geänderten Dateien aus:
+   - Behebe alle Findings
+   - Wiederhole betroffene CI-Checks (Step 5) falls Code geändert wurde
+7. Erstelle einen Commit mit Conventional Commits Format:
    `type(scope): description (#$ARGUMENTS)`
-7. Pushe den Branch
+8. Pushe den Branch
 
 Regeln:
 - Folge den Konventionen aus CLAUDE.md
