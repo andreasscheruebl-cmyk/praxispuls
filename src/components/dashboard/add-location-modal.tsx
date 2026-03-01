@@ -38,8 +38,8 @@ export function AddLocationModal({
     onOpenChange(nextOpen);
   }
 
-  function onComplete() {
-    handleComplete(() => {
+  async function onComplete() {
+    await handleComplete(() => {
       resetForm();
       onSuccess();
     });
@@ -69,7 +69,7 @@ export function AddLocationModal({
           {step === 1 && (
             <>
               <IndustryPicker value={industry} onChange={handleIndustryChange} />
-              <Button onClick={() => setStep(2)} className="w-full" disabled={!industry}>
+              <Button onClick={() => setStep(2)} className="w-full" disabled={!industry || templatesLoading || !!error}>
                 Weiter
               </Button>
             </>
@@ -104,11 +104,20 @@ export function AddLocationModal({
                 <Button variant="outline" onClick={() => setStep(1)} className="flex-1">
                   Zurück
                 </Button>
-                <Button onClick={() => setStep(3)} className="flex-1" disabled={!name.trim()}>
+                <Button onClick={() => setStep(3)} className="flex-1" disabled={name.trim().length < 2}>
                   {googlePlaceId ? "Weiter" : "Überspringen"}
                 </Button>
               </div>
             </>
+          )}
+
+          {error && (
+            <p
+              className="rounded-md bg-destructive/10 p-3 text-sm text-destructive"
+              role="alert"
+            >
+              {error}
+            </p>
           )}
 
           {step === 3 && (
@@ -122,14 +131,6 @@ export function AddLocationModal({
                   loading={templatesLoading}
                 />
               </div>
-              {error && (
-                <p
-                  className="rounded-md bg-destructive/10 p-3 text-sm text-destructive"
-                  role="alert"
-                >
-                  {error}
-                </p>
-              )}
               <div className="flex gap-3">
                 <Button variant="outline" onClick={() => setStep(2)} className="flex-1">
                   Zurück

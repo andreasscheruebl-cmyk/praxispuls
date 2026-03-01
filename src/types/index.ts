@@ -6,8 +6,8 @@ export type { SurveyStatus } from "@/lib/db/schema";
 // ============================================================
 // Derived types (single source of truth: as-const arrays in validations.ts)
 // ============================================================
-import type { SurveyQuestionType, RespondentType, IndustryCategory, IndustrySubCategory } from "@/lib/validations";
-export type { SurveyQuestionType, RespondentType, IndustryCategory, IndustrySubCategory };
+import type { SurveyQuestionType, RespondentType, IndustryCategory, IndustrySubCategory, TemplateCategory } from "@/lib/validations";
+export type { SurveyQuestionType, RespondentType, IndustryCategory, IndustrySubCategory, TemplateCategory };
 
 // ============================================================
 // Survey Template Types
@@ -60,9 +60,8 @@ export type TemplateCustomization = {
 export type SurveyAnswers = Record<string, number | string | boolean>;
 
 // ============================================================
-// Template Category
+// Template Category (re-exported from validations.ts above)
 // ============================================================
-export type TemplateCategory = "customer" | "employee";
 
 // ============================================================
 // Onboarding Template (DTO for client-side rendering)

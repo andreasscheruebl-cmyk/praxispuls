@@ -13,14 +13,21 @@ export async function GET(request: Request) {
 
     // Verify a specific Place ID → return full details
     if (placeId) {
-      const details = await getPlaceDetails(placeId);
-      if (!details) {
+      const result = await getPlaceDetails(placeId);
+      if ("error" in result) {
+        if (result.error === "NO_API_KEY") {
+          return NextResponse.json(
+            { error: "Google Places API nicht konfiguriert", code: "NOT_CONFIGURED" },
+            { status: 503 }
+          );
+        }
+        const status = result.error === "NOT_FOUND" ? 404 : 502;
         return NextResponse.json(
-          { error: "Google Place ID nicht gefunden", code: "NOT_FOUND" },
-          { status: 404 }
+          { error: "Google Place ID nicht gefunden", code: result.error },
+          { status }
         );
       }
-      return NextResponse.json(details);
+      return NextResponse.json(result.data);
     }
 
     // Search by query

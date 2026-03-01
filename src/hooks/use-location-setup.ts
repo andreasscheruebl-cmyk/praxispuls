@@ -57,7 +57,8 @@ export function useLocationSetup() {
     setIndustry(selection);
     setTemplateId(null);
     setError(null);
-    loadTemplates(selection.category, selection.subCategory).catch(() => {});
+    // loadTemplates handles errors internally via try-catch + setError
+    void loadTemplates(selection.category, selection.subCategory);
   }
 
   async function handleComplete(onSuccess: () => void) {

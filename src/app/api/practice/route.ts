@@ -82,12 +82,18 @@ export async function POST(request: Request) {
     // Validate external data before transaction
     let googleReviewUrl: string | null = null;
     if (googlePlaceId) {
-      const placeDetails = await getPlaceDetails(googlePlaceId);
-      if (!placeDetails) {
-        return NextResponse.json(
-          { error: "Ungültige Google Place ID. Bitte wählen Sie Ihre Praxis erneut aus.", code: "BAD_REQUEST" },
-          { status: 400 },
-        );
+      const placeResult = await getPlaceDetails(googlePlaceId);
+      if ("error" in placeResult) {
+        // Skip validation if API key not configured — don't block onboarding
+        if (placeResult.error !== "NO_API_KEY") {
+          const msg = placeResult.error === "NOT_FOUND"
+            ? "Ungültige Google Place ID. Bitte wählen Sie Ihre Praxis erneut aus."
+            : "Google Places API ist derzeit nicht erreichbar. Bitte versuchen Sie es später erneut.";
+          return NextResponse.json(
+            { error: msg, code: placeResult.error === "NOT_FOUND" ? "BAD_REQUEST" : "EXTERNAL_API_ERROR" },
+            { status: placeResult.error === "NOT_FOUND" ? 400 : 502 },
+          );
+        }
       }
       googleReviewUrl = getGoogleReviewLink(googlePlaceId);
     }
@@ -125,7 +131,7 @@ export async function POST(request: Request) {
 
       if (googlePlaceId) {
         const existingPlace = await tx.query.practices.findFirst({
-          where: eq(practices.googlePlaceId, googlePlaceId),
+          where: and(eq(practices.googlePlaceId, googlePlaceId), isNull(practices.deletedAt)),
           columns: { id: true },
         });
         if (existingPlace) {
@@ -137,13 +143,17 @@ export async function POST(request: Request) {
       }
 
       let slug = slugify(name);
+      let slugAvailable = false;
       for (let i = 0; i < 5; i++) {
         const existingSlug = await tx.query.practices.findFirst({
           where: eq(practices.slug, slug),
           columns: { id: true },
         });
-        if (!existingSlug) break;
+        if (!existingSlug) { slugAvailable = true; break; }
         slug = `${slugify(name)}-${Math.random().toString(36).slice(2, 8)}`;
+      }
+      if (!slugAvailable) {
+        return { error: "Ein eindeutiger Name konnte nicht generiert werden. Bitte wählen Sie einen anderen Namen.", code: "SLUG_COLLISION" as const };
       }
 
       const [practice] = await tx.insert(practices).values({
@@ -164,13 +174,17 @@ export async function POST(request: Request) {
       }
 
       let surveySlug = `${slug}-umfrage`;
+      let surveySlugAvailable = false;
       for (let i = 0; i < 5; i++) {
         const existingSurveySlug = await tx.query.surveys.findFirst({
           where: eq(surveys.slug, surveySlug),
           columns: { id: true },
         });
-        if (!existingSurveySlug) break;
+        if (!existingSurveySlug) { surveySlugAvailable = true; break; }
         surveySlug = `${slug}-umfrage-${Math.random().toString(36).slice(2, 8)}`;
+      }
+      if (!surveySlugAvailable) {
+        return { error: "Ein eindeutiger Name konnte nicht generiert werden. Bitte wählen Sie einen anderen Namen.", code: "SLUG_COLLISION" as const };
       }
 
       await tx.insert(surveys).values({
@@ -191,6 +205,7 @@ export async function POST(request: Request) {
       switch (result.code) {
         case "PLACE_ID_TAKEN": status = 409; break;
         case "LOCATION_LIMIT_REACHED": status = 403; break;
+        case "SLUG_COLLISION": status = 409; break;
         default: status = 500; break;
       }
       return NextResponse.json(
@@ -247,18 +262,22 @@ export async function PUT(request: Request) {
     const updates = parsed.data;
 
     if (updates.googlePlaceId && updates.googlePlaceId !== practice.googlePlaceId) {
-      const placeDetails = await getPlaceDetails(updates.googlePlaceId);
-      if (!placeDetails) {
+      const placeResult = await getPlaceDetails(updates.googlePlaceId);
+      if ("error" in placeResult && placeResult.error !== "NO_API_KEY") {
+        const msg = placeResult.error === "NOT_FOUND"
+          ? "Ungültige Google Place ID. Bitte wählen Sie Ihre Praxis erneut aus."
+          : "Google Places API ist derzeit nicht erreichbar. Bitte versuchen Sie es später erneut.";
         return NextResponse.json(
-          { error: "Ungültige Google Place ID. Bitte wählen Sie Ihre Praxis erneut aus.", code: "BAD_REQUEST" },
-          { status: 400 },
+          { error: msg, code: placeResult.error === "NOT_FOUND" ? "BAD_REQUEST" : "EXTERNAL_API_ERROR" },
+          { status: placeResult.error === "NOT_FOUND" ? 400 : 502 },
         );
       }
 
       const existing = await db.query.practices.findFirst({
         where: and(
           eq(practices.googlePlaceId, updates.googlePlaceId),
-          ne(practices.id, practice.id)
+          ne(practices.id, practice.id),
+          isNull(practices.deletedAt),
         ),
         columns: { id: true },
       });

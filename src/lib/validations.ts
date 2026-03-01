@@ -66,6 +66,9 @@ export const RESPONDENT_TYPES = [
 ] as const;
 export type RespondentType = (typeof RESPONDENT_TYPES)[number];
 
+export const TEMPLATE_CATEGORIES = ["customer", "employee"] as const;
+export type TemplateCategory = (typeof TEMPLATE_CATEGORIES)[number];
+
 // ============================================================
 // PRACTICE
 // ============================================================
@@ -174,7 +177,7 @@ export const templateCreateSchema = z.object({
   industryCategory: z.enum(INDUSTRY_CATEGORY_IDS),
   industrySubCategory: z.enum(INDUSTRY_SUB_CATEGORY_IDS).optional(),
   respondentType: z.enum(RESPONDENT_TYPES),
-  category: z.enum(["customer", "employee"]),
+  category: z.enum(TEMPLATE_CATEGORIES),
   questions: z.array(surveyQuestionSchema).min(1).max(30),
   sortOrder: z.number().int().min(0).max(999).optional(),
 });
