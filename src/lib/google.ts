@@ -19,14 +19,19 @@ interface PlaceDetails {
   website?: string;
 }
 
+export type SearchPlacesResult =
+  | { data: PlacePrediction[] }
+  | { error: "NO_API_KEY" | "API_ERROR" };
+
 /**
  * Search for a business via Google Places Autocomplete.
- * If postalCode is provided, appends it to the query for better local results.
+ * Returns discriminated union so callers can distinguish
+ * "no results" (empty data array) from "API not available".
  */
-export async function searchPlaces(query: string, postalCode?: string): Promise<PlacePrediction[]> {
+export async function searchPlaces(query: string, postalCode?: string): Promise<SearchPlacesResult> {
   if (!GOOGLE_API_KEY) {
     console.warn("GOOGLE_PLACES_API_KEY not set");
-    return [];
+    return { error: "NO_API_KEY" };
   }
 
   // Append postal code to query for better local relevance
@@ -45,40 +50,43 @@ export async function searchPlaces(query: string, postalCode?: string): Promise<
     const res = await fetch(url.toString());
     if (!res.ok) {
       console.error(`Google Places Autocomplete HTTP ${res.status}`);
-      return [];
+      return { error: "API_ERROR" };
     }
     const contentType = res.headers.get("content-type") ?? "";
     if (!contentType.includes("application/json")) {
       console.error(`Google Places Autocomplete non-JSON response: ${contentType}`);
-      return [];
+      return { error: "API_ERROR" };
     }
     const data = await res.json();
 
     if (data.status !== "OK") {
       if (data.status !== "ZERO_RESULTS") {
         console.error(`Google Places Autocomplete API status: ${data.status}`, data.error_message);
+        return { error: "API_ERROR" };
       }
-      return [];
+      return { data: [] };
     }
 
-    return data.predictions.map(
-      (p: {
-        place_id: string;
-        description: string;
-        structured_formatting: {
-          main_text: string;
-          secondary_text: string;
-        };
-      }) => ({
-        placeId: p.place_id,
-        description: p.description,
-        mainText: p.structured_formatting.main_text,
-        secondaryText: p.structured_formatting.secondary_text,
-      })
-    );
+    return {
+      data: data.predictions.map(
+        (p: {
+          place_id: string;
+          description: string;
+          structured_formatting: {
+            main_text: string;
+            secondary_text: string;
+          };
+        }) => ({
+          placeId: p.place_id,
+          description: p.description,
+          mainText: p.structured_formatting.main_text,
+          secondaryText: p.structured_formatting.secondary_text,
+        })
+      ),
+    };
   } catch (err) {
     console.error("Google Places Autocomplete error:", err);
-    return [];
+    return { error: "API_ERROR" };
   }
 }
 

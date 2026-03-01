@@ -109,10 +109,13 @@ export async function POST(request: Request) {
     const userEmail = user.email;
 
     const respondentParsed = z.enum(RESPONDENT_TYPES).safeParse(dbTemplate.respondentType);
+    if (!respondentParsed.success) {
+      console.error(`[POST /api/practice] Invalid respondentType "${dbTemplate.respondentType}" in template ${templateId}, falling back to "kunde"`);
+    }
     const respondentType = respondentParsed.success ? respondentParsed.data : "kunde";
     const terminology = getTerminology(respondentType);
 
-    // Transaction: check limit + insert atomically to prevent race conditions
+    // Transaction: limit check, place-id uniqueness, slug generation, practice insert, survey slug, survey insert
     const result = await db.transaction(async (tx) => {
       const userPractices = await tx.query.practices.findMany({
         where: and(eq(practices.ownerUserId, user.id), isNull(practices.deletedAt)),
@@ -138,7 +141,7 @@ export async function POST(request: Request) {
         });
         if (existingPlace) {
           return {
-            error: "Diese Google-Praxis ist bereits mit einem anderen Konto verknüpft.",
+            error: "Dieser Google-Eintrag ist bereits mit einem Standort verknüpft.",
             code: "PLACE_ID_TAKEN" as const,
           };
         }
@@ -216,15 +219,19 @@ export async function POST(request: Request) {
       );
     }
 
-    await logAudit({
-      practiceId: result.practice.id,
-      action: "practice.created",
-      entity: "practice",
-      entityId: result.practice.id,
-      before: undefined,
-      after: { name, industryCategory, industrySubCategory, templateId, googlePlaceId: googlePlaceId ?? null, respondentType },
-      ...getRequestMeta(request),
-    });
+    try {
+      await logAudit({
+        practiceId: result.practice.id,
+        action: "practice.created",
+        entity: "practice",
+        entityId: result.practice.id,
+        before: undefined,
+        after: { name, industryCategory, industrySubCategory, templateId, googlePlaceId: googlePlaceId ?? null, respondentType },
+        ...getRequestMeta(request),
+      });
+    } catch (auditErr) {
+      console.error("[POST /api/practice] Audit log failed (practice created successfully):", auditErr);
+    }
 
     return NextResponse.json(result.practice, { status: 201 });
   } catch (err) {
@@ -298,7 +305,7 @@ export async function PUT(request: Request) {
       });
       if (existing) {
         return NextResponse.json(
-          { error: "Diese Google-Praxis ist bereits mit einem anderen Konto verknüpft.", code: "PLACE_ID_TAKEN", warning: true },
+          { error: "Dieser Google-Eintrag ist bereits mit einem Standort verknüpft.", code: "PLACE_ID_TAKEN", warning: true },
           { status: 409 },
         );
       }
@@ -312,21 +319,24 @@ export async function PUT(request: Request) {
       .set({ ...updates, googleReviewUrl, updatedAt: new Date() })
       .where(eq(practices.id, practice.id));
 
-    // Audit log for settings change
-    await logAudit({
-      practiceId: practice.id,
-      action: "practice.updated",
-      entity: "practice",
-      entityId: practice.id,
-      before: {
-        name: practice.name,
-        googlePlaceId: practice.googlePlaceId,
-        npsThreshold: practice.npsThreshold,
-        logoUrl: practice.logoUrl,
-      },
-      after: updates,
-      ...meta,
-    });
+    try {
+      await logAudit({
+        practiceId: practice.id,
+        action: "practice.updated",
+        entity: "practice",
+        entityId: practice.id,
+        before: {
+          name: practice.name,
+          googlePlaceId: practice.googlePlaceId,
+          npsThreshold: practice.npsThreshold,
+          logoUrl: practice.logoUrl,
+        },
+        after: updates,
+        ...meta,
+      });
+    } catch (auditErr) {
+      console.error("[PUT /api/practice] Audit log failed:", auditErr);
+    }
 
     return NextResponse.json({ success: true });
   } catch (err) {

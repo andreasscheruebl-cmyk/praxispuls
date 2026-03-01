@@ -24,6 +24,7 @@ export function useLocationSetup() {
   const [templateId, setTemplateId] = useState<string | null>(null);
   const [templates, setTemplates] = useState<OnboardingTemplate[]>([]);
   const submittingRef = useRef(false);
+  const templateRequestCounter = useRef(0);
 
   // Terminology derived from selected sub-category
   const sub = industry ? getSubCategory(industry.subCategory) : null;
@@ -31,9 +32,11 @@ export function useLocationSetup() {
   const stepTitle = STEP_TITLES[step];
 
   async function loadTemplates(category: IndustryCategory, subCategory: IndustrySubCategory) {
+    const requestId = ++templateRequestCounter.current;
     setTemplatesLoading(true);
     try {
       const result = await getOnboardingTemplates(category, subCategory);
+      if (requestId !== templateRequestCounter.current) return; // stale response
       if ("error" in result) {
         console.error("[loadTemplates]", result.error);
         setError(result.error ?? "Unbekannter Fehler");
@@ -45,11 +48,14 @@ export function useLocationSetup() {
         }
       }
     } catch (err) {
+      if (requestId !== templateRequestCounter.current) return; // stale response
       console.error("[loadTemplates]", err);
       setError("Templates konnten nicht geladen werden");
       setTemplates([]);
     } finally {
-      setTemplatesLoading(false);
+      if (requestId === templateRequestCounter.current) {
+        setTemplatesLoading(false);
+      }
     }
   }
 

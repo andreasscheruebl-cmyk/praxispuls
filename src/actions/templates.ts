@@ -60,9 +60,6 @@ export async function createTemplateAction(formData: FormData) {
     revalidatePath("/admin/templates");
     return { success: true, template };
   } catch (error) {
-    if (error instanceof SyntaxError) {
-      return { error: "Ungültige JSON-Daten in Fragen", code: "VALIDATION_ERROR" };
-    }
     console.error("[createTemplateAction]", error);
     return { error: "Template konnte nicht erstellt werden", code: "INTERNAL_ERROR" };
   }
@@ -107,9 +104,6 @@ export async function updateTemplateAction(id: string, formData: FormData) {
     revalidatePath(`/admin/templates/${id}`);
     return { success: true };
   } catch (error) {
-    if (error instanceof SyntaxError) {
-      return { error: "Ungültige JSON-Daten in Fragen", code: "VALIDATION_ERROR" };
-    }
     console.error("[updateTemplateAction]", error);
     return { error: "Aktualisierung fehlgeschlagen", code: "INTERNAL_ERROR" };
   }
