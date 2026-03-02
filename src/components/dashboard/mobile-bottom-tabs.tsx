@@ -11,11 +11,13 @@ import {
   Settings,
   CreditCard,
   UserCircle,
+  BarChart2,
 } from "lucide-react";
 
 const iconMap: Record<string, typeof LayoutDashboard> = {
   LayoutDashboard,
   ClipboardList,
+  BarChart2,
   MessageSquare,
   Bell,
   QrCode,
