@@ -1,7 +1,8 @@
 # CLAUDE.md – Anweisungen für Claude Code
 
 ## Projekt: PraxisPuls
-SaaS für Zahnarztpraxen: Patientenumfrage + Google-Review-Routing + QM-Dashboard.
+Multi-Branchen SaaS: Umfragen (Patienten, Kunden, Mitarbeiter) + Google-Review-Routing ("Zufriedenheits-Weiche") + QM-Dashboard.
+Ursprünglich für Zahnarztpraxen, jetzt 10 Branchen-Kategorien mit 28 Sub-Branchen.
 
 ## Entwickler
 Andi – Solo-Dev, Bayern. Arbeitet Abende/Wochenenden. Pragmatische Lösungen bevorzugt.
@@ -25,9 +26,15 @@ npm run dev              # Dev-Server (Turbopack, Port 3000)
 npm run build            # Production Build
 npm run typecheck        # TypeScript Check
 npm run lint             # ESLint
+npm run lint:fix         # ESLint Auto-Fix
 npm run test             # Unit Tests (Vitest)
+npm run test:watch       # Unit Tests Watch Mode
+npm run test:coverage    # Unit Tests mit Coverage (v8)
 npm run test:e2e         # E2E Tests (Playwright)
+npm run test:e2e:ui      # E2E Tests UI Mode
 npm run knip             # Dead Code Detection
+npm run db:generate      # Drizzle Migration generieren
+npm run db:migrate       # Drizzle Migration anwenden
 npm run db:push          # Schema zu Supabase pushen
 npm run db:studio        # Drizzle Studio (Port 4983)
 ```
@@ -117,14 +124,17 @@ Ein PR ist bereit für Review wenn:
 ## Tech Stack
 - Next.js 15 (App Router, RSC, Server Actions, Turbopack)
 - TypeScript strict mode
-- Tailwind CSS + shadcn/ui
+- Tailwind CSS + shadcn/ui (Radix UI Primitives)
 - Supabase (Auth + DB + Storage) – Frankfurt Region
 - Drizzle ORM (DB Queries) + Drizzle Kit (Migrations)
 - Stripe (Payments)
 - Resend (E-Mail)
 - Recharts (Charts)
+- Sentry (Error Tracking + Performance)
 - zod (Validation)
-- qrcode (QR generation)
+- qrcode + jspdf (QR generation + PDF)
+- sonner (Toast Notifications)
+- lucide-react (Icons)
 
 ## Arbeitsweise
 - **Kein unaufgefordertes Refactoring.** Nur das tun, was explizit verlangt wurde – keine "Verbesserungen" nebenbei.
@@ -169,10 +179,64 @@ Ein PR ist bereit für Review wenn:
 - **Pre-push Hook**: `vitest run` – Unit Tests müssen grün sein
 
 ### Testing
-- **Unit Tests**: Vitest (`src/lib/__tests__/`) – `npm run test`
-- **E2E Tests**: Playwright (`e2e/`) – `npm run test:e2e`
-- **Coverage**: `npm run test:coverage` (v8)
+- **Unit Tests**: Vitest (`src/lib/__tests__/`) – `npm run test` – 22 Test-Dateien
+- **E2E Tests**: Playwright (`e2e/`) – `npm run test:e2e` – 6 Spec-Dateien
+- **Coverage**: `npm run test:coverage` (v8, 80% Threshold)
 - **Dead Code**: `npm run knip`
+- **Coverage-Excludes**: db, supabase, email, stripe, google, auth, audit, qr-pdf, version, plausible (externe Services)
+- **E2E Projekte**: chromium + mobile (iPhone 14)
+
+### Security
+- **Auth Gates**: `requireAuthForApi()`, `requireAuthForAction()`, `requireAdminForApi()` aus `lib/auth.ts`
+- **IDOR Prevention**: Alle DB-Queries filtern nach `practiceId` + Ownership-Check
+- **SSRF Prevention**: `isSafeUrl()` aus `lib/url-validation.ts` für alle serverseitigen URL-Fetches
+- **Input Validation**: Zod Schemas auf allen API/Action-Boundaries
+- **Soft Deletes**: `deletedAt` Column, Queries filtern mit `isNull(deletedAt)`
+- **Audit Logging**: Alle Mutations → `audit_events` Tabelle (before/after)
+- **Secret Scanning**: Gitleaks (pre-commit + CI), TruffleHog (CI)
+- **ESLint Plugins**: `eslint-plugin-security` + `eslint-plugin-sonarjs`
+
+---
+
+## Core Business Logic
+
+### Zufriedenheits-Weiche (Review Router)
+Kernfeature in `src/lib/review-router.ts`:
+- **NPS 9–10 (Promoter)** → Google-Review-Prompt
+- **NPS 7–8 (Passiv)** → Danke-Seite
+- **NPS 0–6 (Detractor)** → Empathie-Seite + Alert an Praxis
+- **Employee Surveys** → `noRouting()` (kein Google-Redirect)
+
+### Branchen-System
+`src/lib/industries.ts` — 10 Kategorien, 28 Sub-Branchen:
+- Gesundheit (7), Handwerk (3), Beauty (2), Gastronomie (2), Fitness (2)
+- Einzelhandel (2), Bildung (4), Vereine (2), Beratung (2), Individuell (2)
+- Smart 2-Layer: Sub-Kategorie-Auswahl nur wenn ≥ 3 Sub-Kategorien
+
+### Terminologie-System
+`src/lib/terminology.ts` — 12 Respondent-Types mit DE-Deklinationen:
+patient, tierhalter, kunde, gast, mitglied, fahrschueler, schueler, eltern, mandant, mitarbeiter, individuell, teilnehmer
+
+### Pricing (3 Pläne)
+- **Free**: 30 Responses/Monat, 1 Standort, Basis-Template
+- **Starter**: 200 Responses/Monat, 3 Standorte, Alerts, Branding, Zeitfilter
+- **Professional**: Unlimited, 10 Standorte, alle Features
+- Admin-Override: `planOverride` + `overrideReason` + `overrideExpiresAt`
+
+### Survey Lifecycle
+`draft` → `active` → `paused` → `archived` (via `src/lib/survey-status.ts`)
+- Soft-Delete auf surveys + practices
+- Template-Customization: Fragen deaktivieren, Labels überschreiben, bis zu 3 Custom-Fragen
+
+## CI Pipeline (GitHub Actions)
+
+4 Jobs auf `push main` + `pull_request main`:
+1. **lint-types** — ESLint + TypeScript + knip (Dead Code, continue-on-error)
+2. **unit-tests** — Vitest mit Coverage + Artifact Upload
+3. **e2e** — Build + Playwright (nur public-pages in CI, Auth-Tests brauchen DB)
+4. **security** — npm audit + Gitleaks + TruffleHog
+
+Node 22 + npm cache. Placeholder Env-Vars für Build in CI.
 
 ---
 
@@ -202,10 +266,12 @@ Ein PR ist bereit für Review wenn:
 - ❌ Mobile App
 
 **Im MVP seit Multi-Survey-Redesign (#59):**
-- ✅ Multi-Branchen (10 Kategorien, 26 Sub-Branchen)
+- ✅ Multi-Branchen (10 Kategorien, 28 Sub-Branchen)
 - ✅ Multi-Standort
 - ✅ Mitarbeiterbefragung (Employee Templates + eNPS)
 - ✅ 7 Frage-Typen (NPS, Stars, Likert, Freetext, SingleChoice, YesNo, eNPS)
+- ✅ Vergleichs-Dashboard mit 3 Modi (Zeitraum, Standort, Umfrage) (#69)
+- ✅ Admin-Panel (Praxen-Verwaltung, Template-CRUD, Audit-Log, Login-Events)
 
 Wenn Andi eines davon anfragt: "⚠️ Das ist v2. Soll ich es trotzdem machen?"
 
@@ -223,13 +289,16 @@ Siehe GitHub Issues (`gh issue list`) und GitHub Projects für den aktuellen Pro
 
 ## DB Schema
 Siehe `src/lib/db/schema.ts` – 7 Tabellen:
-- practices (Tenants)
-- survey_templates (Branchen-Templates, Admin-CRUD)
-- surveys (Umfragen, Status-Lifecycle)
-- responses (Antworten, kein PII!)
-- alerts (Detractor-Notifications)
-- loginEvents (Login-Audit-Log)
-- auditEvents (Change-Tracking)
+- **practices** (Tenants) — Multi-Tenant, Soft-Delete, Plan-Override, Industry, Theme
+- **survey_templates** (Branchen-Templates, Admin-CRUD) — JSONB questions, isSystem, respondentType, category (customer/employee)
+- **surveys** (Umfragen, Status-Lifecycle: draft→active→paused→archived) — Soft-Delete, sourceSurveyId (Clone), anonymityThreshold
+- **responses** (Antworten, **kein PII!**) — JSONB answers, NPS Score/Category, Channel (qr/link/email), Google-Review-Tracking
+- **alerts** (Detractor-Notifications) — isRead, Note
+- **loginEvents** (Login-Audit-Log) — Method (password/magic_link/oauth)
+- **auditEvents** (Change-Tracking) — before/after JSONB, Action, Entity/EntityId
+
+**Enums:** `surveyStatusEnum` = draft | active | paused | archived
+**Relations:** Vollständig definiert mit Drizzle `relations()` (practices → surveys, responses, alerts, loginEvents, auditEvents)
 
 ## Projektstruktur
 
@@ -239,46 +308,112 @@ praxispuls/
 ├── .github/
 │   ├── ISSUE_TEMPLATE/             ← Issue Template (universal)
 │   ├── pull_request_template.md    ← PR Template
-│   └── workflows/ci.yml            ← GitHub Actions CI
+│   └── workflows/ci.yml            ← GitHub Actions CI (4 Jobs)
+├── .claude/
+│   ├── settings.json               ← Hooks (git-tracked)
+│   ├── launch.json                 ← Dev-Server Config
+│   ├── agents/
+│   │   ├── security-reviewer.md    ← Security Audit Agent
+│   │   └── code-reviewer.md        ← Code Review Agent (8 Passes)
+│   └── skills/
+│       ├── fix-issue/SKILL.md      ← /fix-issue <nr>
+│       ├── create-pr/SKILL.md      ← /create-pr
+│       ├── review-checklist/SKILL.md ← /review-checklist
+│       ├── pre-flight/SKILL.md     ← /pre-flight (49 Checks in 8 Kategorien)
+│       └── db-migrate/SKILL.md     ← /db-migrate <generate|push|studio|status>
 ├── src/
 │   ├── app/
 │   │   ├── (auth)/
+│   │   │   ├── login/              ← Login Page + Form
+│   │   │   └── register/           ← Register Page + Form
 │   │   ├── (dashboard)/
+│   │   │   ├── dashboard/          ← Overview
+│   │   │   ├── dashboard/surveys/  ← Survey Management
+│   │   │   ├── dashboard/responses/← Response Analytics
+│   │   │   ├── dashboard/alerts/   ← Detractor Alerts
+│   │   │   ├── dashboard/compare/  ← Vergleichs-Dashboard (3 Modi)
+│   │   │   ├── dashboard/qr-codes/ ← QR Code Generation
+│   │   │   ├── dashboard/settings/ ← Practice Settings
+│   │   │   ├── dashboard/billing/  ← Stripe Integration
+│   │   │   ├── dashboard/profile/  ← User Profile
+│   │   │   └── onboarding/         ← Initial Setup
+│   │   ├── (admin)/
+│   │   │   └── admin/
+│   │   │       ├── stats/          ← Admin Stats Dashboard
+│   │   │       ├── practices/      ← Practice Management + [id] Detail
+│   │   │       ├── templates/      ← Template CRUD (list, new, [id])
+│   │   │       ├── audit/          ← Audit Event Log
+│   │   │       └── logins/         ← Login Event Log
 │   │   ├── (marketing)/
-│   │   ├── s/[slug]/               ← Public Survey (SSR)
+│   │   │   ├── impressum/datenschutz/agb/  ← Legal Pages
+│   │   │   └── page.tsx            ← Landing Page
+│   │   ├── s/[slug]/               ← Public Survey (SSR, kein Auth)
 │   │   ├── api/
-│   │   │   ├── account/
-│   │   │   ├── billing/
-│   │   │   ├── google/
-│   │   │   ├── health/
-│   │   │   ├── practice/
-│   │   │   ├── public/
-│   │   │   └── webhooks/
-│   │   └── global-error.tsx
+│   │   │   ├── account/            ← Account Info
+│   │   │   ├── admin/practices/    ← Admin Practice CRUD + Actions
+│   │   │   ├── auth/               ← Login-Event, Confirm, Callback
+│   │   │   ├── billing/            ← Checkout, Portal, Invoices
+│   │   │   ├── google/             ← Places Search, Photo Proxy
+│   │   │   ├── health/             ← Health Check
+│   │   │   ├── practice/           ← Practice CRUD, Logo, QR, Website-Logos
+│   │   │   ├── public/             ← Responses (POST), Track-Click
+│   │   │   ├── surveys/            ← Survey CRUD + [surveyId]/qr-code
+│   │   │   └── webhooks/stripe/    ← Stripe Webhook
+│   │   ├── global-error.tsx
+│   │   └── opengraph-image.tsx     ← Dynamic OG Image
 │   ├── components/
-│   │   ├── ui/                     ← shadcn/ui
-│   │   ├── dashboard/
-│   │   ├── shared/
-│   │   ├── survey/
-│   │   ├── marketing/
+│   │   ├── ui/                     ← shadcn/ui (11 Komponenten)
+│   │   ├── admin/                  ← Admin Components (12)
+│   │   ├── dashboard/              ← Dashboard Components (22)
+│   │   ├── survey/                 ← Survey Form + 6 Question Types
+│   │   ├── marketing/              ← Hero, Scroll-Link
+│   │   ├── shared/                 ← Build Badge
 │   │   └── theme-provider.tsx
 │   ├── lib/
-│   │   ├── __tests__/              ← Unit Tests (Vitest)
-│   │   ├── db/schema.ts            ← Drizzle Schema
-│   │   ├── db/queries/             ← DB Query Functions
-│   │   ├── supabase/
-│   │   ├── stripe.ts
-│   │   ├── email.ts
-│   │   ├── themes.ts               ← Theme-System
-│   │   ├── review-router.ts
-│   │   ├── validations.ts          ← Zod Schemas
-│   │   └── ...
+│   │   ├── __tests__/              ← Unit Tests (22 Test-Dateien)
+│   │   ├── db/
+│   │   │   ├── schema.ts           ← Drizzle Schema (7 Tabellen)
+│   │   │   ├── index.ts            ← Drizzle Client
+│   │   │   └── queries/            ← admin, compare, dashboard, surveys, templates
+│   │   ├── supabase/               ← client.ts, server.ts, middleware.ts
+│   │   ├── constants/plans.ts      ← Plan Badge Styles + Labels
+│   │   ├── validations.ts          ← Alle Zod Schemas (Env, Auth, Practice, Survey, Admin, Templates)
+│   │   ├── industries.ts           ← 10 Kategorien, 28 Sub-Branchen
+│   │   ├── terminology.ts          ← 12 Respondent-Type Terminologien (DE)
+│   │   ├── review-router.ts        ← Zufriedenheits-Weiche (Core Feature)
+│   │   ├── compare-utils.ts        ← Comparison Analytics (NPS, Category Scores)
+│   │   ├── survey-status.ts        ← Status-Lifecycle Transitions
+│   │   ├── survey-steps.ts         ← Multi-Step Survey Flow
+│   │   ├── survey-validation.ts    ← Survey-spezifische Validation
+│   │   ├── template-data.ts        ← Seed Template Data
+│   │   ├── auth.ts                 ← getUser, requireAuthForApi, requireAdmin
+│   │   ├── audit.ts                ← Audit Event Logging
+│   │   ├── plans.ts                ← getEffectivePlan() (inkl. Override)
+│   │   ├── stripe.ts               ← Stripe Client + Checkout/Portal
+│   │   ├── email.ts                ← Resend E-Mail + escapeHtml
+│   │   ├── google.ts               ← Google Places API
+│   │   ├── qr.ts                   ← QR Code Generation
+│   │   ├── qr-pdf.ts               ← QR Code PDF (jspdf)
+│   │   ├── url-validation.ts       ← SSRF Prevention (isSafeUrl)
+│   │   ├── plausible.ts            ← Analytics Event Tracking
+│   │   ├── practice.ts             ← Practice Utils
+│   │   ├── utils.ts                ← Helper Functions
+│   │   └── version.ts              ← Build Version Info
 │   ├── middleware.ts                ← Supabase Auth Middleware
-│   └── types/index.ts              ← TypeScript Types + PLAN_LIMITS
-├── e2e/                            ← E2E Tests (Playwright)
-├── drizzle/                        ← Migrations
+│   ├── types/index.ts              ← TypeScript Types + PLAN_LIMITS
+│   └── instrumentation-client.ts   ← Sentry Client Config (Turbopack-safe)
+├── e2e/                            ← E2E Tests (6 Spec-Dateien)
+├── drizzle/                        ← Migrations (9 SQL-Dateien)
 ├── scripts/
-│   └── git-hooks/                  ← Git Hooks (commit-msg)
+│   ├── git-hooks/                  ← commit-msg, pre-commit, pre-push
+│   ├── seed-templates.ts           ← Template Seeding
+│   ├── check-tables.ts             ← DB Table Verification
+│   ├── setup-storage.ts            ← Supabase Storage Init
+│   ├── migrate-soft-delete.ts      ← Data Migration
+│   ├── run-migrations.ts           ← Migration Runner
+│   ├── backup.sh                   ← DB Backup
+│   └── setup-hooks.ps1             ← Windows Hook Setup
+├── docs/                           ← Documentation (Email Templates)
 └── package.json
 ```
 
@@ -289,13 +424,30 @@ praxispuls/
 
 ## Claude Code Automations
 - **Hooks** (`.claude/settings.json`): Auto-Lint nach Edit/Write (.ts/.tsx), Block .env Edits
-- **Skills**: `/fix-issue <nr>` (Issue bearbeiten), `/create-pr` (PR erstellen), `/review-checklist` (Pre-Review Checks), `/db-migrate <generate|push|studio|status>` (Drizzle Workflow)
-- **Agents**: `security-reviewer` (Stripe, RLS, DSGVO, OWASP)
+- **Skills**:
+  - `/fix-issue <nr>` — Issue bearbeiten (Branch + Implement + Test + Commit)
+  - `/create-pr` — PR erstellen (mit Pre-Flight Gate)
+  - `/review-checklist` — Pre-Review Checks (typecheck, lint, test, build, E2E)
+  - `/pre-flight` — Exhaustiver Self-Check (49 Checks in 8 Kategorien: Security, Validation, Error Handling, Audit, Types, UI, Tests, Code Hygiene)
+  - `/db-migrate <generate|push|studio|status>` — Drizzle Workflow
+- **Agents**:
+  - `security-reviewer` — Read-only Security Audit (IDOR, SSRF, XSS, DSGVO, Stripe, Auth, Secrets)
+  - `code-reviewer` — Read-only Code Review (8 Passes: Security → Code Hygiene)
 - Hooks empfangen JSON via stdin – `node -e` als Parser (`jq` nicht verfügbar)
 - **`settings.json`** = Hooks (git-tracked) · **`settings.local.json`** = Permissions (local-only, nicht committen)
 - **Security-Hook Gotcha**: `execFileSync` statt `execSync` in Hook-Commands verwenden — Security-Plugin flaggt `execSync` auch in Config-Dateien
 
 ## Environment Variables
-Siehe `.env.example` für alle benötigten Variablen.
-- **Vercel Env Vars:** IMMER `printf "value"` statt `echo "value"` – `echo` hängt Newline an, das Stripe/Sentry bricht.
-- **Nach dem Setzen:** Env Vars auf Whitespace/Newlines prüfen.
+Siehe `.env.example` für alle benötigten Variablen:
+- **Supabase**: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`
+- **Database**: `DATABASE_URL` (Supabase Postgres Direct)
+- **Stripe**: `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`, `STRIPE_PRICE_STARTER_MONTHLY`, `STRIPE_PRICE_PROFESSIONAL_MONTHLY`
+- **Resend**: `RESEND_API_KEY`
+- **Google**: `GOOGLE_PLACES_API_KEY`
+- **App**: `NEXT_PUBLIC_APP_URL`
+- **Admin**: `ADMIN_EMAILS` (comma-separated)
+- **Sentry**: `NEXT_PUBLIC_SENTRY_DSN`, `SENTRY_ORG`, `SENTRY_PROJECT`
+- **Plausible**: `NEXT_PUBLIC_PLAUSIBLE_DOMAIN`
+
+**Vercel Env Vars:** IMMER `printf "value"` statt `echo "value"` – `echo` hängt Newline an, das Stripe/Sentry bricht.
+**Nach dem Setzen:** Env Vars auf Whitespace/Newlines prüfen.
